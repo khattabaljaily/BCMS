@@ -1629,4 +1629,87 @@ body { background: linear-gradient(160deg, #f0f2f7 0%, #f5f0f9 100%); }
   .topbar__username { display: none; }
 }
 
+/* ══════════════════════════════════════════════════════════
+   SIDEBAR FOOTER — user card + logout
+══════════════════════════════════════════════════════════ */
+.sidebar__footer {
+  padding: 10px 10px 14px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.sidebar__footer-user {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 8px 6px;
+}
+.sidebar__footer-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--rose), var(--pink));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff;
+  box-shadow: 0 2px 8px rgba(244,63,94,.4);
+}
+.sidebar__footer-name {
+  font-size: 12px; font-weight: 700; color: rgba(255,255,255,.88);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar__footer-role {
+  font-size: 10px; color: rgba(255,255,255,.38); margin-top: 1px;
+}
+.sidebar__footer-links {
+  display: flex; flex-direction: column; gap: 2px; padding-top: 4px;
+}
+.sidebar__footer-links a {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 8px;
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,.45);
+  transition: background .15s, color .15s; text-decoration: none;
+}
+.sidebar__footer-links a:hover {
+  background: rgba(255,255,255,.08); color: rgba(255,255,255,.85);
+}
+.sidebar__footer-links a i { font-size: 11px; width: 14px; text-align: center; }
+.sidebar__footer-logout { color: rgba(239,68,68,.7) !important; }
+.sidebar__footer-logout:hover { background: rgba(239,68,68,.12) !important; color: #ef4444 !important; }
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD MOBILE POLISH
+══════════════════════════════════════════════════════════ */
+
+/* Sidebar overlay: JS controls display:none/block via inline style */
+#sidebar-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,.48);
+  backdrop-filter: blur(2px);
+  z-index: 199;
+  cursor: pointer;
+}
+
+/* Topbar: hamburger button — JS (bcms.js) forces display:flex on it;
+   the media queries below use !important to control visibility */
+#sidebar-toggle {
+  width: 38px; height: 38px; border-radius: 10px;
+  border: 1.5px solid var(--slate-200); background: #fff;
+  align-items: center; justify-content: center;
+  color: var(--slate-600); font-size: 15px; cursor: pointer;
+  flex-shrink: 0; padding: 0;
+  transition: background .15s, border-color .15s, color .15s;
+}
+#sidebar-toggle:hover { background: var(--rose-50); border-color: var(--rose-light); color: var(--rose); }
+/* Always hidden on desktop regardless of JS inline style */
+@media (min-width: 769px) { #sidebar-toggle { display: none !important; } }
+/* Always visible on mobile */
+@media (max-width: 768px)  { #sidebar-toggle { display: flex !important; } }
+
+/* Topbar avatar: shrink slightly on mobile */
+@media (max-width: 480px) {
+  .topbar__avatar { width: 32px; height: 32px; font-size: 12px; }
+  .topbar { height: 52px; }
+}
+
+/* stats-grid: ensure 2 cols at tablet range too */
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+}
+
 /* ── print: keep existing print rules intact ─────────────── */

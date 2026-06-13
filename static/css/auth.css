@@ -300,7 +300,7 @@ html,body {
 .country-chips {
   display:none; gap:7px; flex-wrap:wrap; margin-top:8px;
 }
-.country-chips.visible { display:flex; }
+.country-chips.visible { display:none; }
 .chip {
   display:inline-flex; align-items:center; gap:5px;
   padding:4px 10px; border-radius:999px;

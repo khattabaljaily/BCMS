@@ -631,15 +631,48 @@ select.form-control { appearance: none; }
 .sa-bc__sep { color: var(--sa-muted); }
 
 /* ════════ RESPONSIVE ════════ */
+
+/* Hamburger toggle — hidden on desktop */
+#sa-toggle {
+  display: none;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: #f1f5f9; border: 1.5px solid #e2e8f0;
+  align-items: center; justify-content: center;
+  font-size: 15px; color: #475569; cursor: pointer;
+  flex-shrink: 0; transition: background .15s, color .15s;
+  margin-left: 10px;
+}
+#sa-toggle:hover { background: #eef2ff; color: var(--sa-accent); border-color: #c7d2fe; }
+@media (max-width: 960px) { #sa-toggle { display: flex; } }
+
+/* Sidebar: slide-in drawer on mobile */
 @media (max-width: 960px) {
-  .sa-sidebar { display: none; }
+  .sa-sidebar {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    z-index: 400;
+    transform: translateX(110%);
+    transition: transform .3s cubic-bezier(.25,.8,.25,1);
+    box-shadow: -4px 0 24px rgba(0,0,0,.18);
+  }
+  .sa-sidebar.open { transform: translateX(0); }
+
+  /* overlay behind sidebar */
+  #sa-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 399;
+  }
+  #sa-overlay.active { display: block; }
+
   .form-grid  { grid-template-columns: 1fr; }
   .sa-charts  { grid-template-columns: 1fr; }
-  .sa-content { padding: 18px; }
+  .sa-content { padding: 16px; }
 }
 @media (max-width: 768px) {
   .m-cards    { display: block; }
   .d-hide-mob { display: none !important; }
+  .sa-topbar  { padding: 0 14px; }
+  .sa-content { padding: 12px; }
 }
 </style>
 {% block extra_css %}{% endblock %}
@@ -679,21 +712,6 @@ select.form-control { appearance: none; }
       <i class="fas fa-spa"></i> أنواع المراكز
     </a>
   </nav>
-
-  <div class="sa-nav-bottom">
-    <div class="sa-user-info">
-      <div class="sa-avatar">{{ request.user.full_name|slice:":1"|default:request.user.username|slice:":1" }}</div>
-      <div>
-        <div class="sa-user-name">{{ request.user.full_name|default:request.user.username }}</div>
-        <div class="sa-user-role">مدير النظام</div>
-      </div>
-    </div>
-    <form action="{% url 'accounts:logout' %}" method="post">{% csrf_token %}
-      <button type="submit" class="sa-logout-btn">
-        <i class="fas fa-right-from-bracket"></i> تسجيل الخروج
-      </button>
-    </form>
-  </div>
 </aside>
 
 <!-- ── Main ── -->
@@ -702,13 +720,19 @@ select.form-control { appearance: none; }
   <!-- Topbar -->
   <div class="sa-topbar">
     <div class="sa-topbar__left">
+      <button id="sa-toggle" onclick="saSidebarToggle()" aria-label="القائمة">
+        <i class="fas fa-bars"></i>
+      </button>
       <div class="sa-topbar__title">{% block page_title %}إدارة النظام{% endblock %}</div>
     </div>
     <div class="sa-topbar__actions">
       {% block topbar_actions %}{% endblock %}
-      <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" title="العودة للواجهة الرئيسية">
-        <i class="fas fa-arrow-left"></i> الواجهة الرئيسية
-      </a>
+      <form action="{% url 'accounts:logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary btn-sm" title="تسجيل الخروج">
+          <i class="fas fa-right-from-bracket"></i> تسجيل الخروج
+        </button>
+      </form>
     </div>
   </div>
 
@@ -732,7 +756,25 @@ select.form-control { appearance: none; }
 </div>
 </div>
 
+<div id="sa-overlay" onclick="saSidebarClose()"></div>
+
 <script>
+function saSidebarToggle() {
+  var sb = document.querySelector('.sa-sidebar');
+  var ov = document.getElementById('sa-overlay');
+  if (!sb) return;
+  var isOpen = sb.classList.contains('open');
+  if (isOpen) { sb.classList.remove('open'); ov.classList.remove('active'); document.body.style.overflow = ''; }
+  else { sb.classList.add('open'); ov.classList.add('active'); document.body.style.overflow = 'hidden'; }
+}
+function saSidebarClose() {
+  var sb = document.querySelector('.sa-sidebar');
+  var ov = document.getElementById('sa-overlay');
+  if (sb) sb.classList.remove('open');
+  if (ov) ov.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
 document.querySelectorAll('.alert').forEach(el => {
   el.style.cursor = 'pointer';
   el.addEventListener('click', () => el.remove());
