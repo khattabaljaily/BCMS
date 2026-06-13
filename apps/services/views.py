@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from .models import ServiceCategory, Service
 from django.template.loader import render_to_string
+from django.utils.html import escape
 
 
 def _is_ajax(request):
@@ -49,9 +50,16 @@ def category_save(request):
     obj.is_active = 'is_active' in request.POST
     obj.save()
     if _is_ajax(request):
+        # return a lightweight HTML snippet to speed up AJAX responses
         try:
-            row_html = render_to_string('services/_row.html', {'svc': obj}, request=request)
-            card_html = render_to_string('services/_card.html', {'svc': obj}, request=request)
+            name = escape(obj.name)
+            desc = escape(obj.description or '')
+            row_html = '<tr id="row-%s"><td><strong>%s</strong>%s</td><td>—</td><td></td><td></td><td></td><td></td><td></td></tr>' % (
+                obj.pk,
+                name,
+                ('<br><small class="text-muted">%s</small>' % desc) if desc else ''
+            )
+            card_html = '<div class="cx-card" id="card-%s"><h4>%s</h4></div>' % (obj.pk, name)
         except Exception:
             row_html = ''
             card_html = ''

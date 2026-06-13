@@ -365,7 +365,7 @@ const BCMS = {
                             }
                             // re-run table labeling
                             document.dispatchEvent(new Event('bcms:tableRefresh'));
-                        } catch (e) {}
+                        } catch (e) { console.error('BCMS.ajaxForm: error replacing row_html', e, json); }
                     } else {
                         // fallback: if no row_html provided, try to refresh the main table body from the server
                         try {
@@ -382,10 +382,10 @@ const BCMS = {
                                                 if (curTbody && curTbody.parentNode) curTbody.parentNode.replaceChild(newTbody, curTbody);
                                                 document.dispatchEvent(new Event('bcms:tableRefresh'));
                                             }
-                                        } catch (e) { /* ignore parse errors */ }
+                                        } catch (e) { console.error('BCMS.ajaxForm: error parsing fallback table HTML', e); }
                                     }).catch(function () { /* ignore */ });
                             }
-                        } catch (e) {}
+                        } catch (e) { console.error('BCMS.ajaxForm: fallback table refresh error', e); }
                     }
                     if (options.onSuccess) {
                         options.onSuccess(json);
@@ -454,7 +454,7 @@ const BCMS = {
                     BCMS.hideLoading(btn);
                     if (json && json.success) {
                         BCMS.toast('تم الحفظ', 'success');
-                        try { document.dispatchEvent(new CustomEvent('bcms:recordChanged', { detail: json })); } catch (e) {}
+                        try { document.dispatchEvent(new CustomEvent('bcms:recordChanged', { detail: json })); } catch (e) { console.error('BCMS._attachModalFormHandler: dispatch error', e, json); }
                         if (json.row_id && json.row_html) {
                             try {
                                 var existing = document.getElementById(json.row_id);
@@ -473,7 +473,7 @@ const BCMS = {
                                     if (tb) tb.insertAdjacentHTML('afterbegin', json.row_html);
                                 }
                                 document.dispatchEvent(new Event('bcms:tableRefresh'));
-                            } catch (e) {}
+                            } catch (e) { console.error('BCMS._attachModalFormHandler: error replacing row_html', e, json); }
                         } else {
                             // fallback: refresh main table body
                             try {
@@ -490,10 +490,10 @@ const BCMS = {
                                                     if (curTbody && curTbody.parentNode) curTbody.parentNode.replaceChild(newTbody, curTbody);
                                                     document.dispatchEvent(new Event('bcms:tableRefresh'));
                                                 }
-                                            } catch (e) {}
+                                            } catch (e) { console.error('BCMS._attachModalFormHandler: error parsing fallback table HTML', e); }
                                         }).catch(function () {});
                                 }
-                            } catch (e) {}
+                            } catch (e) { console.error('BCMS._attachModalFormHandler: fallback table refresh error', e); }
                         }
                         // close modal and refresh table
                         var id = overlay.id; BCMS.closeModal(id);
