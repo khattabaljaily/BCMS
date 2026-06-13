@@ -48,7 +48,7 @@
         </thead>
         <tbody>
           {% for cat in categories %}
-          <tr>
+          <tr id="row-{{ cat.pk }}">
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:34px;height:34px;border-radius:9px;background:{{ cat.color|default:'#f43f5e' }}18;display:flex;align-items:center;justify-content:center;color:{{ cat.color|default:'var(--rose)' }};font-size:15px;flex-shrink:0;">
@@ -71,10 +71,10 @@
                         onclick="openEditCategory({{ cat.pk }}, '{{ cat.name|escapejs }}', {{ cat.order }}, {{ cat.is_active|yesno:'true,false' }})">
                   <i class="fas fa-edit"></i>
                 </button>
-                <form method="post" action="{% url 'services:category_delete' cat.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف التصنيف؟')">
-                  {% csrf_token %}
-                  <button class="cx-act cx-act--del" type="submit" title="حذف"><i class="fas fa-trash"></i></button>
-                </form>
+                <button type="button" class="cx-act cx-act--del" title="حذف"
+                        onclick="BCMS.ajaxDelete('{% url 'services:category_delete' cat.pk %}', 'حذف التصنيف {{ cat.name|escapejs }}؟', 'row-{{ cat.pk }}')">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -98,7 +98,7 @@
     <!-- Mobile Cards -->
     <div class="cx-mobile-cards">
       {% for cat in categories %}
-      <div class="cx-card">
+      <div class="cx-card" id="card-{{ cat.pk }}">
         <div class="cx-card-head">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="width:38px;height:38px;border-radius:10px;background:{{ cat.color|default:'#f43f5e' }}18;display:flex;align-items:center;justify-content:center;color:{{ cat.color|default:'var(--rose)' }};font-size:16px;flex-shrink:0;">
@@ -114,10 +114,10 @@
                     onclick="openEditCategory({{ cat.pk }}, '{{ cat.name|escapejs }}', {{ cat.order }}, {{ cat.is_active|yesno:'true,false' }})">
               <i class="fas fa-edit"></i>
             </button>
-            <form method="post" action="{% url 'services:category_delete' cat.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف التصنيف؟')">
-              {% csrf_token %}
-              <button type="submit" class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
-            </form>
+            <button type="button" class="cx-act cx-act--del"
+                    onclick="BCMS.ajaxDelete('{% url 'services:category_delete' cat.pk %}', 'حذف التصنيف {{ cat.name|escapejs }}؟', 'row-{{ cat.pk }}')">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -171,6 +171,10 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  BCMS.ajaxForm(document.querySelector('#modal-cat form'));
+});
+
 function openAddCategory() {
   document.getElementById('cat-modal-title').textContent = 'تصنيف جديد';
   document.getElementById('cat-pk').value = '';

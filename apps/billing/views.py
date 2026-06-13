@@ -2,6 +2,7 @@ import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, Sum, Count
 from django.db import transaction
@@ -10,6 +11,10 @@ from .models import Invoice, InvoiceLine
 from apps.clients.models import Client
 from apps.services.models import Service
 from apps.products.models import Product, StockMovement
+
+
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 def get_invoice_lines_from_post(request, center):
@@ -206,6 +211,8 @@ def invoice_void(request, pk):
         StockMovement.objects.filter(reference=f'invoice_{inv.pk}').delete()
         inv.status = 'cancelled'
         inv.save(update_fields=['status'])
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم إلغاء الفاتورة واستعادة المخزون.'})
         messages.success(request, 'تم إلغاء الفاتورة واستعادة المخزون.')
     return redirect('billing:list')
 
@@ -333,7 +340,9 @@ def invoice_delete(request, pk):
     if request.method == 'POST':
         StockMovement.objects.filter(reference=f'invoice_{inv.pk}').delete()
         inv.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف الفاتورة واستعادة المخزون.'})
         messages.success(request, 'تم حذف الفاتورة واستعادة المخزون.')
         return redirect('billing:list')
-    
+
     return redirect('billing:detail', pk=pk)

@@ -5,6 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
+
+
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 from .models import Appointment, AppointmentService
 from apps.services.models import Service
 from apps.clients.models import Client
@@ -94,6 +98,8 @@ def appointment_save(request):
     obj.total_price = total
     obj.save(update_fields=['total_price'])
 
+    if _is_ajax(request):
+        return JsonResponse({'success': True, 'message': 'تم حفظ الموعد بنجاح.'})
     messages.success(request, 'تم الحفظ.')
     return redirect('appointments:list')
 
@@ -104,6 +110,8 @@ def appointment_status(request, pk):
     if request.method == 'POST':
         obj.status = request.POST.get('status', obj.status)
         obj.save(update_fields=['status'])
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم تحديث الحالة.'})
         messages.success(request, 'تم تحديث الحالة.')
     return redirect('appointments:list')
 
@@ -113,6 +121,8 @@ def appointment_delete(request, pk):
     obj = get_object_or_404(Appointment, pk=pk, center=request.center)
     if request.method == 'POST':
         obj.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف الموعد بنجاح.'})
         messages.success(request, 'تم الحذف.')
     return redirect('appointments:list')
 

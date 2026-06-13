@@ -1,7 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
 from .models import ServiceCategory, Service
+
+
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 @login_required
@@ -42,6 +47,8 @@ def category_save(request):
     obj.order = int(request.POST.get('order', 0))
     obj.is_active = 'is_active' in request.POST
     obj.save()
+    if _is_ajax(request):
+        return JsonResponse({'success': True, 'message': 'تم حفظ التصنيف بنجاح.'})
     messages.success(request, 'تم الحفظ.')
     return redirect('services:categories')
 
@@ -51,6 +58,8 @@ def category_delete(request, pk):
     obj = get_object_or_404(ServiceCategory, pk=pk, center=request.center)
     if request.method == 'POST':
         obj.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف التصنيف بنجاح.'})
         messages.success(request, 'تم الحذف.')
     return redirect('services:categories')
 
@@ -62,7 +71,6 @@ def service_save(request):
     center = request.center
     pk = request.POST.get('pk')
     obj = get_object_or_404(Service, pk=pk, center=center) if pk else Service(center=center)
-    # accept optional category
     cat_id = request.POST.get('category_id') or None
     obj.category_id   = cat_id
     obj.name          = request.POST.get('name', '').strip()
@@ -73,8 +81,9 @@ def service_save(request):
     obj.show_in_store = bool(request.POST.get('show_in_store'))
     obj.is_active     = 'is_active' in request.POST
     obj.order         = int(request.POST.get('order', 0))
-    # category is optional now
     obj.save()
+    if _is_ajax(request):
+        return JsonResponse({'success': True, 'message': 'تم حفظ الخدمة بنجاح.'})
     messages.success(request, 'تم الحفظ.')
     return redirect('services:list')
 
@@ -84,5 +93,7 @@ def service_delete(request, pk):
     obj = get_object_or_404(Service, pk=pk, center=request.center)
     if request.method == 'POST':
         obj.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف الخدمة بنجاح.'})
         messages.success(request, 'تم الحذف.')
     return redirect('services:list')

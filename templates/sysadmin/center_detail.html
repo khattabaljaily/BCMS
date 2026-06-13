@@ -3,53 +3,61 @@
 {% block page_title %}تفاصيل المركز{% endblock %}
 {% block nav_centers %}active{% endblock %}
 
-{% block topbar_actions %}
-<a href="{% url 'sysadmin:center_edit' center.pk %}" class="btn btn-primary btn-sm">
-  <i class="fas fa-pencil"></i> تعديل
-</a>
-{% endblock %}
-
 {% block content %}
 
-<div class="sa-breadcrumb">
-  <a href="{% url 'sysadmin:center_list' %}">المراكز</a> ← {{ center.name }}
+<!-- Breadcrumb -->
+<div class="sa-bc">
+  <a href="{% url 'sysadmin:center_list' %}"><i class="fas fa-building"></i> المراكز</a>
+  <span class="sa-bc__sep">›</span>
+  <span>{{ center.name }}</span>
 </div>
 
-<!-- Header card -->
-<div class="sa-card" style="margin-bottom:20px;">
+<!-- ══ Hero header card ══ -->
+<div class="sa-card" style="margin-bottom:20px;overflow:hidden;">
+  <div style="height:6px;background:linear-gradient(90deg,var(--sa-accent),#818cf8,var(--sa-green));"></div>
   <div class="sa-card-body" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-    <div style="width:64px;height:64px;border-radius:16px;background:var(--sa-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+    <!-- Avatar -->
+    <div style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,var(--sa-accent),#818cf8);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;box-shadow:0 8px 24px rgba(99,102,241,.3);">
       {% if center.logo %}
         <img src="{{ center.logo.url }}" alt="{{ center.name }}" style="width:100%;height:100%;object-fit:cover;">
       {% else %}
-        <i class="fas fa-spa" style="font-size:24px;color:#fff;"></i>
+        <span style="font-size:26px;font-weight:900;color:#fff;">{{ center.name|slice:":1" }}</span>
       {% endif %}
     </div>
-    <div style="flex:1;">
-      <h2 style="font-size:20px;margin-bottom:4px;">{{ center.name }}</h2>
-      <div style="font-size:13px;color:var(--sa-muted);">
-        {{ center.service_type.name }}
-        {% if center.city %} &mdash; {{ center.city }}{% endif %}
-        {% if center.country %}, {{ center.country }}{% endif %}
+
+    <!-- Info -->
+    <div style="flex:1;min-width:200px;">
+      <h2 style="font-size:22px;margin-bottom:4px;">{{ center.name }}</h2>
+      <div style="font-size:13px;color:var(--sa-muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        {% if center.service_type %}
+        <span><i class="fas fa-spa" style="color:var(--sa-accent);"></i> {{ center.service_type.name }}</span>
+        {% endif %}
+        {% if center.city %}<span><i class="fas fa-location-dot" style="color:var(--sa-red);"></i> {{ center.city }}, {{ center.country }}</span>{% endif %}
+        {% if center.phone %}<span><i class="fas fa-phone" style="color:var(--sa-green);"></i> {{ center.phone }}</span>{% endif %}
       </div>
-      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-        {% if center.is_active %}<span class="badge badge-green">نشط</span>
-        {% else %}<span class="badge badge-red">موقوف</span>{% endif %}
+      <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap;">
+        {% if center.is_active %}<span class="badge badge-green"><i class="fas fa-circle" style="font-size:7px;"></i> نشط</span>
+        {% else %}<span class="badge badge-red"><i class="fas fa-circle" style="font-size:7px;"></i> موقوف</span>{% endif %}
 
         {% if center.plan == 'trial' %}<span class="badge badge-gray">تجريبي</span>
         {% elif center.plan == 'starter' %}<span class="badge badge-blue">مبتدئ</span>
         {% elif center.plan == 'pro' %}<span class="badge badge-purple">احترافي</span>
         {% else %}<span class="badge badge-yellow">مؤسسات</span>{% endif %}
 
-        {% if center.is_demo %}<span class="badge badge-yellow">حساب تجريبي</span>{% endif %}
-        {% if center.is_expired %}<span class="badge badge-red">اشتراك منتهٍ</span>{% endif %}
+        {% if center.is_demo %}<span class="badge badge-yellow"><i class="fas fa-flask"></i> تجريبي</span>{% endif %}
+        {% if center.is_expired %}<span class="badge badge-red"><i class="fas fa-clock"></i> اشتراك منتهٍ</span>{% endif %}
       </div>
     </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="openModal('modal-extend')" class="btn btn-success btn-sm">
-        <i class="fas fa-calendar-plus"></i> تمديد / تغيير الباقة
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="openModal('modal-edit')" class="btn btn-primary btn-sm">
+        <i class="fas fa-pencil"></i> تعديل
       </button>
-      <form method="post" action="{% url 'sysadmin:center_toggle' center.pk %}">
+      <button onclick="openModal('modal-extend')" class="btn btn-success btn-sm">
+        <i class="fas fa-calendar-plus"></i> تمديد الاشتراك
+      </button>
+      <form method="post" action="{% url 'sysadmin:center_toggle' center.pk %}" style="display:inline;">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.path }}">
         <button type="submit" class="btn btn-sm {% if center.is_active %}btn-warning{% else %}btn-success{% endif %}">
@@ -64,12 +72,14 @@
   </div>
 </div>
 
-<!-- Info grid -->
+<!-- ══ Info grid ══ -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
 
-  <!-- Contact info -->
+  <!-- Contact -->
   <div class="sa-card">
-    <div class="sa-card-header"><h3><i class="fas fa-address-card" style="color:var(--sa-accent)"></i> بيانات التواصل</h3></div>
+    <div class="sa-card-header">
+      <h3><i class="fas fa-address-card" style="color:var(--sa-accent);"></i> بيانات التواصل</h3>
+    </div>
     <div class="sa-card-body">
       <div class="detail-grid">
         <div class="detail-item">
@@ -78,7 +88,7 @@
         </div>
         <div class="detail-item">
           <span class="detail-item__label">البريد الإلكتروني</span>
-          <span class="detail-item__value">{{ center.email|default:"—" }}</span>
+          <span class="detail-item__value" style="font-size:13px;">{{ center.email|default:"—" }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-item__label">المدينة</span>
@@ -90,11 +100,11 @@
         </div>
         <div class="detail-item" style="grid-column:1/-1;">
           <span class="detail-item__label">العنوان</span>
-          <span class="detail-item__value">{{ center.address|default:"—" }}</span>
+          <span class="detail-item__value" style="font-size:13px;">{{ center.address|default:"—" }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-item__label">الرابط المختصر</span>
-          <span class="detail-item__value" style="font-family:monospace;font-size:12px;">{{ center.slug }}</span>
+          <span class="detail-item__value" style="font-family:monospace;font-size:12px;background:#f1f5f9;padding:2px 8px;border-radius:6px;">{{ center.slug }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-item__label">العملة</span>
@@ -106,7 +116,9 @@
 
   <!-- Subscription -->
   <div class="sa-card">
-    <div class="sa-card-header"><h3><i class="fas fa-credit-card" style="color:var(--sa-green)"></i> بيانات الاشتراك</h3></div>
+    <div class="sa-card-header">
+      <h3><i class="fas fa-credit-card" style="color:var(--sa-green);"></i> بيانات الاشتراك</h3>
+    </div>
     <div class="sa-card-body">
       <div class="detail-grid">
         <div class="detail-item">
@@ -124,8 +136,8 @@
         </div>
         <div class="detail-item">
           <span class="detail-item__label">انتهاء الاشتراك</span>
-          <span class="detail-item__value {% if center.is_expired %}" style="color:var(--sa-red){% endif %}">
-            {{ center.plan_expires|date:"d/m/Y"|default:"غير محدد" }}
+          <span class="detail-item__value {% if center.is_expired %}style='color:var(--sa-red)'{% endif %}">
+            {{ center.plan_expires|date:"d/m/Y"|default:"غير محدد (دائم)" }}
           </span>
         </div>
         <div class="detail-item">
@@ -133,7 +145,7 @@
           <span class="detail-item__value">
             {% if center.is_expired %}<span style="color:var(--sa-red);">منتهٍ</span>
             {% elif not center.plan_expires %}<span style="color:var(--sa-green);">دائم</span>
-            {% else %}<span style="color:var(--sa-green);">نشط</span>{% endif %}
+            {% else %}<span style="color:var(--sa-green);">ساري</span>{% endif %}
           </span>
         </div>
         <div class="detail-item">
@@ -144,7 +156,7 @@
           <span class="detail-item__label">أقصى مستخدمين</span>
           <span class="detail-item__value">{{ center.max_users }}</span>
         </div>
-        <div class="detail-item">
+        <div class="detail-item" style="grid-column:1/-1;">
           <span class="detail-item__label">تاريخ الإنشاء</span>
           <span class="detail-item__value">{{ center.created_at|date:"d/m/Y H:i" }}</span>
         </div>
@@ -154,17 +166,18 @@
 
 </div>
 
-<!-- Users -->
+<!-- ══ Users table ══ -->
 <div class="sa-card">
   <div class="sa-card-header">
-    <h3><i class="fas fa-users" style="color:var(--sa-blue)"></i> مستخدمو المركز ({{ users.count }})</h3>
+    <h3><i class="fas fa-users" style="color:var(--sa-blue);"></i> مستخدمو المركز</h3>
+    <span class="badge badge-blue">{{ users.count }}</span>
   </div>
   <div class="sa-table-wrap">
     <table class="sa-table">
       <thead>
         <tr>
-          <th>الاسم</th>
-          <th>اسم المستخدم</th>
+          <th>المستخدم</th>
+          <th>اسم الدخول</th>
           <th>الدور</th>
           <th>الهاتف</th>
           <th>الحالة</th>
@@ -174,12 +187,19 @@
       <tbody>
         {% for u in users %}
         <tr>
-          <td style="font-weight:600;">{{ u.full_name }}</td>
-          <td style="font-family:monospace;font-size:12px;">{{ u.username }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:9px;">
+              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--sa-accent),#818cf8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;">
+                {{ u.full_name|slice:":1"|default:u.username|slice:":1" }}
+              </div>
+              <span style="font-weight:600;font-size:13.5px;">{{ u.full_name|default:u.username }}</span>
+            </div>
+          </td>
+          <td style="font-family:monospace;font-size:12px;color:var(--sa-muted);">{{ u.username }}</td>
           <td>
             {% if u.is_owner %}<span class="badge badge-purple">مالك</span>
             {% elif u.is_staff %}<span class="badge badge-blue">إداري</span>
-            {% elif u.role %}{{ u.role.name }}
+            {% elif u.role %}<span class="badge badge-indigo">{{ u.role.name }}</span>
             {% else %}<span style="color:var(--sa-muted);">—</span>{% endif %}
           </td>
           <td style="font-size:12px;color:var(--sa-muted);">{{ u.phone|default:"—" }}</td>
@@ -190,35 +210,161 @@
           <td style="font-size:12px;color:var(--sa-muted);">{{ u.created_at|date:"d/m/Y" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--sa-muted);">لا يوجد مستخدمون</td></tr>
+        <tr>
+          <td colspan="6" style="text-align:center;padding:32px;color:var(--sa-muted);">
+            <i class="fas fa-user-slash" style="font-size:24px;display:block;margin-bottom:8px;opacity:.3;"></i>
+            لا يوجد مستخدمون لهذا المركز
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- Extend modal -->
+<!-- ════════════════════════════════════════ EDIT MODAL ════════════════ -->
+<div class="modal-backdrop" id="modal-edit">
+  <div class="modal modal-lg modal-scroll">
+    <div class="modal-header">
+      <h3><i class="fas fa-pencil" style="color:var(--sa-accent);margin-left:8px;"></i> تعديل بيانات المركز</h3>
+      <button class="modal-close" onclick="closeModal('modal-edit')">×</button>
+    </div>
+    <form method="post" action="{% url 'sysadmin:center_edit' center.pk %}" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-building"></i> المعلومات الأساسية</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>اسم المركز *</label>
+              <input type="text" name="name" class="form-control" value="{{ center.name }}" required>
+            </div>
+            <div class="form-group">
+              <label>نوع المركز</label>
+              <select name="service_type" class="form-control">
+                <option value="">— اختر النوع —</option>
+                {% for st in service_types %}
+                <option value="{{ st.pk }}" {% if center.service_type_id == st.pk %}selected{% endif %}>{{ st.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>الباقة</label>
+              <select name="plan" class="form-control">
+                {% for val, label in plans %}
+                <option value="{{ val }}" {% if center.plan == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group full">
+              <label>شعار المركز</label>
+              <input type="file" name="logo" class="form-control" accept="image/*">
+              {% if center.logo %}<span class="form-hint">الشعار الحالي: {{ center.logo.name|slice:"-20:" }}</span>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-address-card"></i> بيانات التواصل والموقع</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>رقم الهاتف</label>
+              <input type="tel" name="phone" class="form-control" value="{{ center.phone }}">
+            </div>
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" name="email" class="form-control" value="{{ center.email }}">
+            </div>
+            <div class="form-group">
+              <label>المدينة</label>
+              <input type="text" name="city" class="form-control" value="{{ center.city }}">
+            </div>
+            <div class="form-group">
+              <label>البلد</label>
+              <select name="country" class="form-control">
+                {% for code, cname in country_choices %}
+                <option value="{{ code }}" {% if center.country == code %}selected{% endif %}>{{ cname }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group full">
+              <label>العنوان التفصيلي</label>
+              <input type="text" name="address" class="form-control" value="{{ center.address }}">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-credit-card"></i> الاشتراك والحدود</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>تاريخ انتهاء الاشتراك</label>
+              <input type="date" name="plan_expires" class="form-control"
+                     value="{{ center.plan_expires|date:'Y-m-d'|default:'' }}">
+              <span class="form-hint">اتركه فارغاً للاشتراك غير المحدود</span>
+            </div>
+            <div class="form-group"><!-- spacer --></div>
+            <div class="form-group">
+              <label>الحد الأقصى للموظفين</label>
+              <input type="number" name="max_staff" class="form-control" value="{{ center.max_staff }}" min="1">
+            </div>
+            <div class="form-group">
+              <label>الحد الأقصى للمستخدمين</label>
+              <input type="number" name="max_users" class="form-control" value="{{ center.max_users }}" min="1">
+            </div>
+          </div>
+          <div style="display:flex;gap:28px;margin-top:12px;">
+            <div class="form-check">
+              <input type="checkbox" name="is_active" id="det-edit-active" {% if center.is_active %}checked{% endif %}>
+              <label for="det-edit-active">مركز نشط</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" name="is_demo" id="det-edit-demo" {% if center.is_demo %}checked{% endif %}>
+              <label for="det-edit-demo">حساب تجريبي</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> حفظ التعديلات
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit')">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ EXTEND MODAL ════════════════ -->
 <div class="modal-backdrop" id="modal-extend">
   <div class="modal">
     <div class="modal-header">
-      <h3><i class="fas fa-calendar-plus"></i> تمديد / تغيير الباقة</h3>
+      <h3><i class="fas fa-calendar-plus" style="color:var(--sa-green);margin-left:8px;"></i> تمديد / تغيير الباقة</h3>
       <button class="modal-close" onclick="closeModal('modal-extend')">×</button>
     </div>
     <form method="post" action="{% url 'sysadmin:center_extend' center.pk %}">
       {% csrf_token %}
-      <div class="form-group" style="margin-bottom:14px;">
-        <label>الباقة</label>
-        <select name="plan" class="form-control">
-          {% for val, label in plans %}
-          <option value="{{ val }}" {% if center.plan == val %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group" style="margin-bottom:14px;">
-        <label>تاريخ انتهاء الاشتراك</label>
-        <input type="date" name="plan_expires" class="form-control"
-               value="{{ center.plan_expires|date:'Y-m-d'|default:'' }}">
-        <small style="color:var(--sa-muted);font-size:11px;">اتركه فارغاً للاشتراك غير المحدود المدة</small>
+      <div class="form-grid" style="gap:14px;margin-bottom:4px;">
+        <div class="form-group">
+          <label>الباقة</label>
+          <select name="plan" class="form-control">
+            {% for val, label in plans %}
+            <option value="{{ val }}" {% if center.plan == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>تاريخ انتهاء الاشتراك</label>
+          <input type="date" name="plan_expires" class="form-control"
+                 value="{{ center.plan_expires|date:'Y-m-d'|default:'' }}">
+          <span class="form-hint">اتركه فارغاً للاشتراك غير المحدود</span>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> حفظ</button>
@@ -228,21 +374,24 @@
   </div>
 </div>
 
-<!-- Delete modal -->
+<!-- ════════════════════════════════════════ DELETE MODAL ════════════════ -->
 <div class="modal-backdrop" id="modal-delete">
   <div class="modal">
     <div class="modal-header">
       <h3 style="color:var(--sa-red);"><i class="fas fa-triangle-exclamation"></i> حذف المركز</h3>
       <button class="modal-close" onclick="closeModal('modal-delete')">×</button>
     </div>
-    <p style="font-size:14px;margin-bottom:16px;">
-      هل أنت متأكد من حذف مركز <strong>{{ center.name }}</strong>؟<br>
-      <span style="color:var(--sa-red);">سيتم حذف جميع البيانات المرتبطة به نهائياً.</span>
-    </p>
+    <div class="del-confirm">
+      <div class="del-confirm__icon"><i class="fas fa-trash"></i></div>
+      <div class="del-confirm__title">تأكيد الحذف</div>
+      <div class="del-confirm__msg">هل أنت متأكد من حذف المركز التالي نهائياً؟</div>
+      <div class="del-confirm__name">{{ center.name }}</div>
+      <div class="del-confirm__warn"><i class="fas fa-triangle-exclamation"></i> سيتم حذف جميع المستخدمين والبيانات المرتبطة ولا يمكن التراجع</div>
+    </div>
     <form method="post" action="{% url 'sysadmin:center_delete' center.pk %}">
       {% csrf_token %}
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> نعم، احذف</button>
+      <div class="modal-footer" style="justify-content:center;margin-top:20px;">
+        <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> نعم، احذف نهائياً</button>
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-delete')">إلغاء</button>
       </div>
     </form>

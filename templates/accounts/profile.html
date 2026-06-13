@@ -3,15 +3,357 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/profile.css' %}">{% endblock %}
 {% block title %}الملف الشخصي{% endblock %}
 {% block page_title %}الملف الشخصي{% endblock %}
-{% block nav_dashboard %}{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width:500px;">
-  <div class="card__header"><span class="card__title">بيانات المستخدم</span></div>
-  <div class="card__body">
-    <p><strong>الاسم:</strong> {{ user.full_name }}</p>
-    <p><strong>اسم المستخدم:</strong> {{ user.username }}</p>
-    <p><strong>الهاتف:</strong> {{ user.phone|default:"—" }}</p>
-    <p><strong>الدور:</strong> {{ user.role|default:"مالك" }}</p>
+<div class="profile-page">
+
+  <!-- ── Hero ──────────────────────────────────────── -->
+  <div class="profile-hero">
+    <div class="profile-hero-bg"></div>
+    <div class="profile-hero-content">
+      <div class="profile-avatar-xl">{{ user.full_name|first|upper }}</div>
+      <div class="profile-hero-info">
+        <h1 class="profile-hero-name">{{ user.full_name|default:user.username }}</h1>
+        <div class="profile-hero-meta">
+          {% if user.is_owner or user.is_superuser %}
+          <span class="profile-badge profile-badge--owner"><i class="fas fa-crown"></i> مالك المركز</span>
+          {% elif user.role %}
+          <span class="profile-badge profile-badge--role"><i class="fas fa-shield-alt"></i> {{ user.role.name }}</span>
+          {% else %}
+          <span class="profile-badge profile-badge--role"><i class="fas fa-user"></i> مستخدم</span>
+          {% endif %}
+          {% if user.is_active %}
+          <span class="profile-badge profile-badge--active"><span class="profile-dot"></span>نشط</span>
+          {% else %}
+          <span class="profile-badge profile-badge--inactive"><span class="profile-dot"></span>معطل</span>
+          {% endif %}
+        </div>
+        <div class="profile-hero-sub">
+          <span><i class="fas fa-building"></i> {{ user.center.name }}</span>
+          <span><i class="fas fa-calendar-plus"></i> عضو منذ {{ user.created_at|date:"j F Y" }}</span>
+          {% if user.phone %}<span><i class="fas fa-phone"></i> {{ user.phone }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- ── Two-column layout ─────────────────────────── -->
+  <div class="profile-grid">
+
+    <!-- Left: Edit forms -->
+    <div class="profile-col-main">
+
+      <!-- Edit Profile -->
+      <div class="profile-card">
+        <div class="profile-card-head">
+          <div class="profile-card-icon" style="background:linear-gradient(135deg,#fce7f3,#fbcfe8);color:#db2777;">
+            <i class="fas fa-user-edit"></i>
+          </div>
+          <div>
+            <div class="profile-card-title">تعديل البيانات</div>
+            <div class="profile-card-sub">تحديث الاسم والتواصل</div>
+          </div>
+        </div>
+        <form id="profile-form" method="post" action="{% url 'accounts:profile' %}">
+          {% csrf_token %}
+          <input type="hidden" name="_action" value="profile">
+          <div class="profile-form-body">
+            <div class="profile-form-grid">
+              <div class="profile-field">
+                <label class="profile-label">الاسم الكامل</label>
+                <div class="profile-input-wrap">
+                  <i class="fas fa-user profile-input-icon"></i>
+                  <input class="profile-input" type="text" name="full_name"
+                         value="{{ user.full_name }}" required placeholder="الاسم الكامل">
+                </div>
+              </div>
+              <div class="profile-field">
+                <label class="profile-label">الهاتف</label>
+                <div class="profile-input-wrap">
+                  <i class="fas fa-phone profile-input-icon"></i>
+                  <input class="profile-input" type="tel" name="phone"
+                         value="{{ user.phone|default:'' }}" placeholder="05xxxxxxxx">
+                </div>
+              </div>
+            </div>
+            <div class="profile-field">
+              <label class="profile-label">البريد الإلكتروني</label>
+              <div class="profile-input-wrap">
+                <i class="fas fa-envelope profile-input-icon"></i>
+                <input class="profile-input" type="email" name="email"
+                       value="{{ user.email|default:'' }}" placeholder="user@example.com">
+              </div>
+            </div>
+            <div class="profile-field">
+              <label class="profile-label">اسم المستخدم</label>
+              <div class="profile-input-wrap">
+                <i class="fas fa-at profile-input-icon"></i>
+                <input class="profile-input profile-input--readonly" type="text"
+                       value="{{ user.username }}" readonly>
+              </div>
+              <span class="profile-hint">لا يمكن تعديل اسم المستخدم</span>
+            </div>
+          </div>
+          <div class="profile-card-foot">
+            <button type="submit" class="btn btn--primary" id="save-profile-btn">
+              <i class="fas fa-save"></i> حفظ التغييرات
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Change Password -->
+      <div class="profile-card">
+        <div class="profile-card-head">
+          <div class="profile-card-icon" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#7c3aed;">
+            <i class="fas fa-lock"></i>
+          </div>
+          <div>
+            <div class="profile-card-title">تغيير كلمة المرور</div>
+            <div class="profile-card-sub">تأكد من استخدام كلمة مرور قوية</div>
+          </div>
+        </div>
+        <form id="password-form" method="post" action="{% url 'accounts:profile' %}">
+          {% csrf_token %}
+          <input type="hidden" name="_action" value="password">
+          <div class="profile-form-body">
+            <div class="profile-field">
+              <label class="profile-label">كلمة المرور الحالية</label>
+              <div class="profile-input-wrap">
+                <i class="fas fa-lock profile-input-icon"></i>
+                <input class="profile-input" type="password" name="current_password"
+                       required placeholder="••••••••" id="pw-current">
+                <button type="button" class="profile-pw-toggle" onclick="togglePw('pw-current', this)">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+            <div class="profile-form-grid">
+              <div class="profile-field">
+                <label class="profile-label">كلمة المرور الجديدة</label>
+                <div class="profile-input-wrap">
+                  <i class="fas fa-key profile-input-icon"></i>
+                  <input class="profile-input" type="password" name="new_password"
+                         required placeholder="6 أحرف على الأقل" id="pw-new" minlength="6">
+                  <button type="button" class="profile-pw-toggle" onclick="togglePw('pw-new', this)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="profile-field">
+                <label class="profile-label">تأكيد كلمة المرور</label>
+                <div class="profile-input-wrap">
+                  <i class="fas fa-key profile-input-icon"></i>
+                  <input class="profile-input" type="password" name="confirm_password"
+                         required placeholder="أعد الكتابة" id="pw-confirm">
+                  <button type="button" class="profile-pw-toggle" onclick="togglePw('pw-confirm', this)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- Strength bar -->
+            <div class="pw-strength-wrap" id="pw-strength-wrap" style="display:none;">
+              <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
+              <span class="pw-strength-label" id="pw-strength-label"></span>
+            </div>
+          </div>
+          <div class="profile-card-foot">
+            <button type="submit" class="btn btn--primary" style="background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 4px 14px rgba(124,58,237,.28);" id="save-pw-btn">
+              <i class="fas fa-shield-alt"></i> تغيير كلمة المرور
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Right: Info panel -->
+    <div class="profile-col-side">
+
+      <!-- Account Summary -->
+      <div class="profile-card profile-card--info">
+        <div class="profile-card-head">
+          <div class="profile-card-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669;">
+            <i class="fas fa-id-badge"></i>
+          </div>
+          <div>
+            <div class="profile-card-title">بيانات الحساب</div>
+            <div class="profile-card-sub">معلومات عامة</div>
+          </div>
+        </div>
+        <div class="profile-info-list">
+          <div class="profile-info-row">
+            <span class="profile-info-label"><i class="fas fa-at"></i> اسم المستخدم</span>
+            <span class="profile-info-value" style="font-family:monospace;font-weight:700;">{{ user.username }}</span>
+          </div>
+          <div class="profile-info-row">
+            <span class="profile-info-label"><i class="fas fa-shield-alt"></i> الدور</span>
+            <span class="profile-info-value">
+              {% if user.is_owner or user.is_superuser %}مالك المركز{% elif user.role %}{{ user.role.name }}{% else %}—{% endif %}
+            </span>
+          </div>
+          <div class="profile-info-row">
+            <span class="profile-info-label"><i class="fas fa-building"></i> المركز</span>
+            <span class="profile-info-value">{{ user.center.name }}</span>
+          </div>
+          <div class="profile-info-row">
+            <span class="profile-info-label"><i class="fas fa-calendar-plus"></i> تاريخ الانضمام</span>
+            <span class="profile-info-value">{{ user.created_at|date:"j F Y" }}</span>
+          </div>
+          {% if user.last_login %}
+          <div class="profile-info-row">
+            <span class="profile-info-label"><i class="fas fa-clock"></i> آخر دخول</span>
+            <span class="profile-info-value">{{ user.last_login|date:"j/n/Y — H:i" }}</span>
+          </div>
+          {% endif %}
+          <div class="profile-info-row">
+            <span class="profile-info-label"><i class="fas fa-circle"></i> الحالة</span>
+            <span class="profile-info-value">
+              {% if user.is_active %}
+              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+              {% else %}
+              <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>معطل</span>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick links -->
+      <div class="profile-card profile-card--links">
+        <div class="profile-card-head">
+          <div class="profile-card-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#d97706;">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <div>
+            <div class="profile-card-title">روابط سريعة</div>
+          </div>
+        </div>
+        <div class="profile-quick-links">
+          <a href="{% url 'core:dashboard' %}" class="profile-quick-link">
+            <i class="fas fa-home"></i>
+            <span>لوحة التحكم</span>
+            <i class="fas fa-chevron-left profile-quick-link-arrow"></i>
+          </a>
+          <a href="{% url 'appointments:list' %}" class="profile-quick-link">
+            <i class="fas fa-calendar-alt"></i>
+            <span>المواعيد</span>
+            <i class="fas fa-chevron-left profile-quick-link-arrow"></i>
+          </a>
+          <a href="{% url 'clients:list' %}" class="profile-quick-link">
+            <i class="fas fa-users"></i>
+            <span>العملاء</span>
+            <i class="fas fa-chevron-left profile-quick-link-arrow"></i>
+          </a>
+          <a href="{% url 'accounts:logout' %}" class="profile-quick-link profile-quick-link--danger">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>تسجيل الخروج</span>
+            <i class="fas fa-chevron-left profile-quick-link-arrow"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  /* ── Profile form: custom fetch to avoid any onSuccess issues ── */
+  var profileForm = document.getElementById('profile-form');
+  if (profileForm && !profileForm._ajaxBound) {
+    profileForm._ajaxBound = true;
+    profileForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = profileForm.querySelector('button[type=submit]');
+      if (btn) BCMS.showLoading(btn);
+      GSpinner.show();
+      fetch(profileForm.getAttribute('action') || window.location.href, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': BCMS.getCsrf(),
+        },
+        body: new FormData(profileForm),
+        credentials: 'same-origin',
+      })
+      .then(function(r) { return r.text().then(function(t) { return {status: r.status, text: t}; }); })
+      .then(function(res) {
+        GSpinner.hide();
+        if (btn) BCMS.hideLoading(btn);
+        var data;
+        try { data = JSON.parse(res.text); } catch(e) {
+          console.error('[profile-form] non-JSON response (status ' + res.status + '):', res.text.slice(0, 200));
+          BCMS.toast('انتهت الجلسة أو حدث خطأ. يرجى إعادة تحميل الصفحة.', 'error');
+          return;
+        }
+        if (data.success) {
+          BCMS.toast(data.message || 'تم تحديث الملف الشخصي بنجاح.', 'success');
+          setTimeout(function() { location.reload(); }, 600);
+        } else {
+          BCMS.toast(data.error || 'حدث خطأ أثناء الحفظ.', 'error');
+        }
+      })
+      .catch(function(err) {
+        GSpinner.hide();
+        if (btn) BCMS.hideLoading(btn);
+        BCMS.toast('تعذر الاتصال بالخادم.', 'error');
+        console.error('[profile-form] fetch error:', err);
+      });
+    });
+  }
+
+  /* ── Password form ── */
+  BCMS.ajaxForm(document.getElementById('password-form'), {
+    onSuccess: function(json) {
+      var form = document.getElementById('password-form');
+      if (form) form.reset();
+      var wrap = document.getElementById('pw-strength-wrap');
+      if (wrap) wrap.style.display = 'none';
+    }
+  });
+
+  /* Password strength meter */
+  document.getElementById('pw-new').addEventListener('input', function() {
+    var val = this.value;
+    var wrap = document.getElementById('pw-strength-wrap');
+    var fill = document.getElementById('pw-strength-fill');
+    var label = document.getElementById('pw-strength-label');
+    if (!val) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'flex';
+    var score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    var levels = [
+      { pct:'25%', color:'#ef4444', text:'ضعيفة جداً' },
+      { pct:'50%', color:'#f97316', text:'ضعيفة' },
+      { pct:'75%', color:'#eab308', text:'متوسطة' },
+      { pct:'100%', color:'#22c55e', text:'قوية' },
+    ];
+    var lvl = levels[Math.min(score, 3)];
+    fill.style.width = lvl.pct;
+    fill.style.background = lvl.color;
+    label.textContent = lvl.text;
+    label.style.color = lvl.color;
+  });
+});
+
+function togglePw(inputId, btn) {
+  var inp = document.getElementById(inputId);
+  var icon = btn.querySelector('i');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+</script>
 {% endblock %}

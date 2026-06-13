@@ -65,7 +65,7 @@
         </thead>
         <tbody>
           {% for cl in clients %}
-          <tr>
+          <tr id="row-{{ cl.pk }}">
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
                 <div class="client-avatar" style="width:36px;height:36px;font-size:14px;flex-shrink:0;">{{ cl.name|first }}</div>
@@ -91,10 +91,10 @@
                         onclick="openEditClient({{ cl.pk }}, '{{ cl.name|escapejs }}', '{{ cl.phone }}', '{{ cl.email|default:''|escapejs }}', '{{ cl.gender }}', '{{ cl.birthdate|date:'Y-m-d'|default:''|escapejs }}', '{{ cl.referral|default:''|escapejs }}', '{{ cl.notes|default:''|escapejs }}')">
                   <i class="fas fa-edit"></i>
                 </button>
-                <form method="post" action="{% url 'clients:delete' cl.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف العميل؟')">
-                  {% csrf_token %}
-                  <button type="submit" class="cx-act cx-act--del" title="حذف"><i class="fas fa-trash"></i></button>
-                </form>
+                <button type="button" class="cx-act cx-act--del" title="حذف"
+                        onclick="BCMS.ajaxDelete('{% url 'clients:delete' cl.pk %}', 'حذف العميل {{ cl.name|escapejs }}؟', 'row-{{ cl.pk }}')">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -106,7 +106,7 @@
     <!-- Mobile Cards -->
     <div class="cx-mobile-cards">
       {% for cl in clients %}
-      <div class="cx-card">
+      <div class="cx-card" id="card-{{ cl.pk }}">
         <div class="cx-card-head">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="client-avatar" style="width:40px;height:40px;flex-shrink:0;">{{ cl.name|first }}</div>
@@ -121,10 +121,10 @@
                     onclick="openEditClient({{ cl.pk }}, '{{ cl.name|escapejs }}', '{{ cl.phone }}', '{{ cl.email|default:''|escapejs }}', '{{ cl.gender }}', '{{ cl.birthdate|date:'Y-m-d'|default:''|escapejs }}', '{{ cl.referral|default:''|escapejs }}', '{{ cl.notes|default:''|escapejs }}')">
               <i class="fas fa-edit"></i>
             </button>
-            <form method="post" action="{% url 'clients:delete' cl.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف العميل؟')">
-              {% csrf_token %}
-              <button type="submit" class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
-            </form>
+            <button type="button" class="cx-act cx-act--del"
+                    onclick="BCMS.ajaxDelete('{% url 'clients:delete' cl.pk %}', 'حذف العميل {{ cl.name|escapejs }}؟', 'row-{{ cl.pk }}')">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
         <div class="cx-card-meta">

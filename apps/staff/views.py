@@ -1,8 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from .models import Specialist
 from apps.services.models import Service
+
+
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 @login_required
@@ -43,10 +48,9 @@ def specialist_save(request, pk=None):
         instance.save()
         service_ids = data.getlist('services')
         instance.services.set(service_ids)
-        if pk:
-            messages.success(request, 'تم تحديث عضو الفريق بنجاح.')
-        else:
-            messages.success(request, 'تم إضافة عضو فريق جديد بنجاح.')
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حفظ بيانات الفرد بنجاح.'})
+        messages.success(request, 'تم إضافة عضو فريق جديد بنجاح.' if not pk else 'تم تحديث عضو الفريق بنجاح.')
         return redirect('staff:list')
 
     return render(request, 'staff/form.html', {
@@ -62,5 +66,7 @@ def specialist_delete(request, pk):
     if request.method == 'POST':
         obj.is_active = False
         obj.save(update_fields=['is_active'])
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم إزالة الفرد من الفريق.'})
         messages.success(request, 'تم حذف عضو الفريق بنجاح.')
     return redirect('staff:list')

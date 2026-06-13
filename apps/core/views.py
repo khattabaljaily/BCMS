@@ -3,9 +3,79 @@ from datetime import timedelta
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate
+from django.views.decorators.cache import cache_control
+
+
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
+@cache_control(max_age=86400)
+def service_worker(request):
+    sw = """
+const CACHE = 'bcms-v1';
+const OFFLINE = ['/dashboard/', '/'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(OFFLINE)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  if (e.request.url.includes('/admin/')) return;
+  e.respondWith(
+    fetch(e.request)
+      .then(r => {
+        const clone = r.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return r;
+      })
+      .catch(() => caches.match(e.request).then(r => r || caches.match('/dashboard/')))
+  );
+});
+"""
+    return HttpResponse(sw.strip(), content_type='application/javascript')
+
+
+def manifest(request):
+    center_name = 'EnjazBCMS'
+    try:
+        if hasattr(request, 'center') and request.center:
+            center_name = request.center.name
+    except Exception:
+        pass
+    data = {
+        'name': center_name,
+        'short_name': 'BCMS',
+        'description': 'نظام إدارة مراكز التجميل',
+        'start_url': '/dashboard/',
+        'display': 'standalone',
+        'orientation': 'portrait',
+        'background_color': '#ffffff',
+        'theme_color': '#db2777',
+        'lang': 'ar',
+        'dir': 'rtl',
+        'icons': [
+            {'src': '/static/img/logo/logo-ffffff.png', 'sizes': '192x192', 'type': 'image/png'},
+            {'src': '/static/img/logo/logo-ffffff.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any maskable'},
+        ],
+        'categories': ['business', 'productivity'],
+    }
+    return HttpResponse(json.dumps(data, ensure_ascii=False), content_type='application/manifest+json')
 
 
 @login_required
@@ -230,6 +300,15 @@ def settings(request):
         center.email   = request.POST.get('email', '').strip()
         center.address = request.POST.get('address', '').strip()
         center.city    = request.POST.get('city', '').strip()
+        # Handle logo removal or update
+        if request.POST.get('remove_logo'):
+            try:
+                if center.logo:
+                    center.logo.delete(save=False)
+            except Exception:
+                pass
+            center.logo = None
+
         if 'logo' in request.FILES:
             center.logo = request.FILES['logo']
         center.save()
@@ -248,6 +327,15 @@ def settings(request):
         settings_obj.work_days           = ','.join(work_days_raw) if work_days_raw else ''
         settings_obj.store_enabled       = bool(request.POST.get('store_enabled'))
         settings_obj.store_name          = request.POST.get('store_name', '')
+        # Handle store cover removal or update
+        if request.POST.get('remove_store_cover'):
+            try:
+                if settings_obj.store_cover:
+                    settings_obj.store_cover.delete(save=False)
+            except Exception:
+                pass
+            settings_obj.store_cover = None
+
         if 'store_cover' in request.FILES:
             settings_obj.store_cover = request.FILES['store_cover']
         settings_obj.loyalty_enabled     = bool(request.POST.get('loyalty_enabled'))
@@ -255,7 +343,9 @@ def settings(request):
         settings_obj.reminder_enabled    = bool(request.POST.get('reminder_enabled'))
         settings_obj.reminder_hours_before = int(request.POST.get('reminder_hours_before', 24) or 24)
         settings_obj.save()
-        
+
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حفظ الإعدادات بنجاح.'})
         messages.success(request, 'تم حفظ الإعدادات بنجاح.')
         return render(request, 'core/settings.html', {
             'center': center,

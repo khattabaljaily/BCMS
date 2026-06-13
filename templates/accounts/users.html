@@ -65,7 +65,7 @@
         </thead>
         <tbody>
           {% for u in users %}
-          <tr>
+          <tr id="row-{{ u.pk }}">
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#6d28d9;flex-shrink:0;">
@@ -90,10 +90,10 @@
             <td>
               <div class="cx-row-actions">
                 <a href="{% url 'accounts:user_edit' u.pk %}" class="cx-act" title="تعديل"><i class="fas fa-edit"></i></a>
-                <form method="post" action="{% url 'accounts:user_delete' u.pk %}" style="display:inline;" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف المستخدم؟')">
-                  {% csrf_token %}
-                  <button class="cx-act cx-act--del" type="submit" title="حذف"><i class="fas fa-trash"></i></button>
-                </form>
+                <button type="button" class="cx-act cx-act--del" title="حذف"
+                        onclick="BCMS.ajaxDelete('{% url 'accounts:user_delete' u.pk %}', 'حذف المستخدم {{ u.full_name|default:u.username|escapejs }}؟', 'row-{{ u.pk }}')">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -114,7 +114,7 @@
     <!-- Mobile Cards -->
     <div class="cx-mobile-cards">
       {% for u in users %}
-      <div class="cx-card">
+      <div class="cx-card" id="card-{{ u.pk }}">
         <div class="cx-card-head">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#6d28d9;flex-shrink:0;">
@@ -127,10 +127,10 @@
           </div>
           <div class="cx-card-actions">
             <a href="{% url 'accounts:user_edit' u.pk %}" class="cx-act"><i class="fas fa-edit"></i></a>
-            <form method="post" action="{% url 'accounts:user_delete' u.pk %}" style="display:inline;" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف المستخدم؟')">
-              {% csrf_token %}
-              <button class="cx-act cx-act--del" type="submit"><i class="fas fa-trash"></i></button>
-            </form>
+            <button type="button" class="cx-act cx-act--del"
+                    onclick="BCMS.ajaxDelete('{% url 'accounts:user_delete' u.pk %}', 'حذف المستخدم {{ u.full_name|default:u.username|escapejs }}؟', 'row-{{ u.pk }}')">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
         <div class="cx-card-meta">

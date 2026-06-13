@@ -26,15 +26,15 @@
         <a href="{% url 'billing:print' inv.pk %}" target="_blank" class="btn btn--ghost btn--sm"><i class="fas fa-print"></i> طباعة</a>
         <a href="{% url 'billing:edit' inv.pk %}" class="btn btn--ghost btn--sm"><i class="fas fa-edit"></i> تعديل</a>
         {% if inv.status != 'cancelled' and inv.status != 'paid' %}
-        <form method="post" action="{% url 'billing:void' inv.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'إلغاء الفاتورة؟ سيتم استعادة المخزون وحفظ سجل الفاتورة كمُلغي.')" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit" class="btn btn--ghost btn--sm" style="color:var(--red);"><i class="fas fa-ban"></i> إلغاء</button>
-        </form>
+        <button type="button" class="btn btn--ghost btn--sm" style="color:var(--red);"
+                onclick="invoiceVoid('{% url 'billing:void' inv.pk %}')">
+          <i class="fas fa-ban"></i> إلغاء
+        </button>
         {% endif %}
-        <form method="post" action="{% url 'billing:delete' inv.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الفاتورة؟ سيتم استعادة المخزون وسيُحذف السجل بالكامل. هل أنت متأكد؟')" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit" class="btn btn--danger btn--sm"><i class="fas fa-trash"></i> حذف</button>
-        </form>
+        <button type="button" class="btn btn--danger btn--sm"
+                onclick="invoiceDelete('{% url 'billing:delete' inv.pk %}', '{% url 'billing:list' %}')">
+          <i class="fas fa-trash"></i> حذف
+        </button>
       </div>
     </div>
   </div>
@@ -129,4 +129,33 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function _ajaxAction(url, confirmMsg, onSuccess) {
+  BCMS.confirmDelete(confirmMsg).then(function(confirmed) {
+    if (!confirmed) return;
+    GSpinner.show();
+    fetch(url, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': BCMS.getCsrf() },
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      GSpinner.hide();
+      if (data.success) { BCMS.toast(data.message || 'تمت العملية', 'success'); if (onSuccess) onSuccess(); }
+      else BCMS.toast(data.error || 'تعذرت العملية', 'error');
+    }).catch(function() { GSpinner.hide(); BCMS.toast('خطأ في الاتصال بالخادم', 'error'); });
+  });
+}
+function invoiceVoid(url) {
+  _ajaxAction(url, 'إلغاء الفاتورة؟ سيتم استعادة المخزون وحفظ سجل الفاتورة كمُلغي.', function() {
+    setTimeout(function() { location.reload(); }, 600);
+  });
+}
+function invoiceDelete(url, listUrl) {
+  _ajaxAction(url, 'حذف الفاتورة؟ سيتم استعادة المخزون وسيُحذف السجل بالكامل. هل أنت متأكد؟', function() {
+    setTimeout(function() { window.location.href = listUrl; }, 600);
+  });
+}
+</script>
 {% endblock %}

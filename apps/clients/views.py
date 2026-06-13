@@ -1,8 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
 from django.db.models import Q, Sum
 from .models import Client
+
+
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 @login_required
@@ -49,11 +54,17 @@ def client_save(request):
     obj.notes     = request.POST.get('notes', '').strip()
     obj.referral  = request.POST.get('referral', '')
 
+    ajax = _is_ajax(request)
     if Client.objects.filter(center=center, phone=obj.phone).exclude(pk=obj.pk if obj.pk else None).exists():
-        messages.error(request, 'رقم الهاتف موجود بالفعل لعميل آخر.')
+        err = 'رقم الهاتف موجود بالفعل لعميل آخر.'
+        if ajax:
+            return JsonResponse({'success': False, 'error': err})
+        messages.error(request, err)
         return redirect('clients:list')
 
     obj.save()
+    if ajax:
+        return JsonResponse({'success': True, 'message': 'تم حفظ بيانات العميل بنجاح.'})
     messages.success(request, 'تم الحفظ.')
     return redirect('clients:list')
 
@@ -63,6 +74,8 @@ def client_delete(request, pk):
     obj = get_object_or_404(Client, pk=pk, center=request.center)
     if request.method == 'POST':
         obj.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف العميل بنجاح.'})
         messages.success(request, 'تم الحذف.')
         return redirect('clients:list')
     return redirect('clients:detail', pk=pk)

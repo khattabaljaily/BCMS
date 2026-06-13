@@ -197,7 +197,7 @@ p{margin:0;}
 <body>
 
 <!-- Header -->
-<div class="st-header">
+<div class="st-header" {% if settings_obj.store_cover %}style="background: url('{{ settings_obj.store_cover.url }}') center/cover no-repeat;"{% endif %}>
   <div class="st-logo">
     {% if center.logo %}<img src="{{ center.logo.url }}" alt="{{ center.name }}">
     {% else %}<i class="fas fa-spa"></i>{% endif %}

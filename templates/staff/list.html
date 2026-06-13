@@ -48,7 +48,7 @@
         </thead>
         <tbody>
           {% for sp in specialists %}
-          <tr>
+          <tr id="row-{{ sp.pk }}">
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#1d4ed8;flex-shrink:0;">
@@ -86,10 +86,10 @@
                         onclick="openEditSpecialist({{ sp.pk }}, '{{ sp.name|escapejs }}', '{{ sp.phone|default:''|escapejs }}', '{{ sp.specialty|default:''|escapejs }}', '{{ sp.work_start|time:"H:i"|default:'' }}', '{{ sp.work_end|time:"H:i"|default:'' }}', '{{ sp.bio|default:''|escapejs }}', {{ sp.is_active|yesno:'true,false' }}, '{% for svc in sp.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}')">
                   <i class="fas fa-edit"></i>
                 </button>
-                <form method="post" action="{% url 'staff:delete' sp.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف فرد الفريق؟')" style="display:inline;">
-                  {% csrf_token %}
-                  <button class="cx-act cx-act--del" title="حذف"><i class="fas fa-trash"></i></button>
-                </form>
+                <button type="button" class="cx-act cx-act--del" title="حذف"
+                        onclick="BCMS.ajaxDelete('{% url 'staff:delete' sp.pk %}', 'حذف {{ sp.name|escapejs }} من الفريق؟', 'row-{{ sp.pk }}')">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -113,7 +113,7 @@
     <!-- Mobile Cards -->
     <div class="cx-mobile-cards">
       {% for sp in specialists %}
-      <div class="cx-card">
+      <div class="cx-card" id="card-{{ sp.pk }}">
         <div class="cx-card-head">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#1d4ed8;flex-shrink:0;">
@@ -129,10 +129,10 @@
                     onclick="openEditSpecialist({{ sp.pk }}, '{{ sp.name|escapejs }}', '{{ sp.phone|default:''|escapejs }}', '{{ sp.specialty|default:''|escapejs }}', '{{ sp.work_start|time:"H:i"|default:'' }}', '{{ sp.work_end|time:"H:i"|default:'' }}', '{{ sp.bio|default:''|escapejs }}', {{ sp.is_active|yesno:'true,false' }}, '{% for svc in sp.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}')">
               <i class="fas fa-edit"></i>
             </button>
-            <form method="post" action="{% url 'staff:delete' sp.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف فرد الفريق؟')" style="display:inline;">
-              {% csrf_token %}
-              <button class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
-            </form>
+            <button type="button" class="cx-act cx-act--del"
+                    onclick="BCMS.ajaxDelete('{% url 'staff:delete' sp.pk %}', 'حذف {{ sp.name|escapejs }} من الفريق؟', 'row-{{ sp.pk }}')">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
         <div class="cx-card-meta">
@@ -242,6 +242,10 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  BCMS.ajaxForm(document.getElementById('specialist-form'));
+});
+
 const specialistAddUrl = "{% url 'staff:add' %}";
 const specialistEditUrlTemplate = "{% url 'staff:edit' 0 %}";
 

@@ -62,7 +62,7 @@
         </thead>
         <tbody>
           {% for appt in appointments %}
-          <tr class="appt-row--{{ appt.status }}">
+          <tr class="appt-row--{{ appt.status }}" id="row-{{ appt.pk }}">
             <td>
               <strong style="font-size:14px;">{{ appt.start_time|time:"H:i" }}</strong>
               {% if appt.end_time %}<br><small class="text-muted">{{ appt.end_time|time:"H:i" }}</small>{% endif %}
@@ -80,14 +80,12 @@
             <td>{{ appt.specialist.name|default:"—" }}</td>
             <td><strong>{{ appt.total_price|format_number:2 }}</strong></td>
             <td>
-              <form method="post" action="{% url 'appointments:status' appt.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <select name="status" class="status-select" onchange="this.form.submit()">
-                  {% for val, label in appt.STATUS %}
-                  <option value="{{ val }}" {% if appt.status == val %}selected{% endif %}>{{ label }}</option>
-                  {% endfor %}
-                </select>
-              </form>
+              <select name="status" class="status-select"
+                      onchange="updateApptStatus({{ appt.pk }}, this.value, '{% url 'appointments:status' appt.pk %}')">
+                {% for val, label in appt.STATUS %}
+                <option value="{{ val }}" {% if appt.status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
             </td>
             <td>
               <div class="cx-row-actions">
@@ -95,13 +93,10 @@
                    class="cx-act" title="إنشاء فاتورة" style="color:var(--green);border-color:#a7f3d0;">
                   <i class="fas fa-receipt"></i>
                 </a>
-                <form method="post" action="{% url 'appointments:delete' appt.pk %}"
-                      onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الموعد؟')">
-                  {% csrf_token %}
-                  <button type="submit" class="cx-act cx-act--del" title="حذف">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </form>
+                <button type="button" class="cx-act cx-act--del" title="حذف"
+                        onclick="BCMS.ajaxDelete('{% url 'appointments:delete' appt.pk %}', 'حذف الموعد؟', 'row-{{ appt.pk }}')">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -113,7 +108,7 @@
     <!-- Mobile Cards -->
     <div class="cx-mobile-cards">
       {% for appt in appointments %}
-      <div class="cx-card" style="border-right: 3px solid {% if appt.status == 'pending' %}var(--yellow){% elif appt.status == 'confirmed' %}var(--blue){% elif appt.status == 'in_progress' %}var(--purple){% elif appt.status == 'completed' %}var(--green){% elif appt.status == 'no_show' %}var(--red){% else %}var(--slate-300){% endif %};">
+      <div class="cx-card" id="card-{{ appt.pk }}" style="border-right: 3px solid {% if appt.status == 'pending' %}var(--yellow){% elif appt.status == 'confirmed' %}var(--blue){% elif appt.status == 'in_progress' %}var(--purple){% elif appt.status == 'completed' %}var(--green){% elif appt.status == 'no_show' %}var(--red){% else %}var(--slate-300){% endif %};">
         <div class="cx-card-head">
           <div>
             <div class="cx-card-title">{{ appt.client_display }}</div>
@@ -123,10 +118,10 @@
             <a href="{% url 'billing:create' %}?appointment={{ appt.pk }}" class="cx-act" style="color:var(--green);border-color:#a7f3d0;" title="فاتورة">
               <i class="fas fa-receipt"></i>
             </a>
-            <form method="post" action="{% url 'appointments:delete' appt.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الموعد؟')">
-              {% csrf_token %}
-              <button type="submit" class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
-            </form>
+            <button type="button" class="cx-act cx-act--del"
+                    onclick="BCMS.ajaxDelete('{% url 'appointments:delete' appt.pk %}', 'حذف الموعد؟', 'row-{{ appt.pk }}')">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
         <div class="cx-card-meta">
@@ -149,14 +144,12 @@
           </div>
         </div>
         <div style="padding:0 2px 4px;">
-          <form method="post" action="{% url 'appointments:status' appt.pk %}">
-            {% csrf_token %}
-            <select name="status" class="status-select" style="width:100%;" onchange="this.form.submit()">
-              {% for val, label in appt.STATUS %}
-              <option value="{{ val }}" {% if appt.status == val %}selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-          </form>
+          <select name="status" class="status-select" style="width:100%;"
+                  onchange="updateApptStatus({{ appt.pk }}, this.value, '{% url 'appointments:status' appt.pk %}')">
+            {% for val, label in appt.STATUS %}
+            <option value="{{ val }}" {% if appt.status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
       {% endfor %}
@@ -239,4 +232,29 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  BCMS.ajaxForm(document.querySelector('#modal-add form'));
+});
+
+function updateApptStatus(pk, status, url) {
+  var fd = new FormData();
+  fd.append('status', status);
+  fd.append('csrfmiddlewaretoken', BCMS.getCsrf());
+  fetch(url, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    body: fd,
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) BCMS.toast(data.message || 'تم تحديث الحالة', 'success');
+    else BCMS.toast(data.error || 'تعذر التحديث', 'error');
+  })
+  .catch(function() { BCMS.toast('خطأ في الاتصال بالخادم', 'error'); });
+}
+</script>
 {% endblock %}

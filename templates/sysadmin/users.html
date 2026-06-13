@@ -5,32 +5,35 @@
 
 {% block content %}
 
-<div class="sa-page-header">
-  <div>
-    <h2>جميع المستخدمين</h2>
-    <div style="font-size:12px;color:var(--sa-muted);margin-top:3px;">{{ total }} مستخدم إجمالاً</div>
+<div class="pg-head">
+  <div class="pg-head__left">
+    <h2 class="pg-head__title">جميع المستخدمين</h2>
+    <div class="pg-head__sub">{{ total }} مستخدم عبر جميع المراكز</div>
   </div>
 </div>
 
 <!-- Search -->
-<div class="filter-bar">
-  <form method="get" style="display:flex;gap:10px;width:100%;">
-    <div class="sa-search">
-      <i class="fas fa-search"></i>
-      <input type="text" name="q" value="{{ q }}" placeholder="بحث بالاسم أو المستخدم أو اسم المركز...">
-    </div>
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> بحث</button>
-    {% if q %}<a href="{% url 'sysadmin:users' %}" class="btn btn-secondary btn-sm"><i class="fas fa-xmark"></i></a>{% endif %}
-  </form>
+<form method="get">
+<div class="filter-strip">
+  <div class="sa-search">
+    <i class="fas fa-search"></i>
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث بالاسم أو اسم المستخدم أو المركز...">
+  </div>
+  <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> بحث</button>
+  {% if q %}
+  <a href="{% url 'sysadmin:users' %}" class="btn btn-secondary btn-sm"><i class="fas fa-xmark"></i> مسح</a>
+  {% endif %}
 </div>
+</form>
 
-<div class="sa-card">
+<!-- ══ Desktop table ══ -->
+<div class="sa-card d-hide-mob">
   <div class="sa-table-wrap">
     <table class="sa-table">
       <thead>
         <tr>
-          <th>الاسم</th>
-          <th>اسم المستخدم</th>
+          <th>المستخدم</th>
+          <th>اسم الدخول</th>
           <th>المركز</th>
           <th>الدور</th>
           <th>الهاتف</th>
@@ -42,17 +45,24 @@
       <tbody>
         {% for u in users %}
         <tr>
-          <td style="font-weight:600;">{{ u.full_name }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--sa-accent),#818cf8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;">
+                {{ u.full_name|slice:":1"|default:u.username|slice:":1" }}
+              </div>
+              <span style="font-weight:600;">{{ u.full_name|default:u.username }}</span>
+            </div>
+          </td>
           <td style="font-family:monospace;font-size:12px;color:var(--sa-muted);">{{ u.username }}</td>
           <td>
-            <a href="{% url 'sysadmin:center_detail' u.center.pk %}" style="color:var(--sa-accent);font-size:12px;">
+            <a href="{% url 'sysadmin:center_detail' u.center.pk %}" style="color:var(--sa-accent);font-size:12.5px;">
               {{ u.center.name }}
             </a>
           </td>
           <td>
             {% if u.is_owner %}<span class="badge badge-purple">مالك</span>
-            {% elif u.is_superuser %}<span class="badge badge-red">مشرف</span>
-            {% elif u.role %}{{ u.role.name }}
+            {% elif u.is_superuser %}<span class="badge badge-red">مشرف عام</span>
+            {% elif u.role %}<span class="badge badge-blue">{{ u.role.name }}</span>
             {% else %}<span style="color:var(--sa-muted);">—</span>{% endif %}
           </td>
           <td style="font-size:12px;color:var(--sa-muted);">{{ u.phone|default:"—" }}</td>
@@ -60,14 +70,13 @@
             {% if u.is_active %}<span class="badge badge-green">نشط</span>
             {% else %}<span class="badge badge-red">موقوف</span>{% endif %}
           </td>
-          <td style="font-size:12px;color:var(--sa-muted);">
-            {{ u.last_login_at|date:"d/m/Y H:i"|default:"—" }}
-          </td>
+          <td style="font-size:12px;color:var(--sa-muted);">{{ u.last_login_at|date:"d/m/Y H:i"|default:"—" }}</td>
           <td style="font-size:12px;color:var(--sa-muted);">{{ u.created_at|date:"d/m/Y" }}</td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="8" style="text-align:center;padding:40px;color:var(--sa-muted);">
+          <td colspan="8" style="text-align:center;padding:48px;color:var(--sa-muted);">
+            <i class="fas fa-users" style="font-size:32px;display:block;margin-bottom:12px;opacity:.2;"></i>
             لا توجد نتائج مطابقة
           </td>
         </tr>
@@ -77,12 +86,80 @@
   </div>
 
   {% if total_pages > 1 %}
-  <div style="padding:16px;border-top:1px solid var(--sa-border);">
+  <div style="padding:14px 20px;border-top:1px solid var(--sa-border);">
     <div class="sa-pagination">
       {% if page > 1 %}
       <a href="?q={{ q }}&page={{ page|add:'-1' }}" class="sa-page-btn"><i class="fas fa-chevron-right"></i></a>
       {% endif %}
       <span style="font-size:13px;color:var(--sa-muted);">صفحة {{ page }} من {{ total_pages }}</span>
+      {% if page < total_pages %}
+      <a href="?q={{ q }}&page={{ page|add:'1' }}" class="sa-page-btn"><i class="fas fa-chevron-left"></i></a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ══ Mobile cards ══ -->
+<div class="m-cards">
+  {% for u in users %}
+  <div class="m-card">
+    <div class="m-card__head">
+      <div class="m-card__avatar {% if u.is_owner %}m-card__avatar--purple{% elif not u.is_active %}m-card__avatar--amber{% endif %}">
+        {{ u.full_name|slice:":1"|default:u.username|slice:":1" }}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="m-card__name">{{ u.full_name|default:u.username }}</div>
+        <div class="m-card__sub">
+          <a href="{% url 'sysadmin:center_detail' u.center.pk %}" style="color:var(--sa-accent);">{{ u.center.name }}</a>
+        </div>
+      </div>
+      <div class="m-card__badges">
+        {% if u.is_active %}<span class="badge badge-green">نشط</span>
+        {% else %}<span class="badge badge-red">موقوف</span>{% endif %}
+        {% if u.is_owner %}<span class="badge badge-purple">مالك</span>
+        {% elif u.role %}<span class="badge badge-blue">{{ u.role.name }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="m-card__body">
+      <div>
+        <div class="m-card__field-label">اسم الدخول</div>
+        <div class="m-card__field-value" style="font-family:monospace;font-size:12px;">{{ u.username }}</div>
+      </div>
+      <div>
+        <div class="m-card__field-label">الهاتف</div>
+        <div class="m-card__field-value">{{ u.phone|default:"—" }}</div>
+      </div>
+      <div>
+        <div class="m-card__field-label">آخر دخول</div>
+        <div class="m-card__field-value" style="font-size:12px;">{{ u.last_login_at|date:"d/m/Y"|default:"—" }}</div>
+      </div>
+      <div>
+        <div class="m-card__field-label">تاريخ الإضافة</div>
+        <div class="m-card__field-value" style="font-size:12px;">{{ u.created_at|date:"d/m/Y" }}</div>
+      </div>
+    </div>
+    <div class="m-card__foot">
+      <a href="{% url 'sysadmin:center_detail' u.center.pk %}" class="ia-btn ia-btn--view" title="تفاصيل المركز">
+        <i class="fas fa-building"></i>
+      </a>
+      <span style="font-size:11px;color:var(--sa-muted);margin-right:4px;">عرض المركز</span>
+    </div>
+  </div>
+  {% empty %}
+  <div style="text-align:center;padding:48px 20px;color:var(--sa-muted);">
+    <i class="fas fa-users" style="font-size:32px;display:block;margin-bottom:12px;opacity:.2;"></i>
+    لا توجد نتائج مطابقة
+  </div>
+  {% endfor %}
+
+  {% if total_pages > 1 %}
+  <div style="padding:16px 0;text-align:center;">
+    <div class="sa-pagination">
+      {% if page > 1 %}
+      <a href="?q={{ q }}&page={{ page|add:'-1' }}" class="sa-page-btn"><i class="fas fa-chevron-right"></i></a>
+      {% endif %}
+      <span style="font-size:13px;color:var(--sa-muted);">{{ page }} / {{ total_pages }}</span>
       {% if page < total_pages %}
       <a href="?q={{ q }}&page={{ page|add:'1' }}" class="sa-page-btn"><i class="fas fa-chevron-left"></i></a>
       {% endif %}

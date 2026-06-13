@@ -3,53 +3,49 @@
 {% block page_title %}المراكز{% endblock %}
 {% block nav_centers %}active{% endblock %}
 
-{% block topbar_actions %}
-<a href="{% url 'sysadmin:center_add' %}" class="btn btn-primary btn-sm">
-  <i class="fas fa-plus"></i> إضافة مركز
-</a>
-{% endblock %}
-
 {% block content %}
 
-<div class="sa-page-header">
-  <div>
-    <h2>المراكز المسجلة</h2>
-    <div style="font-size:12px;color:var(--sa-muted);margin-top:3px;">{{ total }} مركز إجمالاً</div>
+<!-- Page header -->
+<div class="pg-head">
+  <div class="pg-head__left">
+    <h2 class="pg-head__title">المراكز المسجلة</h2>
+    <div class="pg-head__sub">{{ total }} مركز إجمالاً</div>
   </div>
-  <a href="{% url 'sysadmin:center_add' %}" class="btn btn-primary">
-    <i class="fas fa-plus"></i> مركز جديد
-  </a>
+  <div class="pg-head__actions">
+    <button class="btn btn-primary" onclick="openModal('modal-add')">
+      <i class="fas fa-plus"></i> مركز جديد
+    </button>
+  </div>
 </div>
 
-<!-- Filter bar -->
-<div class="filter-bar">
-  <form method="get" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;">
-    <div class="sa-search">
-      <i class="fas fa-search"></i>
-      <input type="text" name="q" value="{{ q }}" placeholder="بحث باسم المركز أو الهاتف أو المدينة...">
-    </div>
-    <select name="plan" onchange="this.form.submit()">
-      <option value="">كل الباقات</option>
-      {% for val, label in plans %}
-      <option value="{{ val }}" {% if plan == val %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-    <select name="status" onchange="this.form.submit()">
-      <option value="">كل الحالات</option>
-      <option value="active"    {% if status == 'active' %}selected{% endif %}>نشط</option>
-      <option value="inactive"  {% if status == 'inactive' %}selected{% endif %}>موقوف</option>
-      <option value="expired"   {% if status == 'expired' %}selected{% endif %}>منتهي الاشتراك</option>
-    </select>
-    {% if q or plan or status %}
-    <a href="{% url 'sysadmin:center_list' %}" class="btn btn-secondary btn-sm">
-      <i class="fas fa-xmark"></i> مسح الفلاتر
-    </a>
-    {% endif %}
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> بحث</button>
-  </form>
+<!-- Filter strip -->
+<form method="get">
+<div class="filter-strip">
+  <div class="sa-search">
+    <i class="fas fa-search"></i>
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث بالاسم أو الهاتف أو المدينة...">
+  </div>
+  <select name="plan" onchange="this.form.submit()">
+    <option value="">كل الباقات</option>
+    {% for val, label in plans %}
+    <option value="{{ val }}" {% if plan == val %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="status" onchange="this.form.submit()">
+    <option value="">كل الحالات</option>
+    <option value="active"   {% if status == 'active'   %}selected{% endif %}>نشط</option>
+    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>موقوف</option>
+    <option value="expired"  {% if status == 'expired'  %}selected{% endif %}>منتهي الاشتراك</option>
+  </select>
+  {% if q or plan or status %}
+  <a href="{% url 'sysadmin:center_list' %}" class="btn btn-secondary btn-sm"><i class="fas fa-xmark"></i> مسح</a>
+  {% endif %}
+  <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> بحث</button>
 </div>
+</form>
 
-<div class="sa-card">
+<!-- ══ Desktop table (hidden on mobile) ══ -->
+<div class="sa-card d-hide-mob">
   <div class="sa-table-wrap">
     <table class="sa-table">
       <thead>
@@ -61,13 +57,13 @@
           <th>الباقة</th>
           <th>انتهاء الاشتراك</th>
           <th>الحالة</th>
-          <th>تاريخ التسجيل</th>
-          <th>إجراءات</th>
+          <th>التسجيل</th>
+          <th>الإجراءات</th>
         </tr>
       </thead>
       <tbody>
         {% for c in centers %}
-        <tr>
+        <tr id="row-{{ c.pk }}">
           <td style="color:var(--sa-muted);font-size:12px;">{{ c.pk }}</td>
           <td>
             <div style="font-weight:700;">
@@ -75,77 +71,593 @@
             </div>
             {% if c.phone %}<div style="font-size:11px;color:var(--sa-muted);">{{ c.phone }}</div>{% endif %}
           </td>
-          <td style="font-size:12px;">{{ c.service_type.name }}</td>
+          <td style="font-size:12px;">{{ c.service_type.name|default:"—" }}</td>
           <td style="font-size:12px;color:var(--sa-muted);">{{ c.city|default:"—" }}</td>
           <td>
-            {% if c.plan == 'trial' %}<span class="badge badge-gray">تجريبي</span>
-            {% elif c.plan == 'starter' %}<span class="badge badge-blue">مبتدئ</span>
-            {% elif c.plan == 'pro' %}<span class="badge badge-purple">احترافي</span>
-            {% else %}<span class="badge badge-yellow">مؤسسات</span>{% endif %}
+            <span class="badge {% if c.plan == 'trial' %}badge-gray{% elif c.plan == 'starter' %}badge-blue{% elif c.plan == 'pro' %}badge-purple{% else %}badge-yellow{% endif %}">
+              {{ c.get_plan_display }}
+            </span>
           </td>
           <td style="font-size:12px;">
             {% if c.plan_expires %}
-              {% if c.is_expired %}
-                <span style="color:var(--sa-red);font-weight:700;">{{ c.plan_expires|date:"d/m/Y" }} <small>(منتهي)</small></span>
-              {% else %}
-                {{ c.plan_expires|date:"d/m/Y" }}
-              {% endif %}
+              <span {% if c.is_expired %}style="color:var(--sa-red);font-weight:700;"{% endif %}>
+                {{ c.plan_expires|date:"d/m/Y" }}{% if c.is_expired %} <small>(منتهي)</small>{% endif %}
+              </span>
             {% else %}—{% endif %}
           </td>
           <td>
-            {% if c.is_active %}<span class="badge badge-green">نشط</span>
-            {% else %}<span class="badge badge-red">موقوف</span>{% endif %}
+            <span class="badge status-badge-{{ c.pk }} {% if c.is_active %}badge-green{% else %}badge-red{% endif %}">
+              {% if c.is_active %}نشط{% else %}موقوف{% endif %}
+            </span>
           </td>
           <td style="font-size:12px;color:var(--sa-muted);">{{ c.created_at|date:"d/m/Y" }}</td>
           <td>
-            <div style="display:flex;gap:5px;align-items:center;">
-              <a href="{% url 'sysadmin:center_detail' c.pk %}" class="btn btn-secondary btn-icon btn-sm" title="تفاصيل">
+            <div class="row-actions">
+              <a href="{% url 'sysadmin:center_detail' c.pk %}" class="ia-btn ia-btn--view" title="تفاصيل">
                 <i class="fas fa-eye"></i>
               </a>
-              <a href="{% url 'sysadmin:center_edit' c.pk %}" class="btn btn-primary btn-icon btn-sm" title="تعديل">
+              <button class="ia-btn ia-btn--edit" title="تعديل" onclick="openEditModal(this)"
+                  data-pk="{{ c.pk }}"
+                  data-name="{{ c.name|escapejs }}"
+                  data-phone="{{ c.phone|escapejs }}"
+                  data-email="{{ c.email|escapejs }}"
+                  data-address="{{ c.address|escapejs }}"
+                  data-city="{{ c.city|escapejs }}"
+                  data-country="{{ c.country }}"
+                  data-service-type="{{ c.service_type_id|default:'' }}"
+                  data-plan="{{ c.plan }}"
+                  data-plan-expires="{{ c.plan_expires|date:'Y-m-d'|default:'' }}"
+                  data-max-staff="{{ c.max_staff }}"
+                  data-max-users="{{ c.max_users }}"
+                  data-is-active="{% if c.is_active %}true{% else %}false{% endif %}"
+                  data-is-demo="{% if c.is_demo %}true{% else %}false{% endif %}">
                 <i class="fas fa-pencil"></i>
-              </a>
-              <form method="post" action="{% url 'sysadmin:center_toggle' c.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="btn btn-icon btn-sm {% if c.is_active %}btn-warning{% else %}btn-success{% endif %}"
-                        title="{% if c.is_active %}إيقاف{% else %}تفعيل{% endif %}">
-                  <i class="fas {% if c.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
-                </button>
-              </form>
+              </button>
+              <button class="ia-btn toggle-btn-{{ c.pk }} {% if c.is_active %}ia-btn--pause{% else %}ia-btn--toggle{% endif %}"
+                      title="{% if c.is_active %}إيقاف{% else %}تفعيل{% endif %}"
+                      onclick="toggleCenter({{ c.pk }}, this)">
+                <i class="fas {% if c.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+              </button>
+              <button class="ia-btn ia-btn--delete" title="حذف"
+                      onclick="openDeleteModal({{ c.pk }}, '{{ c.name|escapejs }}')">
+                <i class="fas fa-trash"></i>
+              </button>
             </div>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="9" style="text-align:center;padding:40px;color:var(--sa-muted);">
-            <i class="fas fa-building" style="font-size:32px;margin-bottom:10px;display:block;opacity:.3;"></i>
-            لا توجد مراكز مطابقة للبحث
+          <td colspan="9" style="text-align:center;padding:48px 20px;color:var(--sa-muted);">
+            <i class="fas fa-building" style="font-size:36px;display:block;margin-bottom:12px;opacity:.2;"></i>
+            لا توجد مراكز مطابقة
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
-  <!-- Pagination -->
   {% if total_pages > 1 %}
-  <div style="padding:16px;border-top:1px solid var(--sa-border);">
+  <div style="padding:14px 20px;border-top:1px solid var(--sa-border);">
     <div class="sa-pagination">
       {% if page > 1 %}
-      <a href="?q={{ q }}&plan={{ plan }}&status={{ status }}&page={{ page|add:'-1' }}" class="sa-page-btn">
-        <i class="fas fa-chevron-right"></i>
-      </a>
+      <a href="?q={{ q }}&plan={{ plan }}&status={{ status }}&page={{ page|add:'-1' }}" class="sa-page-btn"><i class="fas fa-chevron-right"></i></a>
       {% endif %}
       <span style="font-size:13px;color:var(--sa-muted);">صفحة {{ page }} من {{ total_pages }}</span>
       {% if page < total_pages %}
-      <a href="?q={{ q }}&plan={{ plan }}&status={{ status }}&page={{ page|add:'1' }}" class="sa-page-btn">
-        <i class="fas fa-chevron-left"></i>
-      </a>
+      <a href="?q={{ q }}&plan={{ plan }}&status={{ status }}&page={{ page|add:'1' }}" class="sa-page-btn"><i class="fas fa-chevron-left"></i></a>
       {% endif %}
     </div>
   </div>
   {% endif %}
 </div>
 
+<!-- ══ Mobile cards ══ -->
+<div class="m-cards">
+  {% for c in centers %}
+  <div class="m-card" id="card-{{ c.pk }}">
+    <div class="m-card__head">
+      <div class="m-card__avatar {% if not c.is_active %}m-card__avatar--amber{% endif %}">
+        {{ c.name|slice:":1" }}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="m-card__name">
+          <a href="{% url 'sysadmin:center_detail' c.pk %}" style="color:var(--sa-accent);">{{ c.name }}</a>
+        </div>
+        <div class="m-card__sub">{{ c.service_type.name|default:"—" }}{% if c.city %} · {{ c.city }}{% endif %}</div>
+      </div>
+      <div class="m-card__badges">
+        <span class="badge status-badge-{{ c.pk }} {% if c.is_active %}badge-green{% else %}badge-red{% endif %}">
+          {% if c.is_active %}نشط{% else %}موقوف{% endif %}
+        </span>
+        <span class="badge {% if c.plan == 'trial' %}badge-gray{% elif c.plan == 'starter' %}badge-blue{% elif c.plan == 'pro' %}badge-purple{% else %}badge-yellow{% endif %}">
+          {{ c.get_plan_display }}
+        </span>
+      </div>
+    </div>
+    <div class="m-card__body">
+      <div>
+        <div class="m-card__field-label">الهاتف</div>
+        <div class="m-card__field-value">{{ c.phone|default:"—" }}</div>
+      </div>
+      <div>
+        <div class="m-card__field-label">انتهاء الاشتراك</div>
+        <div class="m-card__field-value" {% if c.is_expired %}style="color:var(--sa-red)"{% endif %}>
+          {{ c.plan_expires|date:"d/m/Y"|default:"—" }}
+        </div>
+      </div>
+    </div>
+    <div class="m-card__foot">
+      <a href="{% url 'sysadmin:center_detail' c.pk %}" class="ia-btn ia-btn--view" title="تفاصيل">
+        <i class="fas fa-eye"></i>
+      </a>
+      <button class="ia-btn ia-btn--edit" title="تعديل" onclick="openEditModal(this)"
+              data-pk="{{ c.pk }}"
+              data-name="{{ c.name|escapejs }}"
+              data-phone="{{ c.phone|escapejs }}"
+              data-email="{{ c.email|escapejs }}"
+              data-address="{{ c.address|escapejs }}"
+              data-city="{{ c.city|escapejs }}"
+              data-country="{{ c.country }}"
+              data-service-type="{{ c.service_type_id|default:'' }}"
+              data-plan="{{ c.plan }}"
+              data-plan-expires="{{ c.plan_expires|date:'Y-m-d'|default:'' }}"
+              data-max-staff="{{ c.max_staff }}"
+              data-max-users="{{ c.max_users }}"
+              data-is-active="{% if c.is_active %}true{% else %}false{% endif %}"
+              data-is-demo="{% if c.is_demo %}true{% else %}false{% endif %}">
+        <i class="fas fa-pencil"></i>
+      </button>
+      <button class="ia-btn toggle-btn-{{ c.pk }} {% if c.is_active %}ia-btn--pause{% else %}ia-btn--toggle{% endif %}"
+              title="{% if c.is_active %}إيقاف{% else %}تفعيل{% endif %}"
+              onclick="toggleCenter({{ c.pk }}, this)">
+        <i class="fas {% if c.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+      </button>
+      <button class="ia-btn ia-btn--delete" title="حذف"
+              onclick="openDeleteModal({{ c.pk }}, '{{ c.name|escapejs }}')">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+  </div>
+  {% empty %}
+  <div style="text-align:center;padding:48px 20px;color:var(--sa-muted);">
+    <i class="fas fa-building" style="font-size:36px;display:block;margin-bottom:12px;opacity:.2;"></i>
+    لا توجد مراكز مطابقة
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ════════════════════════════════════════ ADD MODAL ════════════════ -->
+<div class="modal-backdrop" id="modal-add">
+  <div class="modal modal-lg modal-scroll">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle" style="color:var(--sa-accent);margin-left:8px;"></i> إضافة مركز جديد</h3>
+      <button class="modal-close" onclick="closeModal('modal-add')">×</button>
+    </div>
+    <form id="form-add" autocomplete="off">
+      {% csrf_token %}
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-building"></i> المعلومات الأساسية</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>اسم المركز *</label>
+              <input type="text" name="name" id="add-name" class="form-control" placeholder="مثال: صالون الجمال الراقي" required>
+            </div>
+            <div class="form-group full">
+              <label>الرابط المختصر *</label>
+              <input type="text" name="slug" id="add-slug" class="form-control" placeholder="beauty-salon" required>
+              <span class="form-hint">أحرف إنجليزية وأرقام وشرطات فقط — يُستخدم في رابط المركز</span>
+            </div>
+            <div class="form-group">
+              <label>نوع المركز</label>
+              <select name="service_type" class="form-control">
+                <option value="">— اختر النوع —</option>
+                {% for st in service_types %}
+                <option value="{{ st.pk }}">{{ st.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>الباقة</label>
+              <select name="plan" class="form-control">
+                {% for val, label in plans %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-address-card"></i> بيانات التواصل والموقع</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>رقم الهاتف</label>
+              <input type="tel" name="phone" class="form-control" placeholder="+249...">
+            </div>
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" name="email" class="form-control" placeholder="info@example.com">
+            </div>
+            <div class="form-group">
+              <label>المدينة</label>
+              <input type="text" name="city" class="form-control" placeholder="الخرطوم">
+            </div>
+            <div class="form-group">
+              <label>البلد</label>
+              <select name="country" class="form-control">
+                {% for code, cname in country_choices %}
+                <option value="{{ code }}" {% if code == 'SD' %}selected{% endif %}>{{ cname }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group full">
+              <label>العنوان التفصيلي</label>
+              <input type="text" name="address" class="form-control" placeholder="الشارع، الحي...">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-credit-card"></i> الاشتراك والحدود</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>تاريخ انتهاء الاشتراك</label>
+              <input type="date" name="plan_expires" class="form-control">
+              <span class="form-hint">اتركه فارغاً للاشتراك غير المحدود</span>
+            </div>
+            <div class="form-group"><!-- spacer --></div>
+            <div class="form-group">
+              <label>الحد الأقصى للموظفين</label>
+              <input type="number" name="max_staff" class="form-control" value="10" min="1">
+            </div>
+            <div class="form-group">
+              <label>الحد الأقصى للمستخدمين</label>
+              <input type="number" name="max_users" class="form-control" value="5" min="1">
+            </div>
+          </div>
+          <div style="display:flex;gap:28px;margin-top:12px;">
+            <div class="form-check">
+              <input type="checkbox" name="is_active" id="add-is-active" checked>
+              <label for="add-is-active">مركز نشط</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" name="is_demo" id="add-is-demo">
+              <label for="add-is-demo">حساب تجريبي</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" id="btn-add-submit">
+          <i class="fas fa-check"></i> إنشاء المركز
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add')">إلغاء</button>
+        <span id="add-error" style="color:var(--sa-red);font-size:12.5px;display:none;margin-right:auto;"></span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ EDIT MODAL ════════════════ -->
+<div class="modal-backdrop" id="modal-edit">
+  <div class="modal modal-lg modal-scroll">
+    <div class="modal-header">
+      <h3><i class="fas fa-pencil" style="color:var(--sa-accent);margin-left:8px;"></i> تعديل بيانات المركز</h3>
+      <button class="modal-close" onclick="closeModal('modal-edit')">×</button>
+    </div>
+    <form id="form-edit" autocomplete="off">
+      {% csrf_token %}
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-building"></i> المعلومات الأساسية</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>اسم المركز *</label>
+              <input type="text" name="name" id="edit-name" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>نوع المركز</label>
+              <select name="service_type" id="edit-service-type" class="form-control">
+                <option value="">— اختر النوع —</option>
+                {% for st in service_types %}
+                <option value="{{ st.pk }}">{{ st.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>الباقة</label>
+              <select name="plan" id="edit-plan" class="form-control">
+                {% for val, label in plans %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-address-card"></i> بيانات التواصل والموقع</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>رقم الهاتف</label>
+              <input type="tel" name="phone" id="edit-phone" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" name="email" id="edit-email" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>المدينة</label>
+              <input type="text" name="city" id="edit-city" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>البلد</label>
+              <select name="country" id="edit-country" class="form-control">
+                {% for code, cname in country_choices %}
+                <option value="{{ code }}">{{ cname }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group full">
+              <label>العنوان التفصيلي</label>
+              <input type="text" name="address" id="edit-address" class="form-control">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-credit-card"></i> الاشتراك والحدود</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>تاريخ انتهاء الاشتراك</label>
+              <input type="date" name="plan_expires" id="edit-plan-expires" class="form-control">
+              <span class="form-hint">اتركه فارغاً للاشتراك غير المحدود</span>
+            </div>
+            <div class="form-group"><!-- spacer --></div>
+            <div class="form-group">
+              <label>الحد الأقصى للموظفين</label>
+              <input type="number" name="max_staff" id="edit-max-staff" class="form-control" min="1">
+            </div>
+            <div class="form-group">
+              <label>الحد الأقصى للمستخدمين</label>
+              <input type="number" name="max_users" id="edit-max-users" class="form-control" min="1">
+            </div>
+          </div>
+          <div style="display:flex;gap:28px;margin-top:12px;">
+            <div class="form-check">
+              <input type="checkbox" name="is_active" id="edit-is-active">
+              <label for="edit-is-active">مركز نشط</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" name="is_demo" id="edit-is-demo">
+              <label for="edit-is-demo">حساب تجريبي</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" id="btn-edit-submit">
+          <i class="fas fa-save"></i> حفظ التعديلات
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit')">إلغاء</button>
+        <span id="edit-error" style="color:var(--sa-red);font-size:12.5px;display:none;margin-right:auto;"></span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ DELETE MODAL ════════════════ -->
+<div class="modal-backdrop" id="modal-delete">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 style="color:var(--sa-red);"><i class="fas fa-triangle-exclamation"></i> حذف المركز</h3>
+      <button class="modal-close" onclick="closeModal('modal-delete')">×</button>
+    </div>
+    <div class="del-confirm">
+      <div class="del-confirm__icon"><i class="fas fa-trash"></i></div>
+      <div class="del-confirm__title">تأكيد الحذف</div>
+      <div class="del-confirm__msg">هل أنت متأكد من حذف المركز التالي؟</div>
+      <div class="del-confirm__name" id="del-center-name">—</div>
+      <div class="del-confirm__warn"><i class="fas fa-triangle-exclamation"></i> سيتم حذف جميع البيانات المرتبطة به نهائياً ولا يمكن التراجع</div>
+    </div>
+    <div class="modal-footer" style="justify-content:center;margin-top:20px;">
+      <button class="btn btn-danger" id="btn-confirm-delete" onclick="confirmDelete()">
+        <i class="fas fa-trash"></i> نعم، احذف نهائياً
+      </button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-delete')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+let editPk   = null;
+let deletePk = null;
+
+/* ── Auto-slug from name in add form ── */
+(function () {
+  const nameEl = document.getElementById('add-name');
+  const slugEl = document.getElementById('add-slug');
+  if (!nameEl || !slugEl) return;
+  slugEl._touched = false;
+  slugEl.addEventListener('input', () => { slugEl._touched = !!slugEl.value; });
+  nameEl.addEventListener('input', () => {
+    if (slugEl._touched) return;
+    slugEl.value = nameEl.value
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9\-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  });
+})();
+
+/* ── Open edit modal & populate fields ── */
+function openEditModal(btn) {
+  editPk = btn.dataset.pk;
+  const d = btn.dataset;
+  document.getElementById('edit-name').value         = d.name         || '';
+  document.getElementById('edit-phone').value        = d.phone        || '';
+  document.getElementById('edit-email').value        = d.email        || '';
+  document.getElementById('edit-city').value         = d.city         || '';
+  document.getElementById('edit-address').value      = d.address      || '';
+  document.getElementById('edit-country').value      = d.country      || 'SD';
+  document.getElementById('edit-service-type').value = d.serviceType  || '';
+  document.getElementById('edit-plan').value         = d.plan         || 'trial';
+  document.getElementById('edit-plan-expires').value = d.planExpires  || '';
+  document.getElementById('edit-max-staff').value    = d.maxStaff     || '10';
+  document.getElementById('edit-max-users').value    = d.maxUsers     || '5';
+  document.getElementById('edit-is-active').checked  = d.isActive === 'true';
+  document.getElementById('edit-is-demo').checked    = d.isDemo   === 'true';
+  document.getElementById('edit-error').style.display = 'none';
+  openModal('modal-edit');
+}
+
+/* ── Open delete modal ── */
+function openDeleteModal(pk, name) {
+  deletePk = pk;
+  document.getElementById('del-center-name').textContent = name;
+  openModal('modal-delete');
+}
+
+/* ── Add form submit ── */
+document.getElementById('form-add').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const btn    = document.getElementById('btn-add-submit');
+  const errEl  = document.getElementById('add-error');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="sa-spinner"></span> جاري الإنشاء...';
+  errEl.style.display = 'none';
+  try {
+    const resp = await fetch('{% url "sysadmin:center_add" %}', {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: new FormData(this),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      closeModal('modal-add');
+      this.reset();
+      showToast('تم إنشاء المركز "' + data.center.name + '" بنجاح');
+      setTimeout(() => location.reload(), 700);
+    } else {
+      errEl.textContent   = data.error || 'حدث خطأ غير متوقع';
+      errEl.style.display = 'inline';
+    }
+  } catch {
+    errEl.textContent   = 'حدث خطأ في الاتصال بالخادم';
+    errEl.style.display = 'inline';
+  }
+  btn.disabled  = false;
+  btn.innerHTML = '<i class="fas fa-check"></i> إنشاء المركز';
+});
+
+/* ── Edit form submit ── */
+document.getElementById('form-edit').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const btn    = document.getElementById('btn-edit-submit');
+  const errEl  = document.getElementById('edit-error');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="sa-spinner"></span> جاري الحفظ...';
+  errEl.style.display = 'none';
+  try {
+    const resp = await fetch(`/sysadmin/centers/${editPk}/edit/`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: new FormData(this),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      closeModal('modal-edit');
+      showToast('تم حفظ التعديلات بنجاح');
+      setTimeout(() => location.reload(), 700);
+    } else {
+      errEl.textContent   = data.error || 'حدث خطأ غير متوقع';
+      errEl.style.display = 'inline';
+    }
+  } catch {
+    errEl.textContent   = 'حدث خطأ في الاتصال بالخادم';
+    errEl.style.display = 'inline';
+  }
+  btn.disabled  = false;
+  btn.innerHTML = '<i class="fas fa-save"></i> حفظ التعديلات';
+});
+
+/* ── Confirm delete ── */
+async function confirmDelete() {
+  const btn    = document.getElementById('btn-confirm-delete');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="sa-spinner"></span> جاري الحذف...';
+  try {
+    const resp = await fetch(`/sysadmin/centers/${deletePk}/delete/`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': CSRF },
+    });
+    const data = await resp.json();
+    if (data.success) {
+      closeModal('modal-delete');
+      document.getElementById(`row-${deletePk}`)?.remove();
+      document.getElementById(`card-${deletePk}`)?.remove();
+      showToast('تم حذف المركز بنجاح');
+    } else {
+      showToast('حدث خطأ في الحذف', false);
+    }
+  } catch {
+    showToast('حدث خطأ في الاتصال بالخادم', false);
+  }
+  btn.disabled  = false;
+  btn.innerHTML = '<i class="fas fa-trash"></i> نعم، احذف نهائياً';
+}
+
+/* ── Toggle active/inactive ── */
+async function toggleCenter(pk, btn) {
+  const origClass = btn.className;
+  const origHTML  = btn.innerHTML;
+  btn.disabled    = true;
+  try {
+    const resp = await fetch(`/sysadmin/centers/${pk}/toggle/`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': CSRF },
+    });
+    const data = await resp.json();
+    if (data.success) {
+      const active = data.is_active;
+      document.querySelectorAll(`.status-badge-${pk}`).forEach(el => {
+        el.className   = `badge status-badge-${pk} ${active ? 'badge-green' : 'badge-red'}`;
+        el.textContent = active ? 'نشط' : 'موقوف';
+      });
+      document.querySelectorAll(`.toggle-btn-${pk}`).forEach(el => {
+        el.className = `ia-btn toggle-btn-${pk} ${active ? 'ia-btn--pause' : 'ia-btn--toggle'}`;
+        el.title     = active ? 'إيقاف' : 'تفعيل';
+        el.innerHTML = `<i class="fas ${active ? 'fa-pause' : 'fa-play'}"></i>`;
+        el.disabled  = false;
+      });
+      showToast(active ? 'تم تفعيل المركز' : 'تم إيقاف المركز');
+      return;
+    }
+    showToast('حدث خطأ', false);
+  } catch {
+    showToast('حدث خطأ في الاتصال بالخادم', false);
+  }
+  btn.className = origClass;
+  btn.innerHTML = origHTML;
+  btn.disabled  = false;
+}
+</script>
 {% endblock %}

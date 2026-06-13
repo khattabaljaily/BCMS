@@ -270,6 +270,94 @@ const BCMS = {
         setTimeout(function () { try { m.style.display = 'none'; } catch (err) {} }, 220);
     },
 
+    // ── Get CSRF token from page ───────────────────────────────────────────────
+    getCsrf: function () {
+        var inp = document.querySelector('[name=csrfmiddlewaretoken]');
+        return inp ? inp.value : '';
+    },
+
+    // ── AJAX delete: confirm → POST → remove row from DOM + toast ─────────────
+    // rowId: string id of the <tr> to remove (also removes matching cx-card-{id})
+    ajaxDelete: function (url, confirmMsg, rowId) {
+        BCMS.confirmDelete(confirmMsg || 'هل أنت متأكد من الحذف؟').then(function (confirmed) {
+            if (!confirmed) return;
+            GSpinner.show();
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': BCMS.getCsrf(),
+                },
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                GSpinner.hide();
+                if (data.success) {
+                    if (rowId) {
+                        var fade = function (el) {
+                            if (!el) return;
+                            el.style.transition = 'opacity .18s';
+                            el.style.opacity = '0';
+                            setTimeout(function () { el.remove(); }, 200);
+                        };
+                        fade(document.getElementById(rowId));
+                        fade(document.getElementById(rowId.replace(/^row-/, 'card-')));
+                    }
+                    BCMS.toast(data.message || 'تم الحذف بنجاح', 'success');
+                } else {
+                    BCMS.toast(data.error || 'تعذر الحذف', 'error');
+                }
+            })
+            .catch(function () { GSpinner.hide(); BCMS.toast('خطأ في الاتصال بالخادم', 'error'); });
+        });
+    },
+
+    // ── AJAX form submit: POST → JSON → toast + close modal or reload ─────────
+    // options: { onSuccess(json), onError(json), msgSuccess, msgError }
+    ajaxForm: function (formEl, options) {
+        if (!formEl || formEl._ajaxBound) return;
+        formEl._ajaxBound = true;
+        options = options || {};
+        formEl.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var btn = formEl.querySelector('button[type=submit]');
+            if (btn) BCMS.showLoading(btn);
+            GSpinner.show();
+            fetch(formEl.getAttribute('action') || window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': BCMS.getCsrf(),
+                },
+                body: new FormData(formEl),
+                credentials: 'same-origin',
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+                GSpinner.hide();
+                if (btn) BCMS.hideLoading(btn);
+                if (json.success) {
+                    BCMS.toast(json.message || options.msgSuccess || 'تم الحفظ بنجاح', 'success');
+                    if (options.onSuccess) {
+                        options.onSuccess(json);
+                    } else {
+                        var overlay = formEl.closest('.modal-overlay');
+                        if (overlay) BCMS.closeModal(overlay.id);
+                        setTimeout(function () { window.location.reload(); }, 350);
+                    }
+                } else {
+                    BCMS.toast(json.error || options.msgError || 'حدث خطأ أثناء الحفظ', 'error');
+                    if (options.onError) options.onError(json);
+                }
+            })
+            .catch(function () {
+                GSpinner.hide();
+                if (btn) BCMS.hideLoading(btn);
+                BCMS.toast('حدث خطأ في الاتصال بالخادم', 'error');
+            });
+        });
+    },
+
     // ── Load remote modal HTML and open it (expects server to return modal markup)
     loadRemoteModal: function (url) {
         // ensure we request the modal variant so server can return a partial
@@ -301,7 +389,15 @@ const BCMS = {
             var btn = form.querySelector('button[type=submit]');
             BCMS.showLoading(btn);
             var data = new FormData(form);
-            fetch(form.action, { method: 'POST', body: data, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            fetch(form.action, {
+                method: 'POST',
+                body: data,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': BCMS.getCsrf(),
+                },
+                credentials: 'same-origin',
+            })
                 .then(function (r) { return r.json(); })
                 .then(function (json) {
                     BCMS.hideLoading(btn);
@@ -338,8 +434,13 @@ const BCMS = {
     }
 };
 
-// Flush Django messages on DOM ready
-document.addEventListener('DOMContentLoaded', function () { BCMS.flushMessages(); });
+// Flush Django messages + attach AJAX to always-present modals
+document.addEventListener('DOMContentLoaded', function () {
+    BCMS.flushMessages();
+    // Client modal is included sitewide via base.html
+    var clientForm = document.getElementById('client-form');
+    if (clientForm) BCMS.ajaxForm(clientForm);
+});
 
 // Close modals when overlay clicked or [data-close-modal] clicked
 document.addEventListener('click', function (e) {

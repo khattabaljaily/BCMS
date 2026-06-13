@@ -4,7 +4,12 @@ from django.shortcuts import render, get_object_or_404, redirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib import messages
+from django.http import JsonResponse
 from .models import Product, ProductCategory, StockMovement, PurchaseInvoice, PurchaseInvoiceLine
+
+
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 @login_required
@@ -49,6 +54,8 @@ def product_save(request, pk=None):
         if 'image' in request.FILES:
             instance.image = request.FILES['image']
         instance.save()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حفظ المنتج بنجاح.'})
         return redirect('products:list')
 
     return render(request, 'products/form.html', {
@@ -63,6 +70,8 @@ def product_delete(request, pk):
     if request.method == 'POST':
         product.is_active = False
         product.save(update_fields=['is_active'])
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف المنتج بنجاح.'})
     return redirect('products:list')
 
 
@@ -82,6 +91,8 @@ def category_save(request):
     obj.order = int(request.POST.get('order', 0))
     obj.is_active = 'is_active' in request.POST
     obj.save()
+    if _is_ajax(request):
+        return JsonResponse({'success': True, 'message': 'تم حفظ التصنيف بنجاح.'})
     messages.success(request, 'تم الحفظ.')
     return redirect('products:categories')
 
@@ -91,6 +102,8 @@ def category_delete(request, pk):
     obj = get_object_or_404(ProductCategory, pk=pk, center=request.center)
     if request.method == 'POST':
         obj.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف التصنيف بنجاح.'})
         messages.success(request, 'تم الحذف.')
     return redirect('products:categories')
 

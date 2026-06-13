@@ -53,7 +53,7 @@
         </thead>
         <tbody>
           {% for p in products %}
-          <tr>
+          <tr id="row-{{ p.pk }}">
             <td>
               <strong>{{ p.name }}</strong>
               {% if p.sku %}<br><small class="text-muted" style="font-family:monospace;">{{ p.sku }}</small>{% endif %}
@@ -81,10 +81,10 @@
                         onclick="openEditProduct({{ p.pk }}, '{{ p.name|escapejs }}', '{{ p.sku|default_if_none:''|escapejs }}', {{ p.category_id|default:'null' }}, '{{ p.price }}', '{{ p.cost }}', '{{ p.stock }}', '{{ p.min_stock }}', '{{ p.description|default:''|escapejs }}', {{ p.is_active|yesno:'true,false' }}, {{ p.show_in_store|yesno:'true,false' }})">
                   <i class="fas fa-edit"></i>
                 </button>
-                <form method="post" action="{% url 'products:delete' p.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'أرشفة {{ p.name }}؟')">
-                  {% csrf_token %}
-                  <button class="cx-act cx-act--del" title="أرشفة"><i class="fas fa-archive"></i></button>
-                </form>
+                <button type="button" class="cx-act cx-act--del" title="أرشفة"
+                        onclick="BCMS.ajaxDelete('{% url 'products:delete' p.pk %}', 'أرشفة المنتج {{ p.name|escapejs }}؟', 'row-{{ p.pk }}')">
+                  <i class="fas fa-archive"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -108,7 +108,7 @@
     <!-- Mobile Cards -->
     <div class="cx-mobile-cards">
       {% for p in products %}
-      <div class="cx-card">
+      <div class="cx-card" id="card-{{ p.pk }}">
         <div class="cx-card-head">
           <div>
             <div class="cx-card-title">{{ p.name }}</div>
@@ -119,10 +119,10 @@
                     onclick="openEditProduct({{ p.pk }}, '{{ p.name|escapejs }}', '{{ p.sku|default_if_none:''|escapejs }}', {{ p.category_id|default:'null' }}, '{{ p.price }}', '{{ p.cost }}', '{{ p.stock }}', '{{ p.min_stock }}', '{{ p.description|default:''|escapejs }}', {{ p.is_active|yesno:'true,false' }}, {{ p.show_in_store|yesno:'true,false' }})">
               <i class="fas fa-edit"></i>
             </button>
-            <form method="post" action="{% url 'products:delete' p.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'أرشفة {{ p.name }}؟')">
-              {% csrf_token %}
-              <button class="cx-act cx-act--del"><i class="fas fa-archive"></i></button>
-            </form>
+            <button type="button" class="cx-act cx-act--del"
+                    onclick="BCMS.ajaxDelete('{% url 'products:delete' p.pk %}', 'أرشفة المنتج {{ p.name|escapejs }}؟', 'row-{{ p.pk }}')">
+              <i class="fas fa-archive"></i>
+            </button>
           </div>
         </div>
         <div class="cx-card-meta">
@@ -237,6 +237,10 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  BCMS.ajaxForm(document.getElementById('product-form'));
+});
+
 const productCreateUrl = "{% url 'products:add' %}";
 const productEditUrlTemplate = "{% url 'products:edit' 0 %}";
 

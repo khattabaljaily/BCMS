@@ -147,7 +147,7 @@ def expense_create(request):
             )
             _create_expense_movement(exp)
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True})
+                return JsonResponse({'success': True, 'message': 'تم حفظ المصروف بنجاح.'})
             return redirect('finance:expenses')
 
         treasuries = Treasury.objects.filter(center=center)
@@ -180,7 +180,7 @@ def expense_edit(request, pk):
             _create_expense_movement(exp)
 
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True})
+                return JsonResponse({'success': True, 'message': 'تم تحديث المصروف بنجاح.'})
             return redirect('finance:expenses')
 
         treasuries = Treasury.objects.filter(center=center)
@@ -202,7 +202,7 @@ def expense_delete(request, pk):
         _delete_expense_movement(exp)
         exp.delete()
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': True})
+            return JsonResponse({'success': True, 'message': 'تم حذف المصروف بنجاح.'})
         return redirect('finance:expenses')
     except OperationalError as exc:
         return render(request, 'finance/error.html', {'error': str(exc)})
@@ -240,7 +240,7 @@ def client_payment_create(request):
                 invoice.save(update_fields=['paid_amount', 'status'])
             _create_payment_movement(payment)
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True})
+                return JsonResponse({'success': True, 'message': 'تم تسجيل الدفعة بنجاح.'})
             return redirect('finance:client_payments')
 
         invoices = Invoice.objects.filter(center=center).exclude(status='paid')
@@ -299,7 +299,7 @@ def client_payment_edit(request, pk):
             _create_payment_movement(pay)
 
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True})
+                return JsonResponse({'success': True, 'message': 'تم تحديث الدفعة بنجاح.'})
             return redirect('finance:client_payments')
 
         invoices = Invoice.objects.filter(center=center).exclude(status='paid') | Invoice.objects.filter(pk=pay.invoice_id)
@@ -320,7 +320,7 @@ def client_payment_delete(request, pk):
         _delete_payment_movement(pay)
         pay.cancel()
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': True})
+            return JsonResponse({'success': True, 'message': 'تم إلغاء الدفعة بنجاح.'})
         return redirect('finance:client_payments')
     except OperationalError as exc:
         return render(request, 'finance/error.html', {'error': str(exc)})

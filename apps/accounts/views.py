@@ -4,9 +4,14 @@ from django.db import models
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
 from .forms import LoginForm, RegisterForm
 from .models import User, Role
 from .permissions import PERMISSIONS
+
+
+def _is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 def login_view(request):
@@ -46,7 +51,52 @@ def logout_view(request):
 
 @login_required
 def profile_view(request):
-    return render(request, 'accounts/profile.html', {'user': request.user})
+    user = request.user
+    if request.method == 'POST':
+        action = request.POST.get('_action')
+        if action == 'profile':
+            try:
+                user.full_name = request.POST.get('full_name', '').strip() or user.full_name
+                user.phone = request.POST.get('phone', '').strip()
+                user.email = request.POST.get('email', '').strip()
+                user.save(update_fields=['full_name', 'phone', 'email'])
+            except Exception as exc:
+                if _is_ajax(request):
+                    return JsonResponse({'success': False, 'error': 'تعذر حفظ البيانات.'})
+                messages.error(request, 'تعذر حفظ البيانات.')
+                return redirect('accounts:profile')
+            if _is_ajax(request):
+                return JsonResponse({'success': True, 'message': 'تم تحديث الملف الشخصي بنجاح.'})
+            messages.success(request, 'تم تحديث الملف الشخصي.')
+        elif action == 'password':
+            current = request.POST.get('current_password', '')
+            new_pw = request.POST.get('new_password', '')
+            confirm_pw = request.POST.get('confirm_password', '')
+            if not user.check_password(current):
+                err = 'كلمة المرور الحالية غير صحيحة.'
+                if _is_ajax(request):
+                    return JsonResponse({'success': False, 'error': err})
+                messages.error(request, err)
+            elif len(new_pw) < 6:
+                err = 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل.'
+                if _is_ajax(request):
+                    return JsonResponse({'success': False, 'error': err})
+                messages.error(request, err)
+            elif new_pw != confirm_pw:
+                err = 'كلمة المرور الجديدة وتأكيدها غير متطابقتين.'
+                if _is_ajax(request):
+                    return JsonResponse({'success': False, 'error': err})
+                messages.error(request, err)
+            else:
+                user.set_password(new_pw)
+                user.save(update_fields=['password'])
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, user)
+                if _is_ajax(request):
+                    return JsonResponse({'success': True, 'message': 'تم تغيير كلمة المرور بنجاح.'})
+                messages.success(request, 'تم تغيير كلمة المرور.')
+        return redirect('accounts:profile')
+    return render(request, 'accounts/profile.html', {'user': user})
 
 
 @login_required
@@ -103,6 +153,8 @@ def user_save(request, pk=None):
         if data.get('password'):
             instance.set_password(data.get('password'))
         instance.save()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حفظ المستخدم بنجاح.'})
         messages.success(request, 'تم حفظ المستخدم.')
         return redirect('accounts:users')
 
@@ -118,6 +170,8 @@ def user_delete(request, pk):
     obj = get_object_or_404(User, pk=pk, center=center)
     if request.method == 'POST':
         obj.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف المستخدم بنجاح.'})
         messages.success(request, 'تم حذف المستخدم.')
     return redirect('accounts:users')
 
@@ -165,6 +219,8 @@ def role_save(request, pk=None):
         instance.permissions = perms
         instance.is_default = 'is_default' in request.POST
         instance.save()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حفظ الدور بنجاح.'})
         messages.success(request, 'تم حفظ الدور.')
         return redirect('accounts:roles')
 

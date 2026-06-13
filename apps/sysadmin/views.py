@@ -167,10 +167,12 @@ def center_detail(request, pk):
     today  = timezone.localdate()
 
     return render(request, 'sysadmin/center_detail.html', {
-        'center': center,
-        'users':  users,
-        'today':  today,
-        'plans':  Center.PLANS,
+        'center':          center,
+        'users':           users,
+        'today':           today,
+        'plans':           Center.PLANS,
+        'service_types':   ServiceType.objects.filter(is_active=True).order_by('order', 'name'),
+        'country_choices': COUNTRY_CHOICES,
     })
 
 
@@ -346,6 +348,8 @@ def center_delete(request, pk):
         center = get_object_or_404(Center, pk=pk)
         name = center.name
         center.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True})
         messages.success(request, f'تم حذف المركز "{name}".')
     return redirect('sysadmin:center_list')
 
@@ -360,7 +364,8 @@ def service_types(request):
 
 @superuser_required
 def service_type_save(request, pk=None):
-    obj = get_object_or_404(ServiceType, pk=pk) if pk else None
+    obj  = get_object_or_404(ServiceType, pk=pk) if pk else None
+    ajax = _is_ajax(request)
 
     if request.method == 'POST':
         name        = request.POST.get('name', '').strip()
@@ -371,33 +376,49 @@ def service_type_save(request, pk=None):
         is_active   = bool(request.POST.get('is_active'))
 
         if not name:
-            messages.error(request, 'الاسم مطلوب.')
+            err = 'الاسم مطلوب.'
+            if ajax:
+                return JsonResponse({'success': False, 'error': err})
+            messages.error(request, err)
         else:
             if obj:
                 obj.name = name; obj.icon = icon; obj.color = color
                 obj.description = description; obj.order = order
                 obj.is_active = is_active
                 obj.save()
+                if ajax:
+                    return JsonResponse({'success': True, 'type': _service_type_payload(obj)})
                 messages.success(request, 'تم تعديل نوع المركز.')
             else:
-                ServiceType.objects.create(
+                t = ServiceType.objects.create(
                     name=name, icon=icon, color=color,
                     description=description, order=order, is_active=is_active,
                 )
+                if ajax:
+                    return JsonResponse({'success': True, 'type': _service_type_payload(t)})
                 messages.success(request, 'تم إضافة نوع المركز.')
-        return redirect('sysadmin:service_types')
+        if not ajax:
+            return redirect('sysadmin:service_types')
 
+    if ajax:
+        return JsonResponse({'success': False, 'error': 'طلب غير صحيح'}, status=400)
     return render(request, 'sysadmin/service_type_form.html', {'obj': obj})
 
 
 @superuser_required
 def service_type_delete(request, pk):
     if request.method == 'POST':
-        obj = get_object_or_404(ServiceType, pk=pk)
+        obj  = get_object_or_404(ServiceType, pk=pk)
+        ajax = _is_ajax(request)
         if obj.centers.exists():
-            messages.error(request, 'لا يمكن حذف نوع مرتبط بمراكز موجودة.')
+            err = 'لا يمكن حذف نوع مرتبط بمراكز موجودة.'
+            if ajax:
+                return JsonResponse({'success': False, 'error': err})
+            messages.error(request, err)
         else:
             obj.delete()
+            if ajax:
+                return JsonResponse({'success': True})
             messages.success(request, 'تم حذف نوع المركز.')
     return redirect('sysadmin:service_types')
 

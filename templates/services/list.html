@@ -51,7 +51,7 @@
         </thead>
         <tbody>
           {% for svc in services %}
-          <tr>
+          <tr id="row-{{ svc.pk }}">
             <td>
               <strong>{{ svc.name }}</strong>
               {% if svc.description %}
@@ -85,10 +85,10 @@
                         onclick="openEditService({{ svc.pk }}, '{{ svc.name|escapejs }}', {{ svc.category_id|default:'null' }}, {{ svc.duration }}, '{{ svc.price }}', '{{ svc.description|escapejs }}', {{ svc.show_in_store|yesno:'true,false' }}, {{ svc.is_active|yesno:'true,false' }})">
                   <i class="fas fa-edit"></i>
                 </button>
-                <form method="post" action="{% url 'services:service_delete' svc.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الخدمة؟')">
-                  {% csrf_token %}
-                  <button type="submit" class="cx-act cx-act--del" title="حذف"><i class="fas fa-trash"></i></button>
-                </form>
+                <button type="button" class="cx-act cx-act--del" title="حذف"
+                        onclick="BCMS.ajaxDelete('{% url 'services:service_delete' svc.pk %}', 'حذف الخدمة {{ svc.name|escapejs }}؟', 'row-{{ svc.pk }}')">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -112,7 +112,7 @@
     <!-- Mobile Cards -->
     <div class="cx-mobile-cards">
       {% for svc in services %}
-      <div class="cx-card">
+      <div class="cx-card" id="card-{{ svc.pk }}">
         <div class="cx-card-head">
           <div>
             <div class="cx-card-title">{{ svc.name }}</div>
@@ -123,10 +123,10 @@
                     onclick="openEditService({{ svc.pk }}, '{{ svc.name|escapejs }}', {{ svc.category_id|default:'null' }}, {{ svc.duration }}, '{{ svc.price }}', '{{ svc.description|escapejs }}', {{ svc.show_in_store|yesno:'true,false' }}, {{ svc.is_active|yesno:'true,false' }})">
               <i class="fas fa-edit"></i>
             </button>
-            <form method="post" action="{% url 'services:service_delete' svc.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الخدمة؟')">
-              {% csrf_token %}
-              <button type="submit" class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
-            </form>
+            <button type="button" class="cx-act cx-act--del"
+                    onclick="BCMS.ajaxDelete('{% url 'services:service_delete' svc.pk %}', 'حذف الخدمة {{ svc.name|escapejs }}؟', 'row-{{ svc.pk }}')">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
         <div class="cx-card-meta">
@@ -233,6 +233,10 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  BCMS.ajaxForm(document.querySelector('#modal-svc form'));
+});
+
 function openAddService() {
   document.getElementById('svc-modal-title').textContent = 'خدمة جديدة';
   document.getElementById('svc-pk').value = '';
