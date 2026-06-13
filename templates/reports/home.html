@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block title %}التقارير{% endblock %}
+{% block page_title %}التقارير{% endblock %}
+{% block nav_reports %}active{% endblock %}
+
+{% block content %}
+{% include 'reports/_content.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.font.family = "Cairo, 'Segoe UI', sans-serif";
+Chart.defaults.color = '#64748b';
+
+function toggleCustom(v) {
+  document.getElementById('custom-range').style.display = v === 'custom' ? 'flex' : 'none';
+}
+
+const revLabels  = {{ chart_rev_labels|safe }};
+const revData    = {{ chart_rev_data|safe }};
+const apptLabels = {{ chart_appt_labels|safe }};
+const apptData   = {{ chart_appt_data|safe }};
+const statusLabels = {{ chart_status_labels|safe }};
+const statusData   = {{ chart_status_data|safe }};
+const statusColors = {{ chart_status_colors|safe }};
+const methodLabels = {{ chart_method_labels|safe }};
+const methodData   = {{ chart_method_data|safe }};
+const methodColors = {{ chart_method_colors|safe }};
+
+if (document.getElementById('revChart') && revData.length) {
+  new Chart(document.getElementById('revChart'), {
+    type: 'line',
+    data: {
+      labels: revLabels,
+      datasets: [{
+        data: revData, fill: true,
+        borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.12)',
+        tension: 0.4, pointRadius: 3,
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 10 } } } }
+  });
+}
+
+if (document.getElementById('apptChart') && apptData.length) {
+  new Chart(document.getElementById('apptChart'), {
+    type: 'bar',
+    data: {
+      labels: apptLabels,
+      datasets: [{
+        data: apptData,
+        backgroundColor: 'rgba(236,72,153,.65)',
+        borderRadius: 4,
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 10 } } } }
+  });
+}
+
+if (document.getElementById('statusChart') && statusData.length) {
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: statusColors }] },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+if (document.getElementById('methodChart') && methodData.length) {
+  new Chart(document.getElementById('methodChart'), {
+    type: 'doughnut',
+    data: { labels: methodLabels, datasets: [{ data: methodData, backgroundColor: methodColors }] },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+}
+</script>
+<script>
+// Export PDF button: open printable view in new tab and auto-print
+document.getElementById('exportPdfBtn').addEventListener('click', function() {
+  try {
+    var qs = window.location.search || '';
+    var sep = qs.indexOf('?') === 0 ? '&' : '?';
+    // ensure we don't double-add auto_print
+    var params = new URLSearchParams(qs);
+    params.set('auto_print', '1');
+    var url = window.location.pathname.replace(/\/$/, '') + 'print/' + '?' + params.toString();
+    // If current path is /reports/..., we want /reports/print/
+    if (!url.match(/reports\/print/)) {
+      // fallback: build from origin + /reports/print/
+      var base = window.location.pathname.replace(/reports.*$/, 'reports/');
+      url = base + 'print/?' + params.toString();
+    }
+    window.open(url, '_blank');
+  } catch (e) { console.error(e); }
+});
+</script>
+{% endblock %}

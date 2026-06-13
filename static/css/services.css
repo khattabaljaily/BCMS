@@ -1,0 +1,94 @@
+/* ================================================
+   EnjazBCMS — Services
+   ================================================ */
+
+/* ── Service card grid ─────────────────────────── */
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.service-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid var(--slate-200);
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  transition: box-shadow .18s;
+}
+.service-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+.service-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--rose-bg);
+  color: var(--rose);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.service-info { flex: 1; min-width: 0; }
+.service-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.service-meta {
+  font-size: 11px;
+  color: var(--slate-400);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.service-price {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--rose);
+}
+.service-card__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* ── Category chips ────────────────────────────── */
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all .15s;
+}
+.cat-chip.active {
+  background: var(--rose);
+  color: #fff;
+  border-color: var(--rose);
+}
+.cat-chip:not(.active) {
+  background: #fff;
+  border-color: var(--slate-200);
+  color: var(--slate-600);
+}
+.cat-chip:not(.active):hover {
+  border-color: var(--rose);
+  color: var(--rose);
+}
+
+/* ── Duration badge ────────────────────────────── */
+.duration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--slate-500);
+}
+
+/* ── Mobile ─────────────────────────────────────── */
+@media (max-width: 600px) {
+  .service-grid { grid-template-columns: 1fr; }
+}

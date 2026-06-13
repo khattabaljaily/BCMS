@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block title %}كشف حساب عميل{% endblock %}
+{% block page_title %}كشف حساب عميل{% endblock %}
+{% block nav_finance_open %}open{% endblock %}
+{% block nav_finance_statements %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- ── Hero ─────────────────────────────────────────────────── -->
+  <div class="cx-hero" style="margin-bottom:24px;">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 14px rgba(99,102,241,.3);">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">كشف حساب عميل</h1>
+          <p class="cx-hero-desc">عرض الفواتير والمدفوعات والرصيد الجاري</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          {% if client %}
+          <a href="{% url 'clients:detail' client.pk %}" class="btn btn--ghost btn--sm">
+            <i class="fas fa-user"></i> ملف العميل
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Client selector ──────────────────────────────────────── -->
+  <div class="cx-panel" style="padding:20px 24px;margin-bottom:20px;">
+    <form method="get" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <label style="font-size:13px;font-weight:600;color:var(--slate-600);white-space:nowrap;">
+        <i class="fas fa-user" style="margin-left:6px;color:var(--slate-400);"></i>اختر عميلاً
+      </label>
+      <div style="position:relative;flex:1;min-width:240px;">
+        <select name="client" onchange="this.form.submit()"
+                style="width:100%;padding:10px 14px;border:1px solid var(--slate-200);border-radius:10px;font-size:13px;font-family:inherit;background:#fff;color:var(--slate-700);appearance:none;cursor:pointer;">
+          <option value="">— اختر عميلاً —</option>
+          {% for c in clients %}
+          <option value="{{ c.pk }}" {% if client and client.pk == c.pk %}selected{% endif %}>
+            {{ c.name }}{% if c.phone %} · {{ c.phone }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <i class="fas fa-chevron-down" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--slate-400);font-size:11px;pointer-events:none;"></i>
+      </div>
+      {% if client %}
+      <a href="{% url 'finance:client_statement' %}" class="btn btn--ghost btn--sm">
+        <i class="fas fa-times"></i> مسح
+      </a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if client %}
+
+  <!-- ── Client header ────────────────────────────────────────── -->
+  <div class="cx-panel" style="margin-bottom:20px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#f5f3ff 0%,#fff 60%);padding:20px 24px;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;gap:16px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.3);">
+        {{ client.name|first|upper }}
+      </div>
+      <div>
+        <div style="font-size:17px;font-weight:800;color:var(--slate-800);">{{ client.name }}</div>
+        <div style="font-size:12px;color:var(--slate-400);margin-top:2px;">
+          <i class="fas fa-phone" style="font-size:10px;margin-left:4px;"></i>{{ client.phone }}
+          {% if client.email %} &nbsp;·&nbsp; {{ client.email }}{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0;">
+      <div style="padding:18px 20px;border-left:1px solid var(--slate-100);text-align:center;">
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:6px;">إجمالي الفواتير</div>
+        <div style="font-size:20px;font-weight:900;color:var(--slate-700);">{{ total_invoiced|format_number:2 }}</div>
+      </div>
+      <div style="padding:18px 20px;border-left:1px solid var(--slate-100);text-align:center;">
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:6px;">إجمالي المدفوع</div>
+        <div style="font-size:20px;font-weight:900;color:#059669;">{{ total_paid|format_number:2 }}</div>
+      </div>
+      <div style="padding:18px 20px;border-left:1px solid var(--slate-100);text-align:center;">
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:6px;">المبلغ المطلوب</div>
+        <div style="font-size:20px;font-weight:900;color:{% if balance > 0 %}#d97706{% else %}#059669{% endif %};">
+          {{ balance|format_number:2 }}
+        </div>
+      </div>
+      <div style="padding:18px 20px;text-align:center;">
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:6px;">عدد المعاملات</div>
+        <div style="font-size:20px;font-weight:900;color:var(--slate-700);">{{ entries|length }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Statement table ──────────────────────────────────────── -->
+  <div class="cx-panel">
+    <div style="padding:18px 24px 14px;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:14px;font-weight:700;color:var(--slate-700);">
+        <i class="fas fa-list-ul" style="margin-left:8px;color:#6366f1;"></i> كشف الحساب التفصيلي
+      </span>
+      <span style="font-size:12px;color:var(--slate-400);">مرتب زمنياً</span>
+    </div>
+
+    {% if entries %}
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th style="width:120px;">التاريخ</th>
+            <th>النوع</th>
+            <th>المرجع</th>
+            <th style="text-align:end;">مدين</th>
+            <th style="text-align:end;">دائن</th>
+            <th style="text-align:end;">الرصيد</th>
+            <th>الحالة / الملاحظة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in entries %}
+          <tr style="{% if e.type == 'payment' %}background:rgba(5,150,105,.03);{% endif %}">
+            <td style="color:var(--slate-500);white-space:nowrap;font-size:12px;">
+              {{ e.datetime|date:"j/n/Y" }}
+              <div style="font-size:10px;color:var(--slate-400);">{{ e.datetime|time:"H:i" }}</div>
+            </td>
+            <td>
+              {% if e.type == 'invoice' %}
+                <span style="display:inline-flex;align-items:center;gap:5px;background:#ede9fe;color:#6d28d9;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  <i class="fas fa-file-invoice" style="font-size:9px;"></i> فاتورة
+                </span>
+              {% else %}
+                <span style="display:inline-flex;align-items:center;gap:5px;background:#d1fae5;color:#065f46;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  <i class="fas fa-hand-holding-dollar" style="font-size:9px;"></i> دفعة
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if e.type == 'invoice' %}
+                <a href="{% url 'billing:detail' e.obj.pk %}" style="color:#6366f1;font-weight:700;text-decoration:none;font-size:13px;">
+                  {{ e.obj.number }}
+                </a>
+              {% else %}
+                <span style="font-size:12px;color:var(--slate-500);">{{ e.obj.get_method_display }}</span>
+              {% endif %}
+            </td>
+            <td style="text-align:end;font-weight:700;color:{% if e.debit %}var(--slate-700){% else %}var(--slate-200){% endif %};">
+              {% if e.debit %}{{ e.debit|format_number:2 }}{% else %}—{% endif %}
+            </td>
+            <td style="text-align:end;font-weight:700;color:{% if e.credit %}#059669{% else %}var(--slate-200){% endif %};">
+              {% if e.credit %}{{ e.credit|format_number:2 }}{% else %}—{% endif %}
+            </td>
+            <td style="text-align:end;">
+              <span style="font-weight:800;font-size:13px;color:{% if e.balance > 0 %}#d97706{% elif e.balance == 0 %}#059669{% else %}#ef4444{% endif %};">
+                {{ e.balance|format_number:2 }}
+              </span>
+            </td>
+            <td style="font-size:12px;color:var(--slate-500);">
+              {% if e.type == 'invoice' %}
+                <span class="badge badge--{% if e.obj.status == 'paid' %}green{% elif e.obj.status == 'partial' %}yellow{% elif e.obj.status == 'cancelled' %}red{% else %}gray{% endif %}" style="font-size:11px;">
+                  {{ e.obj.get_status_display }}
+                </span>
+              {% else %}
+                {% if e.obj.notes %}{{ e.obj.notes }}{% else %}—{% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--slate-50);">
+            <td colspan="3" style="font-weight:700;color:var(--slate-600);padding:14px 12px;">الإجمالي</td>
+            <td style="text-align:end;font-weight:900;color:var(--slate-700);padding:14px 12px;">{{ total_invoiced|format_number:2 }}</td>
+            <td style="text-align:end;font-weight:900;color:#059669;padding:14px 12px;">{{ total_paid|format_number:2 }}</td>
+            <td style="text-align:end;padding:14px 12px;">
+              <span style="font-weight:900;font-size:14px;color:{% if balance > 0 %}#d97706{% else %}#059669{% endif %};">
+                {{ balance|format_number:2 }}
+              </span>
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Balance legend -->
+    <div style="padding:14px 24px;border-top:1px solid var(--slate-100);display:flex;gap:20px;font-size:12px;color:var(--slate-500);">
+      <span><i class="fas fa-circle" style="color:#d97706;font-size:8px;margin-left:5px;"></i>مبلغ مطلوب (مدين)</span>
+      <span><i class="fas fa-circle" style="color:#059669;font-size:8px;margin-left:5px;"></i>رصيد صفر أو دائن</span>
+      <span style="margin-right:auto;color:var(--slate-400);">مدين = فواتير · دائن = مدفوعات</span>
+    </div>
+
+    {% else %}
+    <div class="cx-empty" style="padding:60px 24px;">
+      <i class="fas fa-file-invoice-dollar"></i>
+      <p>لا توجد معاملات لهذا العميل بعد</p>
+      <a href="{% url 'billing:create' %}?client={{ client.pk }}" class="btn btn--primary" style="margin-top:12px;">
+        <i class="fas fa-plus"></i> إنشاء فاتورة
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+
+  <!-- ── Empty state ───────────────────────────────────────────── -->
+  <div class="cx-panel">
+    <div class="cx-empty" style="padding:80px 24px;">
+      <i class="fas fa-user-circle" style="font-size:40px;color:var(--slate-300);margin-bottom:12px;"></i>
+      <p style="font-size:15px;">اختر عميلاً من القائمة لعرض كشف حسابه</p>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div>
+{% endblock %}

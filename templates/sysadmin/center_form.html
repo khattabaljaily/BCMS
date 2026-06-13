@@ -1,0 +1,210 @@
+{% extends "sysadmin/base.html" %}
+{% block title %}{% if obj %}تعديل {{ obj.name }}{% else %}إضافة مركز{% endif %}{% endblock %}
+{% block page_title %}{% if obj %}تعديل مركز{% else %}إضافة مركز جديد{% endif %}{% endblock %}
+{% block nav_centers %}active{% endblock %}
+
+{% block content %}
+
+<div class="sa-breadcrumb">
+  <a href="{% url 'sysadmin:center_list' %}">المراكز</a>
+  {% if obj %} ← <a href="{% url 'sysadmin:center_detail' obj.pk %}">{{ obj.name }}</a>{% endif %}
+  ← {% if obj %}تعديل{% else %}إضافة{% endif %}
+</div>
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+<div style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;">
+
+  <!-- Left: main form -->
+  <div>
+    <div class="sa-card" style="margin-bottom:16px;">
+      <div class="sa-card-header"><h3><i class="fas fa-building"></i> بيانات المركز</h3></div>
+      <div class="sa-card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>اسم المركز *</label>
+            <input type="text" name="name" class="form-control" value="{{ obj.name|default:'' }}" required placeholder="مثال: صالون نور">
+          </div>
+          <div class="form-group">
+            <label>الرابط المختصر *</label>
+            <input type="text" name="slug" class="form-control" value="{{ obj.slug|default:'' }}" required
+                   placeholder="nur-salon" pattern="[a-z0-9\-]+" {% if obj %}readonly{% endif %}>
+            <small style="font-size:11px;color:var(--sa-muted);">حروف إنجليزية صغيرة وأرقام وشرطات فقط</small>
+          </div>
+          <div class="form-group">
+            <label>نوع المركز *</label>
+            <select name="service_type" class="form-control" required>
+              <option value="">اختر النوع...</option>
+              {% for st in service_types %}
+              <option value="{{ st.pk }}" {% if obj and obj.service_type_id == st.pk %}selected{% endif %}>{{ st.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>رقم الهاتف</label>
+            <input type="text" name="phone" class="form-control" value="{{ obj.phone|default:'' }}" placeholder="+966 5xxxxxxx">
+          </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="email" class="form-control" value="{{ obj.email|default:'' }}" placeholder="info@example.com">
+          </div>
+          <div class="form-group">
+            <label>المدينة</label>
+            <input type="text" name="city" class="form-control" value="{{ obj.city|default:'' }}" placeholder="مثال: الرياض">
+          </div>
+          <div class="form-group full">
+            <label>العنوان</label>
+            <textarea name="address" class="form-control" rows="2">{{ obj.address|default:'' }}</textarea>
+          </div>
+          {% if obj %}
+          <div class="form-group full">
+            <label>الشعار</label>
+            <input type="file" name="logo" class="form-control" accept="image/*">
+            {% if obj.logo %}<small style="color:var(--sa-muted);font-size:11px;">الشعار الحالي: {{ obj.logo }}</small>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Country / Timezone / Currency -->
+    <div class="sa-card" style="margin-bottom:16px;">
+      <div class="sa-card-header"><h3><i class="fas fa-globe"></i> الدولة والإعدادات الإقليمية</h3></div>
+      <div class="sa-card-body">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>الدولة *</label>
+            <select name="country" id="sa_country" class="form-control" onchange="saOnCountry(this.value)">
+              {% for code, label in country_choices %}
+              <option value="{{ code }}" {% if obj and obj.country == code %}selected{% elif not obj and code == 'SD' %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>المنطقة الزمنية</label>
+            <input type="text" name="timezone" id="sa_tz" class="form-control"
+                   value="{{ obj.timezone|default:'Africa/Khartoum' }}" readonly
+                   style="background:var(--sa-bg,#f8fafc);color:var(--sa-muted);">
+            <small style="font-size:11px;color:var(--sa-muted);">تُحدَّد تلقائياً من الدولة</small>
+          </div>
+          <div class="form-group">
+            <label>العملة</label>
+            <input type="text" name="currency" id="sa_cur" class="form-control"
+                   value="{{ obj.currency|default:'SDG' }}" readonly
+                   style="background:var(--sa-bg,#f8fafc);color:var(--sa-muted);">
+            <small style="font-size:11px;color:var(--sa-muted);">تُحدَّد تلقائياً من الدولة</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: subscription + limits -->
+  <div>
+    <div class="sa-card" style="margin-bottom:16px;">
+      <div class="sa-card-header"><h3><i class="fas fa-credit-card" style="color:var(--sa-green)"></i> الاشتراك</h3></div>
+      <div class="sa-card-body">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>الباقة</label>
+          <select name="plan" class="form-control">
+            {% for val, label in plans %}
+            <option value="{{ val }}" {% if obj and obj.plan == val %}selected{% elif not obj and val == 'trial' %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>تاريخ انتهاء الاشتراك</label>
+          <input type="date" name="plan_expires" class="form-control"
+                 value="{{ obj.plan_expires|date:'Y-m-d'|default:'' }}">
+          <small style="font-size:11px;color:var(--sa-muted);">اتركه فارغاً للاشتراك غير المحدود</small>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>أقصى عدد موظفين</label>
+          <input type="number" name="max_staff" class="form-control" value="{{ obj.max_staff|default:10 }}" min="1">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>أقصى عدد مستخدمين</label>
+          <input type="number" name="max_users" class="form-control" value="{{ obj.max_users|default:5 }}" min="1">
+        </div>
+      </div>
+    </div>
+
+    <div class="sa-card" style="margin-bottom:16px;">
+      <div class="sa-card-header"><h3><i class="fas fa-toggle-on" style="color:var(--sa-blue)"></i> الخيارات</h3></div>
+      <div class="sa-card-body">
+        <div class="form-check" style="margin-bottom:10px;">
+          <input type="checkbox" name="is_active" id="is_active" value="1"
+                 {% if obj.is_active or not obj %}checked{% endif %}>
+          <label for="is_active">مركز نشط</label>
+        </div>
+        <div class="form-check">
+          <input type="checkbox" name="is_demo" id="is_demo" value="1"
+                 {% if obj and obj.is_demo %}checked{% endif %}>
+          <label for="is_demo">حساب تجريبي (Demo)</label>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button type="submit" class="btn btn-primary" style="flex:1;">
+        <i class="fas fa-check"></i> {% if obj %}حفظ التعديلات{% else %}إنشاء المركز{% endif %}
+      </button>
+      {% if obj %}
+      <a href="{% url 'sysadmin:center_detail' obj.pk %}" class="btn btn-secondary">إلغاء</a>
+      {% else %}
+      <a href="{% url 'sysadmin:center_list' %}" class="btn btn-secondary">إلغاء</a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SA_COUNTRIES = {
+  SA:{tz:'Asia/Riyadh',      cur:'SAR'}, AE:{tz:'Asia/Dubai',       cur:'AED'},
+  KW:{tz:'Asia/Kuwait',      cur:'KWD'}, BH:{tz:'Asia/Bahrain',     cur:'BHD'},
+  QA:{tz:'Asia/Qatar',       cur:'QAR'}, OM:{tz:'Asia/Muscat',      cur:'OMR'},
+  YE:{tz:'Asia/Aden',        cur:'YER'}, JO:{tz:'Asia/Amman',       cur:'JOD'},
+  LB:{tz:'Asia/Beirut',      cur:'LBP'}, SY:{tz:'Asia/Damascus',    cur:'SYP'},
+  IQ:{tz:'Asia/Baghdad',     cur:'IQD'}, EG:{tz:'Africa/Cairo',     cur:'EGP'},
+  LY:{tz:'Africa/Tripoli',   cur:'LYD'}, TN:{tz:'Africa/Tunis',     cur:'TND'},
+  DZ:{tz:'Africa/Algiers',   cur:'DZD'}, MA:{tz:'Africa/Casablanca',cur:'MAD'},
+  MR:{tz:'Africa/Nouakchott',cur:'MRU'}, SD:{tz:'Africa/Khartoum',  cur:'SDG'},
+  SO:{tz:'Africa/Mogadishu', cur:'SOS'}, DJ:{tz:'Africa/Djibouti',  cur:'DJF'},
+  KM:{tz:'Indian/Comoro',    cur:'KMF'}, PS:{tz:'Asia/Gaza',        cur:'ILS'},
+};
+
+function saOnCountry(code) {
+  const d = SA_COUNTRIES[code];
+  if (!d) return;
+  document.getElementById('sa_tz').value  = d.tz;
+  document.getElementById('sa_cur').value = d.cur;
+}
+
+// Auto-generate slug from name (add mode only)
+{% if not obj %}
+const nameInput = document.querySelector('input[name=name]');
+const slugInput = document.querySelector('input[name=slug]');
+let slugDirty = false;
+slugInput.addEventListener('input', () => slugDirty = true);
+nameInput.addEventListener('input', () => {
+  if (slugDirty) return;
+  slugInput.value = nameInput.value
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-]/g, '')
+    .replace(/-+/g, '-');
+});
+{% endif %}
+
+// Init on load
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('sa_country');
+  if (sel && sel.value) saOnCountry(sel.value);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/billing.css' %}">{% endblock %}
+{% block title %}{% if edit_mode %}تعديل فاتورة {{ inv.number }}{% else %}فاتورة جديدة{% endif %}{% endblock %}
+{% block page_title %}{% if edit_mode %}تعديل فاتورة {{ inv.number }}{% else %}فاتورة جديدة{% endif %}{% endblock %}
+{% block nav_billing %}active{% endblock %}
+
+{% block content %}
+<form method="post" action="{% if edit_mode %}{% url 'billing:edit' inv.pk %}{% else %}{% url 'billing:create' %}{% endif %}" id="invoice-form">
+{% csrf_token %}
+
+<div class="inv-layout">
+
+  <!-- ══ Main area (catalog + lines) ════════════════ -->
+  <div class="inv-main">
+
+    <!-- Catalog Picker -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="inv-catalog-header">
+        <span class="card__title" style="font-size:13.5px;">اختر خدمة أو منتجاً</span>
+        <div class="catalog-tabs">
+          <button type="button" class="catalog-tab active" onclick="switchTab('services',this)">
+            <i class="fas fa-spa"></i> الخدمات
+          </button>
+          <button type="button" class="catalog-tab" onclick="switchTab('products',this)">
+            <i class="fas fa-box-open"></i> المنتجات
+          </button>
+        </div>
+        <input type="text" class="catalog-search" id="catalog-search"
+          placeholder="بحث بالاسم..." oninput="renderCatalog()">
+      </div>
+      <div class="catalog-body">
+        <div id="catalog-grid" class="catalog-grid"></div>
+      </div>
+    </div>
+
+    <!-- Lines table -->
+    <div class="card">
+      <div class="card__header">
+        <span class="card__title">بنود الفاتورة</span>
+        <button type="button" class="btn btn--ghost btn--sm" onclick="addManualLine()">
+          <i class="fas fa-plus"></i> بند يدوي
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table class="table" id="lines-table">
+          <thead>
+            <tr>
+              <th>الوصف</th>
+              <th style="width:80px;text-align:center;">الكمية</th>
+              <th style="width:110px;text-align:center;">السعر</th>
+              <th style="width:80px;text-align:center;">خصم%</th>
+              <th style="width:110px;text-align:center;">الإجمالي</th>
+              <th style="width:44px;"></th>
+            </tr>
+          </thead>
+          <tbody id="lines-body">
+            {% if edit_mode %}
+              {% for line in inv.lines.all %}
+              <tr id="line-{{ forloop.counter }}">
+                <td>
+                  <input class="form-control form-control--sm" type="text"
+                    name="description[]" value="{{ line.description|default:''|escape }}" placeholder="الوصف..." required>
+                  <input type="hidden" name="product_id[]" value="{{ line.product_id|default:'' }}">
+                  <input type="hidden" name="service_id[]" value="{{ line.service_id|default:'' }}">
+                </td>
+                <td>
+                  <input class="form-control form-control--sm tc" type="number"
+                    name="quantity[]" value="{{ line.quantity }}" min="0.01" step="0.01" oninput="calcLine(this)">
+                </td>
+                <td>
+                  <input class="form-control form-control--sm tc" type="number"
+                    name="unit_price[]" value="{{ line.unit_price }}" min="0" step="0.01" oninput="calcLine(this)">
+                </td>
+                <td>
+                  <input class="form-control form-control--sm tc" type="number"
+                    name="discount_percent[]" value="{{ line.discount_percent }}" min="0" max="100" oninput="calcLine(this)">
+                </td>
+                <td class="line-total tc" style="font-weight:800;color:var(--rose);">{{ line.line_total }}</td>
+                <td>
+                  <button type="button" class="btn btn--ghost btn--icon btn--sm btn-remove-line"
+                    data-target="line-{{ forloop.counter }}">
+                    <i class="fas fa-trash-alt" style="color:#cbd5e1;font-size:12px;"></i>
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      <div id="lines-empty" class="cx-empty" style="padding:32px;">
+        <i class="fas fa-receipt"></i>
+        <p>اختر خدمة أو منتجاً من الأعلى لإضافته للفاتورة</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ Sidebar ════════════════════════════════════ -->
+  <div class="inv-sidebar">
+
+    <!-- Client picker -->
+    <div class="card client-picker-card" style="margin-bottom:14px;">
+      <div class="card__header"><span class="card__title"><i class="fas fa-user" style="color:var(--rose);margin-left:6px;"></i>العميل</span></div>
+      <div class="card__body" style="padding:14px;">
+
+        <div class="client-picker" id="client-picker">
+          <input type="text" id="client-search" class="form-control"
+            placeholder="ابحث باسم أو رقم هاتف..." autocomplete="off"
+            oninput="filterClients(this.value)"
+            onkeyup="filterClients(this.value)"
+            oncompositionend="filterClients(this.value)"
+            onfocus="filterClients(this.value)">
+          <input type="hidden" name="client" id="client-id-input">
+          <div id="client-dropdown" class="client-dropdown"></div>
+        </div>
+
+        <!-- Client info card — shown after selection -->
+        <div id="client-info" class="client-card-mini" style="display:none;">
+          <div class="client-avatar" id="ci-avatar" style="width:42px;height:42px;font-size:17px;flex-shrink:0;"></div>
+          <div class="client-card-mini__body">
+            <div id="ci-name"></div>
+            <div id="ci-phone"></div>
+            <div id="ci-stats"></div>
+          </div>
+          <button type="button" class="btn btn--ghost btn--icon btn--sm" onclick="clearClient()"
+            title="إلغاء التحديد"><i class="fas fa-times"></i></button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <div class="card__header"><span class="card__title">الملخص</span></div>
+      <div class="card__body" style="padding:16px;">
+
+        <div class="form-group">
+          <label class="form-label">طريقة الدفع</label>
+          <select class="form-control" name="payment_method" id="payment-method">
+            {% for val, label in payment_choices %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="inv-summary">
+          <div class="inv-summary__row">
+            <span>المجموع الفرعي</span>
+            <span id="summary-subtotal" class="inv-summary__val">0.00</span>
+          </div>
+          <div class="inv-summary__row">
+            <label class="inv-summary__label" for="discount-amount">خصم</label>
+            <input class="form-control inv-summary__disc" type="number"
+              name="discount_amount" id="discount-amount"
+              value="0" min="0" step="0.01" oninput="calcTotals()">
+          </div>
+          <div class="inv-summary__total">
+            <span>الإجمالي</span>
+            <span id="summary-total">0.00</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px;">
+          <label class="form-label">ملاحظات</label>
+          <textarea class="form-control" name="notes" id="notes-textarea" rows="2" placeholder="..."></textarea>
+        </div>
+
+        <div class="inv-actions">
+          <button type="submit" name="action" value="pay" class="btn btn--primary btn--lg inv-actions__pay" id="pay-action-button">
+            <i class="fas fa-check-circle"></i> حفظ وإتمام الدفع
+          </button>
+          <button type="submit" name="action" value="draft" class="btn btn--ghost inv-actions__draft">
+            <i class="fas fa-save"></i> حفظ كمسودة
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Server data ───────────────────────────────────
+const CLIENTS  = {{ clients_json|safe }};
+const SERVICES = {{ services_json|safe }};
+const PRODUCTS = {{ products_json|safe }};
+
+// ── State ─────────────────────────────────────────
+let activeTab  = 'services';
+let lineCount  = 0;
+
+// ════════════════════════════════════════════════════
+// CLIENT PICKER
+// ════════════════════════════════════════════════════
+function filterClients(q) {
+  const dd = document.getElementById('client-dropdown');
+  const q2 = String(q || '').trim().toLowerCase();
+  let matches = q2
+    ? CLIENTS.filter(c => {
+        const name = String(c.name || '').toLowerCase();
+        const phone = String(c.phone || '');
+        return name.includes(q2) || phone.includes(q2);
+      })
+    : CLIENTS;
+  matches = matches.slice(0, 10);
+
+  if (!matches.length) {
+    dd.innerHTML = '<div class="client-dd-empty">لا يوجد عملاء مطابقون</div>';
+  } else {
+    dd.innerHTML = matches.map(c =>
+      `<div class="client-dd-item" data-client-id="${c.id}">
+        <div class="client-dd-name">${c.name}</div>
+        <div class="client-dd-phone">${c.phone}</div>
+      </div>`
+    ).join('');
+  }
+  dd.classList.add('open');
+}
+
+function selectClient(id) {
+  const clientId = parseInt(id, 10);
+  const c = CLIENTS.find(x => x.id === clientId);
+  if (!c) return;
+  const dropdown = document.getElementById('client-dropdown');
+  const searchInput = document.getElementById('client-search');
+
+  searchInput.value   = c.name;
+  document.getElementById('client-id-input').value = id;
+  dropdown.classList.remove('open');
+
+  document.getElementById('ci-avatar').textContent = c.name[0] || '?';
+  document.getElementById('ci-name').textContent   = c.name;
+  document.getElementById('ci-phone').textContent  = c.phone + (c.email ? '  ·  ' + c.email : '');
+  function formatNumberJS(n, decimals=0) {
+    try { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
+    catch(e) { return n; }
+  }
+  document.getElementById('ci-stats').textContent  =
+    c.visits + ' زيارة  ·  ' + formatNumberJS(c.spent, 0);
+  document.getElementById('client-info').style.display = 'flex';
+}
+
+function clearClient() {
+  document.getElementById('client-search').value   = '';
+  document.getElementById('client-id-input').value = '';
+  document.getElementById('client-info').style.display = 'none';
+}
+
+const clientSearchInput = document.getElementById('client-search');
+const clientDropdown = document.getElementById('client-dropdown');
+
+if (clientSearchInput) {
+  clientSearchInput.addEventListener('input', function(e) {
+    filterClients(e.target.value);
+  });
+  clientSearchInput.addEventListener('keyup', function(e) {
+    filterClients(e.target.value);
+  });
+  clientSearchInput.addEventListener('compositionend', function(e) {
+    filterClients(e.target.value);
+  });
+  clientSearchInput.addEventListener('focus', function(e) {
+    filterClients(e.target.value);
+  });
+}
+
+if (clientDropdown) {
+  clientDropdown.addEventListener('click', function(e) {
+    const item = e.target.closest('.client-dd-item');
+    if (!item) return;
+    selectClient(item.dataset.clientId);
+  });
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#client-picker')) {
+    if (clientDropdown) clientDropdown.classList.remove('open');
+  }
+});
+
+// ════════════════════════════════════════════════════
+// CATALOG
+// ════════════════════════════════════════════════════
+function switchTab(tab, btn) {
+  activeTab = tab;
+  document.querySelectorAll('.catalog-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('catalog-search').value = '';
+  renderCatalog();
+}
+
+function renderCatalog() {
+  const q    = document.getElementById('catalog-search').value.trim().toLowerCase();
+  const data = activeTab === 'services' ? SERVICES : PRODUCTS;
+  const list = q ? data.filter(x => x.name.toLowerCase().includes(q)) : data;
+  const grid = document.getElementById('catalog-grid');
+
+  if (!list.length) {
+    grid.innerHTML = '<div class="catalog-empty">لا توجد نتائج</div>';
+    return;
+  }
+
+  // Group services by category
+  if (activeTab === 'services' && !q) {
+    const groups = {};
+    list.forEach(s => {
+      const cat = s.category || 'أخرى';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(s);
+    });
+    grid.innerHTML = Object.entries(groups).map(([cat, items]) =>
+      `<div class="catalog-group">
+        <div class="catalog-group__label">${cat}</div>
+        <div class="catalog-group__items">
+          ${items.map(s => catalogCard(s)).join('')}
+        </div>
+      </div>`
+    ).join('');
+  } else {
+    grid.innerHTML = `<div class="catalog-group__items">${list.map(x => catalogCard(x)).join('')}</div>`;
+  }
+}
+
+function catalogCard(item) {
+  const meta = activeTab === 'services'
+    ? (item.duration || '')
+    : (item.sku ? 'SKU: ' + item.sku : '');
+  const productId = activeTab === 'products' ? item.id : '';
+  const serviceId = activeTab === 'services' ? item.id : '';
+  const safeName = item.name
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '&quot;')
+    .replace(/`/g, '&#96;');
+  const safeLabel = item.name
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/`/g, '&#96;');
+  return `<button type="button" class="catalog-item"
+    data-name="${safeName}"
+    data-price="${item.price}"
+    data-product-id="${productId}"
+    data-service-id="${serviceId}">
+    <span class="catalog-item__icon">
+      ${activeTab === 'services' ? '<i class="fas fa-spa"></i>' : '<i class="fas fa-box-open"></i>'}
+    </span>
+    <span class="catalog-item__name">${safeLabel}</span>
+    ${meta ? `<span class="catalog-item__meta">${meta}</span>` : ''}
+    <span class="catalog-item__price">${item.price.toFixed(2)}</span>
+  </button>`;
+}
+
+// ════════════════════════════════════════════════════
+// LINES TABLE
+// ════════════════════════════════════════════════════
+function addFromCatalog(name, price, productId, serviceId) {
+  addLine(name, 1, price, productId || '', serviceId || '');
+}
+
+function addManualLine() {
+  addLine('', 1, 0, '', '');
+}
+
+function addLine(desc, qty, price, productId = '', serviceId = '') {
+  document.getElementById('lines-empty').style.display = 'none';
+  const n  = ++lineCount;
+  const tr = document.createElement('tr');
+  tr.id    = 'line-' + n;
+  const tot = (qty * price).toFixed(2);
+  tr.innerHTML = `
+    <td>
+      <input class="form-control form-control--sm" type="text"
+        name="description[]" value="${esc(desc)}" placeholder="الوصف..." required>
+      <input type="hidden" name="product_id[]" value="${productId}">
+      <input type="hidden" name="service_id[]" value="${serviceId}">
+    </td>
+    <td>
+      <input class="form-control form-control--sm tc" type="number"
+        name="quantity[]" value="${qty}" min="0.01" step="0.01" oninput="calcLine(this)">
+    </td>
+    <td>
+      <input class="form-control form-control--sm tc" type="number"
+        name="unit_price[]" value="${price}" min="0" step="0.01" oninput="calcLine(this)">
+    </td>
+    <td>
+      <input class="form-control form-control--sm tc" type="number"
+        name="discount_percent[]" value="0" min="0" max="100" oninput="calcLine(this)">
+    </td>
+    <td class="line-total tc" style="font-weight:800;color:var(--rose);">${tot}</td>
+    <td>
+      <button type="button" class="btn btn--ghost btn--icon btn--sm btn-remove-line"
+        data-target="line-${n}">
+        <i class="fas fa-trash-alt" style="color:#cbd5e1;font-size:12px;"></i>
+      </button>
+    </td>`;
+  document.getElementById('lines-body').appendChild(tr);
+  calcTotals();
+}
+
+function removeLine(id) {
+  document.getElementById(id)?.remove();
+  if (!document.querySelectorAll('#lines-body tr').length)
+    document.getElementById('lines-empty').style.display = '';
+  calcTotals();
+}
+
+function calcLine(input) {
+  const row   = input.closest('tr');
+  const qty   = parseFloat(row.querySelector('[name="quantity[]"]').value)        || 0;
+  const price = parseFloat(row.querySelector('[name="unit_price[]"]').value)      || 0;
+  const disc  = parseFloat(row.querySelector('[name="discount_percent[]"]').value) || 0;
+  row.querySelector('.line-total').textContent = (qty * price * (1 - disc / 100)).toFixed(2);
+  calcTotals();
+}
+
+function calcTotals() {
+  let sub = 0;
+  document.querySelectorAll('#lines-body .line-total').forEach(el => sub += parseFloat(el.textContent) || 0);
+  const disc = parseFloat(document.getElementById('discount-amount').value) || 0;
+  document.getElementById('summary-subtotal').textContent = sub.toFixed(2);
+  document.getElementById('summary-total').textContent    = Math.max(0, sub - disc).toFixed(2);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function updatePayButtonLabel() {
+  const btn = document.getElementById('pay-action-button');
+  if (!btn) return;
+  const method = document.getElementById('payment-method').value;
+  const label = method === 'later' ? 'حفظ والدفع لاحقاً' : 'حفظ وإتمام الدفع';
+  btn.innerHTML = `<i class="fas fa-check-circle"></i> ${label}`;
+}
+
+// ── Init ──────────────────────────────────────────
+renderCatalog();
+updatePayButtonLabel();
+
+document.getElementById('payment-method').addEventListener('change', updatePayButtonLabel);
+
+document.getElementById('catalog-grid').addEventListener('click', function(e) {
+  const item = e.target.closest('.catalog-item');
+  if (!item) return;
+  addFromCatalog(
+    item.dataset.name,
+    parseFloat(item.dataset.price) || 0,
+    item.dataset.productId || '',
+    item.dataset.serviceId || ''
+  );
+});
+
+document.getElementById('lines-body').addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn-remove-line');
+  if (!btn) return;
+  removeLine(btn.dataset.target);
+});
+
+{% if edit_mode %}
+lineCount = {{ inv.lines.count }};
+document.getElementById('client-id-input').value = '{{ inv.client.id|default:"" }}';
+{% if inv.client %}
+document.getElementById('client-search').value = '{{ inv.client.name|escapejs }}';
+document.getElementById('ci-avatar').textContent = '{{ inv.client.name|first|default:"?"|escapejs }}';
+document.getElementById('ci-name').textContent = '{{ inv.client.name|escapejs }}';
+document.getElementById('ci-phone').textContent = '{{ inv.client.phone|escapejs }}' + ({% if inv.client.email %}true{% else %}false{% endif %} ? '  ·  {{ inv.client.email|escapejs }}' : '');
+document.getElementById('ci-stats').textContent = '';
+document.getElementById('client-info').style.display = 'flex';
+{% endif %}
+document.getElementById('payment-method').value = '{{ inv.payment_method }}';
+document.getElementById('discount-amount').value = '{{ inv.discount_amount }}';
+document.getElementById('notes-textarea').value = '{{ inv.notes|escapejs }}';
+
+// Recalculate totals for server-rendered lines
+calcTotals();
+{% endif %}
+</script>
+{% endblock %}

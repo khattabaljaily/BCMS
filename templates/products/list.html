@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/products.css' %}">{% endblock %}
+{% block title %}المنتجات{% endblock %}
+{% block page_title %}المنتجات{% endblock %}
+{% block nav_products %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- Page Header -->
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);box-shadow:0 4px 14px rgba(245,158,11,.32);">
+          <i class="fas fa-box"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">المنتجات</h1>
+          <p class="cx-hero-desc">{{ products.count }} منتج مسجل</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <a href="{% url 'products:categories' %}" class="btn btn--ghost btn--sm">
+            <i class="fas fa-tags"></i> التصنيفات
+          </a>
+          <a href="{% url 'products:stock' %}" class="btn btn--ghost btn--sm">
+            <i class="fas fa-exchange-alt"></i> المخزون
+          </a>
+          <button class="btn btn--primary" onclick="openAddProduct()">
+            <i class="fas fa-plus"></i> منتج جديد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="cx-panel">
+    <!-- Desktop Table -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>المنتج</th>
+            <th>التصنيف</th>
+            <th>السعر</th>
+            <th>المخزون</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr>
+            <td>
+              <strong>{{ p.name }}</strong>
+              {% if p.sku %}<br><small class="text-muted" style="font-family:monospace;">{{ p.sku }}</small>{% endif %}
+            </td>
+            <td>{{ p.category.name|default:"—" }}</td>
+            <td><strong style="color:var(--rose);">{{ p.price|format_number:2 }}</strong></td>
+            <td>
+              <span class="badge {% if p.is_low_stock %}badge--red{% else %}badge--green{% endif %}">
+                {{ p.stock|format_number:0 }}
+              </span>
+              {% if p.is_low_stock %}
+              <small class="text-muted" style="font-size:10px;display:block;margin-top:2px;color:var(--red);">مخزون منخفض</small>
+              {% endif %}
+            </td>
+            <td>
+              {% if p.is_active %}
+              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+              {% else %}
+              <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="cx-row-actions">
+                <button type="button" class="cx-act" title="تعديل"
+                        onclick="openEditProduct({{ p.pk }}, '{{ p.name|escapejs }}', '{{ p.sku|default_if_none:''|escapejs }}', {{ p.category_id|default:'null' }}, '{{ p.price }}', '{{ p.cost }}', '{{ p.stock }}', '{{ p.min_stock }}', '{{ p.description|default:''|escapejs }}', {{ p.is_active|yesno:'true,false' }}, {{ p.show_in_store|yesno:'true,false' }})">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <form method="post" action="{% url 'products:delete' p.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'أرشفة {{ p.name }}؟')">
+                  {% csrf_token %}
+                  <button class="cx-act cx-act--del" title="أرشفة"><i class="fas fa-archive"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-box-open"></i>
+                <p>لا توجد منتجات بعد</p>
+                <button class="btn btn--primary" onclick="openAddProduct()" style="margin-top:12px;">
+                  <i class="fas fa-plus"></i> إضافة أول منتج
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for p in products %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">{{ p.name }}</div>
+            <div class="cx-card-sub">{{ p.category.name|default:"بدون تصنيف" }}{% if p.sku %} · {{ p.sku }}{% endif %}</div>
+          </div>
+          <div class="cx-card-actions">
+            <button type="button" class="cx-act"
+                    onclick="openEditProduct({{ p.pk }}, '{{ p.name|escapejs }}', '{{ p.sku|default_if_none:''|escapejs }}', {{ p.category_id|default:'null' }}, '{{ p.price }}', '{{ p.cost }}', '{{ p.stock }}', '{{ p.min_stock }}', '{{ p.description|default:''|escapejs }}', {{ p.is_active|yesno:'true,false' }}, {{ p.show_in_store|yesno:'true,false' }})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <form method="post" action="{% url 'products:delete' p.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'أرشفة {{ p.name }}؟')">
+              {% csrf_token %}
+              <button class="cx-act cx-act--del"><i class="fas fa-archive"></i></button>
+            </form>
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">السعر</span>
+            <span class="cx-card-meta-value" style="color:var(--rose);font-weight:800;">{{ p.price|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">المخزون</span>
+            <span class="cx-card-meta-value">
+              <span class="badge {% if p.is_low_stock %}badge--red{% else %}badge--green{% endif %}">{{ p.stock|format_number:0 }}</span>
+            </span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الحالة</span>
+            <span class="cx-card-meta-value">
+              {% if p.is_active %}<span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+              {% else %}<span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty">
+        <i class="fas fa-box-open"></i>
+        <p>لا توجد منتجات بعد</p>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="modal-product" style="display:none;">
+  <div class="modal-dialog" style="max-width:680px;">
+    <div class="modal-header">
+      <span class="modal-title" id="product-modal-title">منتج جديد</span>
+      <button class="modal-close" onclick="closeModal('modal-product')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" enctype="multipart/form-data" id="product-form" action="{% url 'products:add' %}">
+      {% csrf_token %}
+      <input type="hidden" name="pk" id="product-pk">
+      <div class="modal-body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">اسم المنتج <span style="color:var(--red)">*</span></label>
+            <input class="form-control" type="text" name="name" id="product-name" required autofocus>
+          </div>
+          <div class="form-group">
+            <label class="form-label">التصنيف</label>
+            <select class="form-control" name="category" id="product-category">
+              <option value="">— بدون تصنيف —</option>
+              {% for cat in categories %}
+              <option value="{{ cat.pk }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">الرمز SKU <span class="form-optional">اختياري</span></label>
+            <input class="form-control" type="text" name="sku" id="product-sku">
+          </div>
+          <div class="form-group">
+            <label class="form-label">سعر البيع <span style="color:var(--red)">*</span></label>
+            <input class="form-control" type="number" name="price" id="product-price" min="0" step="0.01" required>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">التكلفة</label>
+            <input class="form-control" type="number" name="cost" id="product-cost" min="0" step="0.01" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">المخزون الحالي</label>
+            <input class="form-control" type="number" name="stock" id="product-stock" min="0" step="0.01" value="0">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">حد التنبيه</label>
+            <input class="form-control" type="number" name="min_stock" id="product-min-stock" min="0" step="0.01" value="5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">صورة المنتج <span class="form-optional">اختياري</span></label>
+            <input class="form-control" type="file" name="image" accept="image/*">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوصف <span class="form-optional">اختياري</span></label>
+          <textarea class="form-control" name="description" id="product-description" rows="2"></textarea>
+        </div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+            <input type="checkbox" name="is_active" id="product-active"> نشط
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+            <input type="checkbox" name="show_in_store" id="product-store"> يظهر في المتجر
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="closeModal('modal-product')">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ المنتج</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const productCreateUrl = "{% url 'products:add' %}";
+const productEditUrlTemplate = "{% url 'products:edit' 0 %}";
+
+function openAddProduct() {
+  document.getElementById('product-modal-title').textContent = 'منتج جديد';
+  document.getElementById('product-form').action = productCreateUrl;
+  document.getElementById('product-pk').value = '';
+  document.getElementById('product-name').value = '';
+  document.getElementById('product-sku').value = '';
+  document.getElementById('product-category').value = '';
+  document.getElementById('product-price').value = '';
+  document.getElementById('product-cost').value = '0';
+  document.getElementById('product-stock').value = '0';
+  document.getElementById('product-min-stock').value = '5';
+  document.getElementById('product-description').value = '';
+  document.getElementById('product-active').checked = true;
+  document.getElementById('product-store').checked = true;
+  openModal('modal-product');
+}
+
+function openEditProduct(pk, name, sku, categoryId, price, cost, stock, minStock, description, isActive, showInStore) {
+  document.getElementById('product-modal-title').textContent = 'تعديل المنتج';
+  document.getElementById('product-form').action = productEditUrlTemplate.replace('/0/', '/' + pk + '/');
+  document.getElementById('product-pk').value = pk;
+  document.getElementById('product-name').value = name;
+  document.getElementById('product-sku').value = sku || '';
+  document.getElementById('product-category').value = categoryId || '';
+  document.getElementById('product-price').value = price;
+  document.getElementById('product-cost').value = cost;
+  document.getElementById('product-stock').value = stock;
+  document.getElementById('product-min-stock').value = minStock;
+  document.getElementById('product-description').value = description || '';
+  document.getElementById('product-active').checked = isActive === true || isActive === 'true';
+  document.getElementById('product-store').checked = showInStore === true || showInStore === 'true';
+  openModal('modal-product');
+}
+</script>
+{% endblock %}

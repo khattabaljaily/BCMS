@@ -1,0 +1,63 @@
+{% load number_format %}
+<div class="modal-overlay" id="expense-modal" style="display:none;">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <span class="modal-title">{% if expense %}تعديل مصروف{% else %}إضافة مصروف{% endif %}</span>
+      <button class="btn btn--ghost btn--icon" data-close-modal="expense-modal"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="expense-form" method="post" action="{% if expense %}{% url 'finance:expense_edit' expense.pk %}{% else %}{% url 'finance:expense_create' %}{% endif %}" onsubmit="BCMS.ensureExpenseCategorySelection()">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الفئة</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="expense-category-select" name="category" class="form-control" required>
+              <option value="">اختر فئة</option>
+              {% for cat in categories %}
+                <option value="{{ cat }}" {% if expense and expense.category == cat %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+              {% if expense and expense.category and expense.category not in categories %}
+                <option value="{{ expense.category }}" selected>{{ expense.category }}</option>
+              {% endif %}
+            </select>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="BCMS.showExpenseCategoryInput()">جديد</button>
+          </div>
+          <div id="expense-category-input-wrapper" style="display:none;margin-top:8px;">
+            <input id="expense-category-input" class="form-control" placeholder="اكتب فئة جديدة">
+            <div style="margin-top:6px;display:flex;justify-content:flex-end;gap:8px;">
+              <button type="button" class="btn btn--ghost btn--sm" onclick="BCMS.clearExpenseCategoryInput()">إلغاء</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">المبلغ</label>
+          <input name="amount" class="form-control" type="number" step="0.01" min="0" required value="{% if expense %}{{ expense.amount }}{% endif %}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">طريقة الدفع</label>
+          <select name="method" class="form-control">
+            <option value="cash" {% if expense and expense.method == 'cash' %}selected{% endif %}>نقد</option>
+            <option value="card_or_bank" {% if expense and expense.method == 'card_or_bank' %}selected{% endif %}>بطاقة أو بنك</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الخزينة <span class="form-optional">اختياري</span></label>
+          <select name="treasury" class="form-control">
+            <option value="">—</option>
+            {% for t in treasuries %}
+              <option value="{{ t.pk }}" {% if expense and expense.treasury and expense.treasury.pk == t.pk %}selected{% endif %}>{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
+          <textarea name="notes" class="form-control" rows="2">{% if expense %}{{ expense.notes }}{% endif %}</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" data-close-modal="expense-modal">إلغاء</button>
+        <button class="btn btn--primary" type="submit"><i class="fas fa-save"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>

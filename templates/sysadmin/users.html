@@ -1,0 +1,94 @@
+{% extends "sysadmin/base.html" %}
+{% block title %}المستخدمون{% endblock %}
+{% block page_title %}المستخدمون{% endblock %}
+{% block nav_users %}active{% endblock %}
+
+{% block content %}
+
+<div class="sa-page-header">
+  <div>
+    <h2>جميع المستخدمين</h2>
+    <div style="font-size:12px;color:var(--sa-muted);margin-top:3px;">{{ total }} مستخدم إجمالاً</div>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="filter-bar">
+  <form method="get" style="display:flex;gap:10px;width:100%;">
+    <div class="sa-search">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="بحث بالاسم أو المستخدم أو اسم المركز...">
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> بحث</button>
+    {% if q %}<a href="{% url 'sysadmin:users' %}" class="btn btn-secondary btn-sm"><i class="fas fa-xmark"></i></a>{% endif %}
+  </form>
+</div>
+
+<div class="sa-card">
+  <div class="sa-table-wrap">
+    <table class="sa-table">
+      <thead>
+        <tr>
+          <th>الاسم</th>
+          <th>اسم المستخدم</th>
+          <th>المركز</th>
+          <th>الدور</th>
+          <th>الهاتف</th>
+          <th>الحالة</th>
+          <th>آخر دخول</th>
+          <th>تاريخ الإضافة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="font-weight:600;">{{ u.full_name }}</td>
+          <td style="font-family:monospace;font-size:12px;color:var(--sa-muted);">{{ u.username }}</td>
+          <td>
+            <a href="{% url 'sysadmin:center_detail' u.center.pk %}" style="color:var(--sa-accent);font-size:12px;">
+              {{ u.center.name }}
+            </a>
+          </td>
+          <td>
+            {% if u.is_owner %}<span class="badge badge-purple">مالك</span>
+            {% elif u.is_superuser %}<span class="badge badge-red">مشرف</span>
+            {% elif u.role %}{{ u.role.name }}
+            {% else %}<span style="color:var(--sa-muted);">—</span>{% endif %}
+          </td>
+          <td style="font-size:12px;color:var(--sa-muted);">{{ u.phone|default:"—" }}</td>
+          <td>
+            {% if u.is_active %}<span class="badge badge-green">نشط</span>
+            {% else %}<span class="badge badge-red">موقوف</span>{% endif %}
+          </td>
+          <td style="font-size:12px;color:var(--sa-muted);">
+            {{ u.last_login_at|date:"d/m/Y H:i"|default:"—" }}
+          </td>
+          <td style="font-size:12px;color:var(--sa-muted);">{{ u.created_at|date:"d/m/Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="text-align:center;padding:40px;color:var(--sa-muted);">
+            لا توجد نتائج مطابقة
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if total_pages > 1 %}
+  <div style="padding:16px;border-top:1px solid var(--sa-border);">
+    <div class="sa-pagination">
+      {% if page > 1 %}
+      <a href="?q={{ q }}&page={{ page|add:'-1' }}" class="sa-page-btn"><i class="fas fa-chevron-right"></i></a>
+      {% endif %}
+      <span style="font-size:13px;color:var(--sa-muted);">صفحة {{ page }} من {{ total_pages }}</span>
+      {% if page < total_pages %}
+      <a href="?q={{ q }}&page={{ page|add:'1' }}" class="sa-page-btn"><i class="fas fa-chevron-left"></i></a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

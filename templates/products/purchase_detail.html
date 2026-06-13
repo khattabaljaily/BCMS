@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block title %}فاتورة {{ inv.number }}{% endblock %}
+{% block page_title %}تفاصيل الفاتورة{% endblock %}
+{% block nav_purchase %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <a href="{% url 'products:purchase_list' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;"><i class="fas fa-arrow-right"></i></a>
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 4px 14px rgba(16,185,129,.32);">
+          <i class="fas fa-truck-loading"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">{{ inv.number }}</h1>
+          <p class="cx-hero-desc">
+            {{ inv.date|date:"j F Y" }}
+            {% if inv.supplier %} · {{ inv.supplier }}{% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          {% if inv.status == 'active' %}
+            {% if inv.payment_method == 'credit' and not inv.paid %}
+              <button type="button" class="btn btn--primary" id="pay-btn">
+                <i class="fas fa-money-bill-wave"></i> تسجيل سداد
+              </button>
+            {% endif %}
+            <a href="{% url 'products:purchase_edit' inv.pk %}" class="btn btn--secondary">
+              <i class="fas fa-edit"></i> تعديل
+            </a>
+            <button type="button" class="btn btn--danger" id="cancel-btn">
+              <i class="fas fa-ban"></i> إلغاء
+            </button>
+          {% else %}
+            <span class="badge badge--red" style="font-size:13px;padding:8px 16px;">ملغاة</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header cards -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
+    <div class="cx-panel" style="padding:20px 24px;">
+      <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:6px;">الإجمالي</div>
+      <div style="font-size:22px;font-weight:900;color:var(--green);">{{ inv.total|format_number:2 }}</div>
+    </div>
+    <div class="cx-panel" style="padding:20px 24px;">
+      <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:6px;">طريقة الدفع</div>
+      <div style="font-size:16px;font-weight:700;color:var(--slate-700);">{{ inv.get_payment_method_display }}</div>
+    </div>
+    <div class="cx-panel" style="padding:20px 24px;">
+      <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:6px;">عدد المنتجات</div>
+      <div style="font-size:22px;font-weight:900;color:var(--slate-800);">{{ lines|length }}</div>
+    </div>
+    <div class="cx-panel" style="padding:20px 24px;">
+      <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:6px;">الحالة</div>
+      <div style="margin-top:4px;">
+        {% if inv.status == 'cancelled' %}
+          <span class="badge badge--red">ملغاة</span>
+        {% elif inv.payment_method == 'credit' and not inv.paid %}
+          <span class="badge badge--orange">آجل — غير مدفوعة</span>
+        {% elif inv.payment_method == 'credit' and inv.paid %}
+          <span class="badge badge--green">آجل — مدفوعة</span>
+        {% else %}
+          <span class="badge badge--green">نشطة</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Lines table -->
+  <div class="cx-panel">
+    <div style="padding:20px 24px 12px;border-bottom:1px solid var(--slate-100);">
+      <h3 style="margin:0;font-size:15px;font-weight:700;color:var(--slate-700);">بنود الفاتورة</h3>
+    </div>
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>المنتج</th>
+            <th>الكمية</th>
+            <th>سعر الوحدة</th>
+            <th>إجمالي السطر</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in lines %}
+          <tr>
+            <td style="color:var(--slate-400);">{{ forloop.counter }}</td>
+            <td>
+              <strong>{{ line.product.name }}</strong>
+              {% if line.product.sku %}<br><span style="font-size:11px;color:var(--slate-400);">{{ line.product.sku }}</span>{% endif %}
+            </td>
+            <td>{{ line.quantity|format_number:2 }}</td>
+            <td>{{ line.unit_cost|format_number:2 }}</td>
+            <td style="font-weight:700;">{{ line.line_total|format_number:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5"><div class="cx-empty"><p>لا توجد بنود</p></div></td></tr>
+          {% endfor %}
+        </tbody>
+        {% if lines %}
+        <tfoot>
+          <tr>
+            <td colspan="4" style="text-align:start;font-weight:700;color:var(--slate-600);">الإجمالي</td>
+            <td style="font-weight:900;font-size:16px;color:var(--green);">{{ inv.total|format_number:2 }}</td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+
+    {% if inv.notes %}
+    <div style="padding:16px 24px;border-top:1px solid var(--slate-100);">
+      <span style="font-size:12px;color:var(--slate-400);font-weight:700;">ملاحظات:</span>
+      <span style="font-size:13px;color:var(--slate-600);margin-right:8px;">{{ inv.notes }}</span>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Pay modal -->
+{% if inv.status == 'active' and inv.payment_method == 'credit' and not inv.paid %}
+<div id="pay-modal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(15,23,42,.5);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;box-shadow:0 24px 60px rgba(15,23,42,.15);">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div style="width:44px;height:44px;border-radius:12px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-money-bill-wave" style="color:#16a34a;font-size:18px;"></i>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--slate-800);">تسجيل سداد الفاتورة</div>
+        <div style="font-size:13px;color:var(--slate-500);">{{ inv.number }} · {{ inv.total|format_number:2 }}</div>
+      </div>
+    </div>
+    <form method="post" action="{% url 'products:purchase_pay' inv.pk %}">
+      {% csrf_token %}
+      {% if treasuries|length > 1 %}
+      <div class="form-group">
+        <label class="form-label">الخزينة</label>
+        <select class="form-control" name="treasury_id">
+          {% for t in treasuries %}
+          <option value="{{ t.pk }}">{{ t.name }} ({{ t.balance|format_number:2 }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% elif treasuries %}
+        <input type="hidden" name="treasury_id" value="{{ treasuries.0.pk }}">
+        <div style="background:var(--slate-50);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:var(--slate-600);">
+          <i class="fas fa-university" style="color:var(--slate-400);margin-left:6px;"></i>
+          سيتم الخصم من: <strong>{{ treasuries.0.name }}</strong>
+        </div>
+      {% endif %}
+      <p style="font-size:13px;color:var(--slate-600);line-height:1.7;margin-bottom:24px;">
+        سيتم تسجيل مبلغ <strong>{{ inv.total|format_number:2 }}</strong> كمصروف في الخزينة وتحديث حالة الفاتورة إلى "مدفوعة".
+      </p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" onclick="closePayModal()" class="btn btn--ghost">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-check"></i> تأكيد السداد</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Cancel confirm modal -->
+{% if inv.status == 'active' %}
+<div id="cancel-modal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(15,23,42,.5);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;box-shadow:0 24px 60px rgba(15,23,42,.15);">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div style="width:44px;height:44px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-ban" style="color:#ef4444;font-size:18px;"></i>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--slate-800);">إلغاء الفاتورة؟</div>
+        <div style="font-size:13px;color:var(--slate-500);">{{ inv.number }}</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--slate-600);line-height:1.7;margin-bottom:24px;">
+      سيتم عكس جميع حركات المخزون والخزينة المرتبطة بهذه الفاتورة{% if inv.payment_method == 'credit' and inv.paid %} بما فيها السداد المسجّل{% endif %}. لا يمكن التراجع عن الإلغاء.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button type="button" onclick="closeCancelModal()" class="btn btn--ghost">تراجع</button>
+      <form method="post" action="{% url 'products:purchase_cancel' inv.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--danger"><i class="fas fa-ban"></i> تأكيد الإلغاء</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function(){
+  function openModal(id){ document.getElementById(id).style.display='flex'; }
+  function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+  var payBtn = document.getElementById('pay-btn');
+  var payModal = document.getElementById('pay-modal');
+  if (payBtn && payModal) {
+    payBtn.addEventListener('click', function(){ openModal('pay-modal'); });
+    payModal.addEventListener('click', function(e){ if(e.target===payModal) closeModal('pay-modal'); });
+  }
+
+  var cancelBtn = document.getElementById('cancel-btn');
+  var cancelModal = document.getElementById('cancel-modal');
+  if (cancelBtn && cancelModal) {
+    cancelBtn.addEventListener('click', function(){ openModal('cancel-modal'); });
+    cancelModal.addEventListener('click', function(e){ if(e.target===cancelModal) closeModal('cancel-modal'); });
+  }
+})();
+function closePayModal(){ document.getElementById('pay-modal').style.display='none'; }
+function closeCancelModal(){ document.getElementById('cancel-modal').style.display='none'; }
+</script>
+{% endblock %}

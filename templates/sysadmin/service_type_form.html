@@ -1,0 +1,106 @@
+{% extends "sysadmin/base.html" %}
+{% block title %}{% if obj %}تعديل نوع مركز{% else %}إضافة نوع مركز{% endif %}{% endblock %}
+{% block page_title %}{% if obj %}تعديل نوع مركز{% else %}إضافة نوع مركز{% endif %}{% endblock %}
+{% block nav_service_types %}active{% endblock %}
+
+{% block content %}
+
+<div class="sa-breadcrumb">
+  <a href="{% url 'sysadmin:service_types' %}">أنواع المراكز</a>
+  ← {% if obj %}تعديل{% else %}إضافة{% endif %}
+</div>
+
+<div style="max-width:540px;">
+<form method="post">
+{% csrf_token %}
+<div class="sa-card">
+  <div class="sa-card-header"><h3>بيانات النوع</h3></div>
+  <div class="sa-card-body">
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>الاسم *</label>
+      <input type="text" name="name" class="form-control" value="{{ obj.name|default:'' }}" required placeholder="مثال: صالون شعر">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div class="form-group">
+        <label>الأيقونة (Font Awesome)</label>
+        <input type="text" name="icon" class="form-control" value="{{ obj.icon|default:'fas fa-spa' }}" placeholder="fas fa-spa">
+        <small style="font-size:11px;color:var(--sa-muted);">مثال: fas fa-scissors</small>
+      </div>
+      <div class="form-group">
+        <label>اللون</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="color" name="color" value="{{ obj.color|default:'#ec4899' }}" style="width:40px;height:40px;border:none;cursor:pointer;border-radius:8px;padding:2px;">
+          <input type="text" id="colorText" class="form-control" style="flex:1;" value="{{ obj.color|default:'#ec4899' }}" placeholder="#ec4899">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>الوصف</label>
+      <textarea name="description" class="form-control" rows="2">{{ obj.description|default:'' }}</textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div class="form-group">
+        <label>الترتيب</label>
+        <input type="number" name="order" class="form-control" value="{{ obj.order|default:0 }}" min="0">
+      </div>
+    </div>
+
+    <div class="form-check" style="margin-bottom:14px;">
+      <input type="checkbox" name="is_active" id="is_active" value="1"
+             {% if obj.is_active or not obj %}checked{% endif %}>
+      <label for="is_active">نشط</label>
+    </div>
+
+    <!-- Preview -->
+    <div style="background:var(--sa-bg);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div id="iconPreview" style="width:44px;height:44px;border-radius:12px;background:#ec489920;display:flex;align-items:center;justify-content:center;color:#ec4899;font-size:20px;">
+        <i class="{{ obj.icon|default:'fas fa-spa' }}"></i>
+      </div>
+      <div style="font-weight:700;" id="namePreview">{{ obj.name|default:"اسم النوع" }}</div>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button type="submit" class="btn btn-primary" style="flex:1;">
+        <i class="fas fa-check"></i> {% if obj %}حفظ التعديلات{% else %}إضافة{% endif %}
+      </button>
+      <a href="{% url 'sysadmin:service_types' %}" class="btn btn-secondary">إلغاء</a>
+    </div>
+  </div>
+</div>
+</form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const colorInput = document.querySelector('input[type=color]');
+const colorText  = document.getElementById('colorText');
+const iconInput  = document.querySelector('input[name=icon]');
+const nameInput  = document.querySelector('input[name=name]');
+const iconPrev   = document.getElementById('iconPreview');
+const namePrev   = document.getElementById('namePreview');
+
+function updatePreview() {
+  const c = colorText.value || '#ec4899';
+  iconPrev.style.background = c + '20';
+  iconPrev.style.color = c;
+  iconPrev.querySelector('i').className = iconInput.value || 'fas fa-spa';
+  namePrev.textContent = nameInput.value || 'اسم النوع';
+}
+
+colorInput.addEventListener('input', () => { colorText.value = colorInput.value; updatePreview(); });
+colorText.addEventListener('input', () => { colorInput.value = colorText.value; updatePreview(); });
+iconInput.addEventListener('input', updatePreview);
+nameInput.addEventListener('input', updatePreview);
+
+// sync color text → hidden color input
+document.querySelector('form').addEventListener('submit', () => {
+  colorInput.name = 'color';
+  colorText.name = '';
+});
+</script>
+{% endblock %}

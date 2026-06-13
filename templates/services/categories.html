@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/services.css' %}">{% endblock %}
+{% block title %}تصنيفات الخدمات{% endblock %}
+{% block page_title %}تصنيفات الخدمات{% endblock %}
+{% block nav_service_cats %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- Page Header -->
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#a855f7,#c084fc);box-shadow:0 4px 14px rgba(168,85,247,.32);">
+          <i class="fas fa-tags"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">تصنيفات الخدمات</h1>
+          <p class="cx-hero-desc">{{ categories.count }} تصنيف</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <a href="{% url 'services:list' %}" class="btn btn--ghost btn--sm">
+            <i class="fas fa-spa"></i> الخدمات
+          </a>
+          <button class="btn btn--primary" onclick="openAddCategory()">
+            <i class="fas fa-plus"></i> تصنيف جديد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="cx-panel">
+    <!-- Desktop Table -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>التصنيف</th>
+            <th>الترتيب</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cat in categories %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;border-radius:9px;background:{{ cat.color|default:'#f43f5e' }}18;display:flex;align-items:center;justify-content:center;color:{{ cat.color|default:'var(--rose)' }};font-size:15px;flex-shrink:0;">
+                  <i class="{{ cat.icon|default:'fas fa-tag' }}"></i>
+                </div>
+                <strong>{{ cat.name }}</strong>
+              </div>
+            </td>
+            <td class="text-muted">{{ cat.order }}</td>
+            <td>
+              {% if cat.is_active %}
+              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+              {% else %}
+              <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="cx-row-actions">
+                <button type="button" class="cx-act" title="تعديل"
+                        onclick="openEditCategory({{ cat.pk }}, '{{ cat.name|escapejs }}', {{ cat.order }}, {{ cat.is_active|yesno:'true,false' }})">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <form method="post" action="{% url 'services:category_delete' cat.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف التصنيف؟')">
+                  {% csrf_token %}
+                  <button class="cx-act cx-act--del" type="submit" title="حذف"><i class="fas fa-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-tags"></i>
+                <p>لا توجد تصنيفات بعد</p>
+                <button class="btn btn--primary" onclick="openAddCategory()" style="margin-top:12px;">
+                  <i class="fas fa-plus"></i> إضافة أول تصنيف
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for cat in categories %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:38px;height:38px;border-radius:10px;background:{{ cat.color|default:'#f43f5e' }}18;display:flex;align-items:center;justify-content:center;color:{{ cat.color|default:'var(--rose)' }};font-size:16px;flex-shrink:0;">
+              <i class="{{ cat.icon|default:'fas fa-tag' }}"></i>
+            </div>
+            <div>
+              <div class="cx-card-title">{{ cat.name }}</div>
+              <div class="cx-card-sub">ترتيب: {{ cat.order }}</div>
+            </div>
+          </div>
+          <div class="cx-card-actions">
+            <button type="button" class="cx-act"
+                    onclick="openEditCategory({{ cat.pk }}, '{{ cat.name|escapejs }}', {{ cat.order }}, {{ cat.is_active|yesno:'true,false' }})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <form method="post" action="{% url 'services:category_delete' cat.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف التصنيف؟')">
+              {% csrf_token %}
+              <button type="submit" class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty">
+        <i class="fas fa-tags"></i>
+        <p>لا توجد تصنيفات بعد</p>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+<!-- Category Modal -->
+<div class="modal-overlay" id="modal-cat" style="display:none;">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <span class="modal-title" id="cat-modal-title">تصنيف جديد</span>
+      <button class="modal-close" onclick="closeModal('modal-cat')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" action="{% url 'services:category_save' %}">
+      {% csrf_token %}
+      <input type="hidden" name="pk" id="cat-pk">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الاسم <span style="color:var(--red)">*</span></label>
+          <input class="form-control" type="text" name="name" id="cat-name" required autofocus>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">الترتيب</label>
+            <input class="form-control" type="number" name="order" id="cat-order" value="0" min="0">
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;padding-top:24px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+              <input type="checkbox" name="is_active" id="cat-active">
+              التصنيف نشط
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="closeModal('modal-cat')">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openAddCategory() {
+  document.getElementById('cat-modal-title').textContent = 'تصنيف جديد';
+  document.getElementById('cat-pk').value = '';
+  document.getElementById('cat-name').value = '';
+  document.getElementById('cat-order').value = 0;
+  document.getElementById('cat-active').checked = true;
+  openModal('modal-cat');
+}
+function openEditCategory(pk, name, order, isActive) {
+  document.getElementById('cat-modal-title').textContent = 'تعديل التصنيف';
+  document.getElementById('cat-pk').value = pk;
+  document.getElementById('cat-name').value = name;
+  document.getElementById('cat-order').value = order;
+  document.getElementById('cat-active').checked = isActive === true || isActive === 'true';
+  openModal('modal-cat');
+}
+</script>
+{% endblock %}

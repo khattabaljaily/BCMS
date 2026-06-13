@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% load humanize %}
+{% block nav_finance_treasury %}active{% endblock %}
+{% block page_title %}الخزائن{% endblock %}
+{% block nav_finance_open %}open{% endblock %}
+{% block title %}الخزائن{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- Page Header -->
+  <div class="cx-hero cx-hero--finance">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 4px 14px rgba(16,185,129,.32);">
+          <i class="fas fa-university"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">الخزائن</h1>
+          <p class="cx-hero-desc">{{ treasuries.count }} خزينة</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="cx-panel">
+    {% if treasuries %}
+    <!-- Desktop Table -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>اسم الخزينة</th>
+            <th>الرصيد الافتتاحي</th>
+            <th>الرصيد الحالي</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in treasuries %}
+          <tr>
+            <td><strong>{{ t.short_name }}</strong></td>
+            <td class="text-muted">{{ t.initial_balance|format_number:2 }}</td>
+            <td><strong style="color:var(--green);">{{ t.balance|format_number:2 }}</strong></td>
+            <td>
+              <div class="cx-row-actions">
+                <a href="{% url 'finance:treasury_detail' t.pk %}" class="cx-act" title="عرض"><i class="fas fa-eye"></i></a>
+                <a href="{% url 'finance:treasury_initial_balance' t.pk %}" class="cx-act" title="تعديل"><i class="fas fa-edit"></i></a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for t in treasuries %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">{{ t.short_name }}</div>
+          </div>
+          <div class="cx-card-actions">
+            <a href="{% url 'finance:treasury_detail' t.pk %}" class="cx-act"><i class="fas fa-eye"></i></a>
+            <a href="{% url 'finance:treasury_initial_balance' t.pk %}" class="cx-act"><i class="fas fa-edit"></i></a>
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">الرصيد الافتتاحي</span>
+            <span class="cx-card-meta-value">{{ t.initial_balance|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الرصيد الحالي</span>
+            <span class="cx-card-meta-value" style="color:var(--green);font-weight:800;">{{ t.balance|format_number:2 }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="cx-empty">
+      <i class="fas fa-university"></i>
+      <p>لا توجد خزائن مسجلة</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

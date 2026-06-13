@@ -1,0 +1,50 @@
+{% load static number_format %}
+
+  <div class="card kpi-card kpi--revenue">
+    <div class="card__body kpi-body">
+      <div class="kpi-label">إجمالي الإيرادات</div>
+      <div class="kpi-value" style="color:var(--green);">{{ total_revenue|format_number:2 }}</div>
+      {% if prev_revenue %}
+      <div class="kpi-meta">السابق: {{ prev_revenue|format_number:2 }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card kpi-card kpi--expenses">
+    <div class="card__body kpi-body">
+      <div class="kpi-label">إجمالي المصروفات</div>
+      <div class="kpi-value" style="color:var(--red);">{{ total_expenses|format_number:2 }}</div>
+      {% if unpaid_total %}<div class="kpi-meta">غير محصل: {{ unpaid_total|format_number:2 }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="card kpi-card {% if net_profit >= 0 %}kpi--profit kpi--pos{% else %}kpi--profit kpi--neg{% endif %}">
+    <div class="card__body kpi-body">
+      <div class="kpi-label">صافي الربح</div>
+      <div class="kpi-value" style="color:{% if net_profit >= 0 %}var(--green){% else %}var(--red){% endif %};">{{ net_profit|format_number:2 }}</div>
+    </div>
+  </div>
+  <div class="card kpi-card kpi--invoices">
+    <div class="card__body kpi-body">
+      <div class="kpi-label">عدد الفواتير</div>
+      <div class="kpi-value" style="color:var(--blue);">{{ invoice_count }}</div>
+    </div>
+  </div>
+  <div class="card kpi-card kpi--appts">
+    <div class="card__body kpi-body">
+      <div class="kpi-label">إجمالي المواعيد</div>
+      <div class="kpi-value" style="color:var(--rose);">{{ total_appts }}</div>
+      <div class="kpi-meta">مكتمل: {{ completed_appts }}</div>
+    </div>
+  </div>
+  <div class="card kpi-card kpi--newclients">
+    <div class="card__body kpi-body">
+      <div class="kpi-label">عملاء جدد</div>
+      <div class="kpi-value" style="color:var(--purple);">{{ new_clients_count }}</div>
+    </div>
+  </div>
+  <div class="card kpi-card kpi--cancelled">
+    <div class="card__body kpi-body">
+      <div class="kpi-label">ملغي / لم يحضر</div>
+      <div class="kpi-value" style="color:var(--slate-500);">{{ cancelled_appts|add:no_show_appts }}</div>
+      <div class="kpi-meta">ملغي {{ cancelled_appts }} · لم يحضر {{ no_show_appts }}</div>
+    </div>
+  </div>

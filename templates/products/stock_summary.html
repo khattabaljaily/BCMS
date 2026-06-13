@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block title %}مخزون المنتجات{% endblock %}
+{% block page_title %}مخزون المنتجات{% endblock %}
+{% block nav_products %}active{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card__header">
+    <span class="card__title">مخزون المنتجات</span>
+  </div>
+  <div class="card__body">
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>المنتج</th><th>SKU</th><th>المخزون</th><th>حد التنبيه</th><th></th></tr></thead>
+        <tbody>
+          {% for p in products %}
+          <tr>
+            <td>{{ p.name }}</td>
+            <td>{{ p.sku|default:'—' }}</td>
+            <td>
+              <strong>{{ p.stock|format_number:2 }}</strong>
+              {% if p.is_low_stock %}<span class="badge badge--red" style="margin-left:8px;">منخفض</span>{% endif %}
+            </td>
+            <td>{{ p.min_stock|format_number:2 }}</td>
+            <td style="white-space:nowrap;">
+              <a href="{% url 'products:stock' %}?q={{ p.pk }}" class="btn btn--ghost btn--sm">حركات</a>
+              <a href="{% url 'products:edit' p.pk %}" class="btn btn--ghost btn--sm">تعديل</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="text-align:center;padding:40px;">لا منتجات</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

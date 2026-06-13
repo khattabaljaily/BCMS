@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/appointments.css' %}">{% endblock %}
+{% block title %}المواعيد{% endblock %}
+{% block page_title %}المواعيد{% endblock %}
+{% block nav_appointments %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- Page Header -->
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">المواعيد</h1>
+          <p class="cx-hero-desc">{{ appointments.count }} موعد — {{ view_date|date:"l، j F Y" }}</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <a href="{% url 'appointments:calendar' %}" class="btn btn--ghost btn--sm">
+            <i class="fas fa-calendar-days"></i> التقويم
+          </a>
+          <button class="btn btn--primary" onclick="openModal('modal-add')">
+            <i class="fas fa-plus"></i> موعد جديد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="cx-panel">
+    <!-- Date Navigation Bar -->
+    <div class="date-nav-bar">
+      <a href="?date={{ prev_date|date:'Y-m-d' }}" title="اليوم السابق"><i class="fas fa-chevron-right"></i></a>
+      <span class="current-date">{{ view_date|date:"l، j F Y" }}</span>
+      <a href="?date={{ next_date|date:'Y-m-d' }}" title="اليوم التالي"><i class="fas fa-chevron-left"></i></a>
+      {% if view_date != today %}
+      <a href="?date={{ today|date:'Y-m-d' }}" style="font-size:12px;font-weight:700;color:var(--rose);border-color:var(--rose-200);">اليوم</a>
+      {% endif %}
+    </div>
+
+    {% if appointments %}
+    <!-- Desktop Table -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>الوقت</th>
+            <th>العميل</th>
+            <th>الخدمات</th>
+            <th>الفنية</th>
+            <th>الإجمالي</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for appt in appointments %}
+          <tr class="appt-row--{{ appt.status }}">
+            <td>
+              <strong style="font-size:14px;">{{ appt.start_time|time:"H:i" }}</strong>
+              {% if appt.end_time %}<br><small class="text-muted">{{ appt.end_time|time:"H:i" }}</small>{% endif %}
+            </td>
+            <td>
+              <strong>{{ appt.client_display }}</strong>
+              {% if appt.client_phone_display %}<br><small class="text-muted">{{ appt.client_phone_display }}</small>{% endif %}
+            </td>
+            <td>
+              {% for asvc in appt.appointment_services.all %}
+              <span class="badge badge--rose" style="margin:1px 1px 1px 0;">{{ asvc.service.name }}</span>
+              {% endfor %}
+              {% if appt.package %}<span class="badge badge--purple">{{ appt.package.name }}</span>{% endif %}
+            </td>
+            <td>{{ appt.specialist.name|default:"—" }}</td>
+            <td><strong>{{ appt.total_price|format_number:2 }}</strong></td>
+            <td>
+              <form method="post" action="{% url 'appointments:status' appt.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <select name="status" class="status-select" onchange="this.form.submit()">
+                  {% for val, label in appt.STATUS %}
+                  <option value="{{ val }}" {% if appt.status == val %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </form>
+            </td>
+            <td>
+              <div class="cx-row-actions">
+                <a href="{% url 'billing:create' %}?appointment={{ appt.pk }}"
+                   class="cx-act" title="إنشاء فاتورة" style="color:var(--green);border-color:#a7f3d0;">
+                  <i class="fas fa-receipt"></i>
+                </a>
+                <form method="post" action="{% url 'appointments:delete' appt.pk %}"
+                      onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الموعد؟')">
+                  {% csrf_token %}
+                  <button type="submit" class="cx-act cx-act--del" title="حذف">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for appt in appointments %}
+      <div class="cx-card" style="border-right: 3px solid {% if appt.status == 'pending' %}var(--yellow){% elif appt.status == 'confirmed' %}var(--blue){% elif appt.status == 'in_progress' %}var(--purple){% elif appt.status == 'completed' %}var(--green){% elif appt.status == 'no_show' %}var(--red){% else %}var(--slate-300){% endif %};">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">{{ appt.client_display }}</div>
+            <div class="cx-card-sub">{{ appt.start_time|time:"H:i" }}{% if appt.end_time %} — {{ appt.end_time|time:"H:i" }}{% endif %}</div>
+          </div>
+          <div class="cx-card-actions">
+            <a href="{% url 'billing:create' %}?appointment={{ appt.pk }}" class="cx-act" style="color:var(--green);border-color:#a7f3d0;" title="فاتورة">
+              <i class="fas fa-receipt"></i>
+            </a>
+            <form method="post" action="{% url 'appointments:delete' appt.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الموعد؟')">
+              {% csrf_token %}
+              <button type="submit" class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">الخدمات</span>
+            <span class="cx-card-meta-value" style="flex-wrap:wrap;display:flex;gap:3px;">
+              {% for asvc in appt.appointment_services.all %}
+              <span class="badge badge--rose">{{ asvc.service.name }}</span>
+              {% endfor %}
+              {% if appt.package %}<span class="badge badge--purple">{{ appt.package.name }}</span>{% endif %}
+            </span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الفنية</span>
+            <span class="cx-card-meta-value">{{ appt.specialist.name|default:"—" }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الإجمالي</span>
+            <span class="cx-card-meta-value" style="color:var(--rose);font-weight:800;">{{ appt.total_price|format_number:2 }}</span>
+          </div>
+        </div>
+        <div style="padding:0 2px 4px;">
+          <form method="post" action="{% url 'appointments:status' appt.pk %}">
+            {% csrf_token %}
+            <select name="status" class="status-select" style="width:100%;" onchange="this.form.submit()">
+              {% for val, label in appt.STATUS %}
+              <option value="{{ val }}" {% if appt.status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="cx-empty">
+      <i class="fas fa-calendar-check"></i>
+      <p>لا توجد مواعيد في هذا اليوم</p>
+      <button class="btn btn--primary" onclick="openModal('modal-add')" style="margin-top:12px;">
+        <i class="fas fa-plus"></i> إضافة موعد
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Add Appointment Modal ──────────────────────────────── -->
+<div class="modal-overlay" id="modal-add" style="display:none;">
+  <div class="modal-dialog" style="max-width:600px;">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fas fa-calendar-plus" style="color:var(--rose);margin-left:8px;"></i> موعد جديد</span>
+      <button class="modal-close" onclick="closeModal('modal-add')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" action="{% url 'appointments:save' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">العميل</label>
+            <select class="form-control" name="client_id">
+              <option value="">— زائر جديد —</option>
+              {% for cl in clients %}
+              <option value="{{ cl.pk }}">{{ cl.name }} ({{ cl.phone }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الفنية / الفني</label>
+            <select class="form-control" name="specialist_id">
+              <option value="">— أي شخص —</option>
+              {% for sp in specialists %}
+              <option value="{{ sp.pk }}">{{ sp.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">التاريخ</label>
+            <input class="form-control" type="date" name="date" value="{{ view_date|date:'Y-m-d' }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الوقت</label>
+            <input class="form-control" type="time" name="start_time" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الخدمات</label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;border:1.5px solid var(--slate-200);border-radius:8px;max-height:180px;overflow-y:auto;">
+            {% for svc in services %}
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:4px 10px;border-radius:6px;background:var(--slate-50);border:1px solid var(--slate-200);">
+              <input type="checkbox" name="service_ids" value="{{ svc.pk }}" style="margin:0;">
+              {{ svc.name }} <span style="color:var(--rose);font-weight:700;margin-right:4px;">({{ svc.price|format_number:2 }})</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
+          <textarea class="form-control" name="notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="closeModal('modal-add')">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ الموعد</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

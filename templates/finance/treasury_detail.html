@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% block title %}{{ treasury.name }}{% endblock %}
+{% block page_title %}الخزينة{% endblock %}
+{% block nav_finance_treasury %}active{% endblock %}
+{% block nav_finance_open %}open{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- ── Hero ─────────────────────────────────────────────────── -->
+  <div class="cx-hero" style="margin-bottom:24px;">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <a href="{% url 'finance:treasury_list' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;">
+          <i class="fas fa-arrow-right"></i>
+        </a>
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 4px 14px rgba(16,185,129,.3);">
+          <i class="fas fa-university"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">{{ treasury.name }}</h1>
+          <p class="cx-hero-desc">{{ movements|length }} حركة مسجّلة</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <a href="{% url 'finance:treasury_initial_balance' treasury.pk %}" class="btn btn--ghost btn--sm">
+            <i class="fas fa-edit"></i> تعديل الرصيد الافتتاحي
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Summary cards ────────────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;">
+
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-flag" style="color:#2563eb;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">الرصيد الافتتاحي</div>
+        <div style="font-size:18px;font-weight:900;color:var(--slate-700);">{{ treasury.initial_balance|format_number:2 }}</div>
+      </div>
+    </div>
+
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-arrow-down" style="color:#059669;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">إجمالي الوارد</div>
+        <div style="font-size:18px;font-weight:900;color:#059669;">{{ total_in|format_number:2 }}</div>
+      </div>
+    </div>
+
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-arrow-up" style="color:#dc2626;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">إجمالي الصادر</div>
+        <div style="font-size:18px;font-weight:900;color:#dc2626;">{{ total_out|format_number:2 }}</div>
+      </div>
+    </div>
+
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;border:2px solid #d1fae5;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-coins" style="color:#059669;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">الرصيد الحالي</div>
+        <div style="font-size:20px;font-weight:900;color:{% if treasury.balance >= 0 %}#059669{% else %}#dc2626{% endif %};">
+          {{ treasury.balance|format_number:2 }}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Movements table ──────────────────────────────────────── -->
+  <div class="cx-panel">
+    <div style="padding:18px 24px 14px;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:14px;font-weight:700;color:var(--slate-700);">
+        <i class="fas fa-list-ul" style="margin-left:8px;color:#10b981;"></i> سجل الحركات
+      </span>
+      <span style="font-size:12px;color:var(--slate-400);">مرتب من الأحدث</span>
+    </div>
+
+    {% if movements %}
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th style="width:130px;">التاريخ</th>
+            <th>النوع</th>
+            <th>المرجع</th>
+            <th>الملاحظات</th>
+            <th style="text-align:end;">وارد</th>
+            <th style="text-align:end;">صادر</th>
+            <th style="text-align:end;">الرصيد</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in movements %}
+          {% with m=entry.obj %}
+          <tr style="{% if m.type == 'in' %}background:rgba(5,150,105,.03);{% elif m.type == 'out' %}background:rgba(220,38,38,.02);{% elif m.type == 'initial' %}background:rgba(37,99,235,.03);{% endif %}">
+            <td style="white-space:nowrap;font-size:12px;color:var(--slate-500);">
+              {{ m.created_at|date:"j/n/Y" }}
+              <div style="font-size:10px;color:var(--slate-400);">{{ m.created_at|time:"H:i" }}</div>
+            </td>
+            <td>
+              {% if m.type == 'in' %}
+                <span style="display:inline-flex;align-items:center;gap:5px;background:#d1fae5;color:#065f46;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  <i class="fas fa-arrow-down" style="font-size:9px;"></i> وارد
+                </span>
+              {% elif m.type == 'out' %}
+                <span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  <i class="fas fa-arrow-up" style="font-size:9px;"></i> صادر
+                </span>
+              {% else %}
+                <span style="display:inline-flex;align-items:center;gap:5px;background:#dbeafe;color:#1e40af;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  <i class="fas fa-flag" style="font-size:9px;"></i> افتتاحية
+                </span>
+              {% endif %}
+            </td>
+            <td style="font-size:12px;color:var(--slate-500);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ m.reference }}">
+              {{ m.reference|default:"—" }}
+            </td>
+            <td style="font-size:12px;color:var(--slate-500);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ m.notes }}">
+              {{ m.notes|default:"—"|truncatewords:8 }}
+            </td>
+            <td style="text-align:end;font-weight:700;color:{% if m.type in 'in initial' %}#059669{% else %}var(--slate-200){% endif %};">
+              {% if m.type == 'in' or m.type == 'initial' %}{{ m.amount|format_number:2 }}{% else %}—{% endif %}
+            </td>
+            <td style="text-align:end;font-weight:700;color:{% if m.type == 'out' %}#dc2626{% else %}var(--slate-200){% endif %};">
+              {% if m.type == 'out' %}{{ m.amount|format_number:2 }}{% else %}—{% endif %}
+            </td>
+            <td style="text-align:end;">
+              <span style="font-weight:800;font-size:13px;color:{% if entry.balance >= 0 %}#059669{% else %}#dc2626{% endif %};">
+                {{ entry.balance|format_number:2 }}
+              </span>
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--slate-50);">
+            <td colspan="4" style="font-weight:700;color:var(--slate-600);padding:14px 12px;">الإجمالي</td>
+            <td style="text-align:end;font-weight:900;color:#059669;padding:14px 12px;">{{ total_in|format_number:2 }}</td>
+            <td style="text-align:end;font-weight:900;color:#dc2626;padding:14px 12px;">{{ total_out|format_number:2 }}</td>
+            <td style="text-align:end;padding:14px 12px;">
+              <span style="font-weight:900;font-size:14px;color:{% if treasury.balance >= 0 %}#059669{% else %}#dc2626{% endif %};">
+                {{ treasury.balance|format_number:2 }}
+              </span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Legend -->
+    <div style="padding:14px 24px;border-top:1px solid var(--slate-100);display:flex;gap:20px;font-size:12px;color:var(--slate-500);flex-wrap:wrap;">
+      <span><i class="fas fa-circle" style="color:#059669;font-size:8px;margin-left:5px;"></i>وارد (دفعات عملاء)</span>
+      <span><i class="fas fa-circle" style="color:#dc2626;font-size:8px;margin-left:5px;"></i>صادر (مصاريف / مشتريات)</span>
+      <span><i class="fas fa-circle" style="color:#2563eb;font-size:8px;margin-left:5px;"></i>رصيد افتتاحي</span>
+    </div>
+
+    {% else %}
+    <div class="cx-empty" style="padding:60px 24px;">
+      <i class="fas fa-receipt"></i>
+      <p>لا توجد حركات مسجّلة بعد</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

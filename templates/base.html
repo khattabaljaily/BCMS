@@ -1,0 +1,284 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}EnjazBCMS{% endblock %} — {{ center.name|default:"EnjazBCMS" }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+      <div class="sidebar__logo">
+        {% if center and center.logo %}
+          <img src="{{ center.logo.url }}" alt="{{ center.name }}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+        {% else %}
+          <i class="fas fa-spa"></i>
+        {% endif %}
+      </div>
+      <div>
+        <div class="sidebar__name">{{ center.name|default:"EnjazBCMS" }}</div>
+      </div>
+    </div>
+
+    <nav class="sidebar__nav">
+
+      <!-- لوحة التحكم -->
+      <a href="{% url 'core:dashboard' %}" class="nav-item {% block nav_dashboard %}{% endblock %}">
+        <span class="nav-icon"><i class="fas fa-th-large"></i></span>
+        لوحة التحكم
+      </a>
+
+      <!-- المواعيد (submenu) -->
+      <div class="nav-group">
+        <div class="nav-item nav-item--parent">
+          <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+          المواعيد
+          <i class="fas fa-chevron-left nav-arrow"></i>
+        </div>
+        <div class="nav-submenu">
+          <a href="{% url 'appointments:list' %}" class="nav-subitem {% block nav_appointments %}{% endblock %}">
+            <i class="fas fa-list-ul"></i> قائمة المواعيد
+          </a>
+          <a href="{% url 'appointments:calendar' %}" class="nav-subitem {% block nav_calendar %}{% endblock %}">
+            <i class="fas fa-calendar-days"></i> التقويم
+          </a>
+        </div>
+      </div>
+
+      <!-- العملاء -->
+      <a href="{% url 'clients:list' %}" class="nav-item {% block nav_clients %}{% endblock %}">
+        <span class="nav-icon"><i class="fas fa-users"></i></span>
+        العملاء
+      </a>
+
+      <!-- الموظفون -->
+      <a href="{% url 'staff:list' %}" class="nav-item {% block nav_staff %}{% endblock %}">
+        <span class="nav-icon"><i class="fas fa-user-friends"></i></span>
+        فريق العمل
+      </a>
+
+      <!-- الفواتير -->
+      <a href="{% url 'billing:list' %}" class="nav-item {% block nav_billing %}{% endblock %}">
+        <span class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+        الفواتير
+      </a>
+
+      <!-- المالية -->
+      <div class="nav-group {% block nav_finance_open %}{% endblock %}">
+        <div class="nav-item nav-item--parent">
+          <span class="nav-icon"><i class="fas fa-wallet"></i></span>
+          الحسابات والمالية
+          <i class="fas fa-chevron-left nav-arrow"></i>
+        </div>
+        <div class="nav-submenu">
+          <a href="{% url 'finance:treasury_list' %}" class="nav-subitem {% block nav_finance_treasury %}{% endblock %}">
+            <i class="fas fa-university"></i> الخزينة
+          </a>
+          <a href="{% url 'finance:expenses' %}" class="nav-subitem {% block nav_finance_expenses %}{% endblock %}">
+            <i class="fas fa-money-bill-wave"></i> المصروفات
+          </a>
+          <a href="{% url 'finance:client_payments' %}" class="nav-subitem {% block nav_finance_payments %}{% endblock %}">
+            <i class="fas fa-hand-holding-dollar"></i> مدفوعات العملاء
+          </a>
+          <a href="{% url 'finance:client_statement' %}" class="nav-subitem {% block nav_finance_statements %}{% endblock %}">
+            <i class="fas fa-list"></i> كشف حساب عميل
+          </a>
+        </div>
+      </div>
+
+      <!-- الخدمات (submenu) -->
+      <div class="nav-group">
+        <div class="nav-item nav-item--parent">
+          <span class="nav-icon"><i class="fas fa-spa"></i></span>
+          الخدمات
+          <i class="fas fa-chevron-left nav-arrow"></i>
+        </div>
+        <div class="nav-submenu">
+          <a href="{% url 'services:categories' %}" class="nav-subitem {% block nav_service_cats %}{% endblock %}">
+            <i class="fas fa-tags"></i> تصنيفات الخدمات
+          </a>
+          <a href="{% url 'services:list' %}" class="nav-subitem {% block nav_services %}{% endblock %}">
+            <i class="fas fa-list-ul"></i> الخدمات
+          </a>
+        </div>
+      </div>
+
+      <!-- المخزون (submenu) -->
+      <div class="nav-group">
+        <div class="nav-item nav-item--parent">
+          <span class="nav-icon"><i class="fas fa-warehouse"></i></span>
+          المخزون
+          <i class="fas fa-chevron-left nav-arrow"></i>
+        </div>
+        <div class="nav-submenu">
+          <a href="{% url 'products:categories' %}" class="nav-subitem {% block nav_product_cats %}{% endblock %}">
+            <i class="fas fa-tags"></i> تصنيفات المنتجات
+          </a>
+          <a href="{% url 'products:list' %}" class="nav-subitem {% block nav_products %}{% endblock %}">
+            <i class="fas fa-box"></i> المنتجات
+          </a>
+          <a href="{% url 'products:purchase_list' %}" class="nav-subitem {% block nav_purchase %}{% endblock %}">
+            <i class="fas fa-truck-loading"></i> المشتريات
+          </a>
+          <a href="{% url 'products:stock' %}" class="nav-subitem {% block nav_stock %}{% endblock %}">
+            <i class="fas fa-exchange-alt"></i> حركات المخزون
+          </a>
+        </div>
+      </div>
+
+      <!-- المتجر (submenu) -->
+      <div class="nav-group">
+        <div class="nav-item nav-item--parent">
+          <span class="nav-icon"><i class="fas fa-store"></i></span>
+          المتجر
+          <i class="fas fa-chevron-left nav-arrow"></i>
+        </div>
+        <div class="nav-submenu">
+          <!-- رابط فتح المتجر + نسخ -->
+          {% if center and center.slug %}
+          <div style="margin:4px 8px;padding:10px 12px;background:rgba(255,255,255,.06);border-radius:10px;">
+            <div style="font-size:10px;color:rgba(255,255,255,.4);font-weight:700;margin-bottom:7px;letter-spacing:.04em;">رابط المتجر العام</div>
+            <div style="font-size:11px;color:#fda4af;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="/store/{{ center.slug }}/">/store/{{ center.slug }}/</div>
+            <div style="display:flex;gap:6px;">
+              <button onclick="copyStoreLink('{{ request.scheme }}://{{ request.get_host }}{% url 'store:home' slug=center.slug %}')"
+                      style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;border:none;background:rgba(255,255,255,.12);color:rgba(255,255,255,.75);border-radius:7px;padding:6px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;"
+                      title="نسخ الرابط">
+                <i class="fas fa-copy"></i> نسخ
+              </button>
+              <a href="{% url 'store:home' slug=center.slug %}" target="_blank" rel="noopener noreferrer"
+                 style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(236,72,153,.25);color:#fda4af;border-radius:7px;padding:6px 8px;font-size:11px;font-weight:600;text-decoration:none;"
+                 title="فتح المتجر في تبويب جديد">
+                <i class="fas fa-external-link-alt"></i> فتح
+              </a>
+            </div>
+          </div>
+          {% endif %}
+          <a href="{% url 'store:bookings' %}" class="nav-subitem {% block nav_bookings %}{% endblock %}">
+            <i class="fas fa-calendar-check"></i>
+            الحجوزات
+            {% if pending_bookings %}<span class="nav-badge">{{ pending_bookings }}</span>{% endif %}
+          </a>
+          <a href="{% url 'store:orders' %}" class="nav-subitem {% block nav_orders %}{% endblock %}">
+            <i class="fas fa-shopping-cart"></i> الطلبات
+            {% if pending_orders %}<span class="nav-badge">{{ pending_orders }}</span>{% endif %}
+          </a>
+          <a href="{% url 'core:settings' %}" class="nav-subitem {% block nav_store_settings %}{% endblock %}">
+            <i class="fas fa-sliders"></i> إعدادات المتجر
+          </a>
+        </div>
+      </div>
+
+      <a href="{% url 'reports:home' %}" class="nav-item {% block nav_reports %}{% endblock %}">
+        <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+        التقارير
+      </a>
+
+    </nav>
+
+  </nav>
+
+  <!-- ── Main ─────────────────────────────────────────────── -->
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn--ghost btn--icon" id="sidebar-toggle" style="display:none;">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar__title">{% block page_title %}{% endblock %}</div>
+      </div>
+      <div class="topbar__actions">
+        {% block topbar_actions %}{% endblock %}
+        <div class="topbar__user">
+          <div style="position:relative;">
+            <button id="topbar-user-btn" onclick="toggleTopbarMenu()" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;">
+              {% if request.user.avatar %}
+                <img src="{{ request.user.avatar.url }}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--slate-200);">
+              {% else %}
+                <div class="topbar__avatar">{{ request.user.full_name|first|upper|default:"م" }}</div>
+              {% endif %}
+            </button>
+            <div id="topbar-user-menu" style="display:none;position:absolute;top:calc(100% + 8px);left:0;background:#fff;border:1px solid var(--slate-200);border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.1);min-width:150px;z-index:500;">
+              <a href="{% url 'accounts:profile' %}" style="display:flex;align-items:center;gap:8px;padding:10px 14px;color:var(--slate-700);font-size:13px;text-decoration:none;" onmouseover="this.style.background='var(--slate-50)'" onmouseout="this.style.background=''">
+                <i class="fas fa-user" style="font-size:12px;color:var(--slate-400);"></i> الملف الشخصي
+              </a>
+              <div style="height:1px;background:var(--slate-100);"></div>
+              <a href="{% url 'accounts:logout' %}" style="display:flex;align-items:center;gap:8px;padding:10px 14px;color:#ef4444;font-size:13px;text-decoration:none;" onmouseover="this.style.background='var(--slate-50)'" onmouseout="this.style.background=''">
+                <i class="fas fa-sign-out-alt" style="font-size:12px;"></i> تسجيل الخروج
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page">
+      {% if messages %}
+      <script>
+      window.__bcmsPendingMessages = window.__bcmsPendingMessages || [];
+      {% for msg in messages %}
+      window.__bcmsPendingMessages.push({
+        message: "{{ msg|escapejs }}",
+        type: "{% if 'error' in msg.tags or 'danger' in msg.tags %}error{% elif 'success' in msg.tags %}success{% elif 'warning' in msg.tags %}warning{% else %}info{% endif %}"
+      });
+      {% endfor %}
+      </script>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Global alerts (toasts) -->
+<div id="global-alerts"></div>
+
+<!-- Include shared client modal so it's available sitewide -->
+{% include 'clients/partials/client_modal.html' %}
+
+<!-- Global spinner -->
+<div id="global-spinner" aria-hidden="true" role="status">
+  <div class="global-spinner__ring"></div>
+</div>
+
+<script src="{% static 'js/bcms.js' %}?v=2"></script>
+{% block extra_js %}{% endblock %}
+<script>
+(function(){
+  // Open any nav-group that contains an active subitem
+  document.querySelectorAll('.nav-group').forEach(function(group){
+    if(group.querySelector('.nav-subitem.active')){
+      group.classList.add('open');
+    }
+  });
+  // Toggle nav-group on parent click
+  document.querySelectorAll('.nav-item--parent').forEach(function(parent){
+    parent.addEventListener('click', function(){
+      this.closest('.nav-group').classList.toggle('open');
+    });
+  });
+
+  // Close topbar user menu when clicking outside
+  document.addEventListener('click', function(e){
+    var tMenu = document.getElementById('topbar-user-menu');
+    var tBtn  = document.getElementById('topbar-user-btn');
+    if (tMenu && tBtn && !tBtn.contains(e.target) && !tMenu.contains(e.target)) {
+      tMenu.style.display = 'none';
+    }
+  });
+})();
+
+function toggleTopbarMenu() {
+  var menu = document.getElementById('topbar-user-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+</body>
+</html>

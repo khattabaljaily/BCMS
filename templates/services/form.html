@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/services.css' %}">{% endblock %}
+{% block title %}{% if instance %}تعديل خدمة{% else %}خدمة جديدة{% endif %}{% endblock %}
+{% block page_title %}{% if instance %}تعديل الخدمة{% else %}إضافة خدمة جديدة{% endif %}{% endblock %}
+{% block nav_services %}active{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:560px;">
+  <div class="card__header">
+    <span class="card__title">بيانات الخدمة</span>
+    <a href="{% url 'services:list' %}" class="btn btn--ghost btn--sm"><i class="fas fa-arrow-right"></i> رجوع</a>
+  </div>
+  <div class="card__body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">اسم الخدمة</label>
+        <input class="form-control" type="text" name="name" value="{{ instance.name|default:'' }}" required>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">التصنيف (اختياري)</label>
+          <select class="form-control" name="category_id">
+            <option value="">— بدون تصنيف —</option>
+            {% for cat in categories %}
+              <option value="{{ cat.pk }}" {% if instance and instance.category_id == cat.pk %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">المدة (دقيقة)</label>
+          <input class="form-control" type="number" name="duration" value="{{ instance.duration|default:60 }}" min="5">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">السعر</label>
+          <input class="form-control" type="number" name="price" value="{{ instance.price|default:0 }}" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">التكلفة (اختياري)</label>
+          <input class="form-control" type="number" name="cost" value="{{ instance.cost|default:0 }}" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الوصف</label>
+        <textarea class="form-control" name="description" rows="2">{{ instance.description|default:'' }}</textarea>
+      </div>
+      <div style="display:flex;gap:20px;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+          <input type="checkbox" name="is_active" {% if not instance or instance.is_active %}checked{% endif %}>
+          نشط
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+          <input type="checkbox" name="show_in_store" {% if not instance or instance.show_in_store %}checked{% endif %}>
+          يظهر في المتجر
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <a href="{% url 'services:list' %}" class="btn btn--ghost">إلغاء</a>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

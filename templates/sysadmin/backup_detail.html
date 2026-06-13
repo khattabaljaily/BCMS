@@ -1,0 +1,350 @@
+{% extends "sysadmin/base.html" %}
+{% block title %}نسخ {{ center.name }}{% endblock %}
+{% block page_title %}النسخ الاحتياطي — {{ center.name }}{% endblock %}
+{% block nav_backup %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Tenant header ── */
+.bk-center-header {
+  background: var(--sa-card);
+  border-radius: var(--sa-radius);
+  padding: 20px 24px;
+  display: flex; align-items: center; gap: 18px;
+  box-shadow: var(--sa-shadow);
+  border: 1px solid var(--sa-border);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.bk-center-header__avatar {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--sa-accent), #818cf8);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 800; font-size: 20px;
+  flex-shrink: 0;
+}
+.bk-center-header__name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.bk-center-header__meta { font-size: 12.5px; color: var(--sa-muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bk-center-header__meta code { background: var(--sa-bg); padding: 2px 6px; border-radius: 5px; font-size: 11.5px; }
+
+/* ── Table enhancements ── */
+.bk-filename {
+  font-family: monospace; font-size: 12px;
+  color: var(--sa-text); word-break: break-all;
+}
+.bk-missing { color: var(--sa-red); font-size: 11px; }
+
+.bk-type-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 8px;
+  font-size: 11px; font-weight: 700;
+}
+.bk-type-badge--manual      { background: #e0e7ff; color: #3730a3; }
+.bk-type-badge--auto        { background: #d1fae5; color: #065f46; }
+.bk-type-badge--pre_restore { background: #fef3c7; color: #92400e; }
+
+.bk-status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 8px;
+  font-size: 11px; font-weight: 700;
+}
+.bk-status-badge--completed  { background: #d1fae5; color: #065f46; }
+.bk-status-badge--failed     { background: #fee2e2; color: #991b1b; }
+.bk-status-badge--in_progress{ background: #dbeafe; color: #1e40af; }
+
+.bk-row--missing td { opacity: .6; }
+
+/* ── Action buttons ── */
+.bk-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; border: 1.5px solid; cursor: pointer;
+  background: transparent; transition: all .17s;
+}
+.bk-btn--download { border-color: var(--sa-blue);   color: var(--sa-blue); }
+.bk-btn--download:hover { background: var(--sa-blue);   color: #fff; }
+.bk-btn--restore  { border-color: var(--sa-yellow); color: var(--sa-yellow); }
+.bk-btn--restore:hover  { background: var(--sa-yellow); color: #fff; }
+.bk-btn--delete   { border-color: var(--sa-red);    color: var(--sa-red); }
+.bk-btn--delete:hover   { background: var(--sa-red);    color: #fff; }
+
+/* ── Empty state ── */
+.bk-empty {
+  text-align: center; padding: 56px 32px;
+  color: var(--sa-muted);
+}
+.bk-empty i { font-size: 44px; opacity: .2; display: block; margin-bottom: 14px; }
+.bk-empty__title { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--sa-text); }
+.bk-empty__desc  { font-size: 13px; }
+
+/* ── Confirm modals ── */
+.bk-modal-icon {
+  width: 58px; height: 58px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin: 0 auto 16px;
+}
+.bk-modal-icon--restore { background: #fef3c7; color: var(--sa-yellow); }
+.bk-modal-icon--delete  { background: #fee2e2; color: var(--sa-red); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div class="sa-breadcrumb" style="margin-bottom:16px;">
+  <a href="{% url 'sysadmin:backup_list' %}"><i class="fas fa-database"></i> النسخ الاحتياطي</a>
+  ← {{ center.name }}
+</div>
+
+<!-- Center header -->
+<div class="bk-center-header">
+  <div class="bk-center-header__avatar">{{ center.name|slice:":1" }}</div>
+  <div style="flex:1;">
+    <div class="bk-center-header__name">{{ center.name }}</div>
+    <div class="bk-center-header__meta">
+      <code>{{ center.slug }}</code>
+      <span>·</span>
+      {% if center.plan == 'trial' %}تجريبي{% elif center.plan == 'starter' %}مبتدئ{% elif center.plan == 'pro' %}احترافي{% else %}مؤسسات{% endif %}
+      <span>·</span>
+      <span>{{ backups.count }} نسخة احتياطية</span>
+      <span>·</span>
+      <span>{{ total_size|filesizeformat }}</span>
+    </div>
+  </div>
+  <button class="btn btn-success" id="btnNewBackup">
+    <i class="fas fa-plus"></i> نسخة احتياطية جديدة
+  </button>
+</div>
+
+<!-- Backups table -->
+<div class="sa-card">
+  <div class="sa-card-header">
+    <h3><i class="fas fa-history" style="color:var(--sa-accent)"></i> سجل النسخ الاحتياطية</h3>
+  </div>
+
+  {% if backups %}
+  <div class="sa-table-wrap">
+    <table class="sa-table" id="backupTable">
+      <thead>
+        <tr>
+          <th style="width:3rem;">#</th>
+          <th>اسم الملف</th>
+          <th>النوع</th>
+          <th>الحجم</th>
+          <th>الحالة</th>
+          <th>التاريخ</th>
+          <th style="width:8rem;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for backup in backups %}
+        <tr id="row-{{ backup.id }}" {% if not backup.file_exists %}class="bk-row--missing"{% endif %}>
+          <td style="color:var(--sa-muted);font-size:11.5px;font-family:monospace;">{{ backup.id }}</td>
+          <td>
+            <span class="bk-filename">{{ backup.filename }}</span>
+            {% if not backup.file_exists %}
+            <div class="bk-missing"><i class="fas fa-exclamation-triangle"></i> الملف مفقود</div>
+            {% endif %}
+          </td>
+          <td>
+            <span class="bk-type-badge bk-type-badge--{{ backup.backup_type }}"
+                  {% if backup.backup_type == 'pre_restore' %}title="أُنشئت تلقائياً قبل تنفيذ عملية استعادة"{% endif %}>
+              {% if backup.backup_type == 'manual' %}<i class="fas fa-hand-pointer"></i>
+              {% elif backup.backup_type == 'auto' %}<i class="fas fa-robot"></i>
+              {% else %}<i class="fas fa-shield-alt"></i>{% endif %}
+              {{ backup.get_backup_type_display }}
+            </span>
+            {% if backup.backup_type == 'pre_restore' %}
+            <div style="font-size:10.5px;color:var(--sa-muted);margin-top:3px;">حماية تلقائية قبل الاستعادة</div>
+            {% endif %}
+          </td>
+          <td style="font-size:12.5px;">{{ backup.file_size_display }}</td>
+          <td>
+            <span class="bk-status-badge bk-status-badge--{{ backup.status }}">
+              {% if backup.status == 'completed' %}<i class="fas fa-check-circle"></i>
+              {% elif backup.status == 'failed' %}<i class="fas fa-times-circle"></i>
+              {% else %}<i class="fas fa-spinner fa-spin"></i>{% endif %}
+              {{ backup.get_status_display }}
+            </span>
+          </td>
+          <td style="font-size:12.5px;color:var(--sa-muted);white-space:nowrap;">{{ backup.created_at|date:"Y-m-d H:i" }}</td>
+          <td>
+            <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+              {% if backup.status == 'completed' and backup.file_exists %}
+              <a href="{% url 'sysadmin:backup_download' backup.id %}"
+                 class="bk-btn bk-btn--download" title="تنزيل">
+                <i class="fas fa-download"></i>
+              </a>
+              <button class="bk-btn bk-btn--restore bk-btn-restore"
+                      data-id="{{ backup.id }}"
+                      data-filename="{{ backup.filename }}"
+                      title="استعادة">
+                <i class="fas fa-undo"></i>
+              </button>
+              {% endif %}
+              <button class="bk-btn bk-btn--delete bk-btn-delete"
+                      data-id="{{ backup.id }}"
+                      data-filename="{{ backup.filename }}"
+                      title="حذف">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="bk-empty">
+    <i class="fas fa-database"></i>
+    <div class="bk-empty__title">لا توجد نسخ احتياطية بعد</div>
+    <div class="bk-empty__desc">اضغط على الزر أدناه لإنشاء أول نسخة احتياطية</div>
+    <button class="btn btn-success" id="btnNewBackupEmpty" style="margin-top:16px;">
+      <i class="fas fa-plus"></i> إنشاء أول نسخة احتياطية
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Restore confirm modal -->
+<div class="modal-backdrop" id="modal-restore">
+  <div class="modal" style="max-width:460px;text-align:center;">
+    <div class="bk-modal-icon bk-modal-icon--restore"><i class="fas fa-undo"></i></div>
+    <h3 style="margin-bottom:10px;">تأكيد الاستعادة</h3>
+    <p style="color:var(--sa-muted);font-size:13px;margin-bottom:6px;">
+      سيتم إنشاء نسخة احتياطية تلقائية قبل الاستعادة، ثم استبدال بيانات المركز بالنسخة:
+    </p>
+    <p id="restoreFilename" style="font-family:monospace;font-size:12px;background:var(--sa-bg);padding:8px 12px;border-radius:8px;border:1px solid var(--sa-border);word-break:break-all;margin-bottom:20px;"></p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-warning" id="btnConfirmRestore">
+        <i class="fas fa-undo"></i> تأكيد الاستعادة
+      </button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-restore')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="modal-backdrop" id="modal-delete">
+  <div class="modal" style="max-width:460px;text-align:center;">
+    <div class="bk-modal-icon bk-modal-icon--delete"><i class="fas fa-trash"></i></div>
+    <h3 style="margin-bottom:10px;color:var(--sa-red);">حذف النسخة الاحتياطية؟</h3>
+    <p style="color:var(--sa-muted);font-size:13px;margin-bottom:6px;">ستقوم بحذف الملف:</p>
+    <p id="deleteFilename" style="font-family:monospace;font-size:12px;background:var(--sa-bg);padding:8px 12px;border-radius:8px;border:1px solid var(--sa-border);word-break:break-all;margin-bottom:6px;"></p>
+    <p style="color:var(--sa-red);font-size:12px;margin-bottom:20px;">لا يمكن التراجع عن هذا الإجراء.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-danger" id="btnConfirmDelete">
+        <i class="fas fa-trash"></i> نعم، احذف
+      </button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-delete')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CENTER_PK = '{{ center.pk }}';
+const CSRF = '{{ csrf_token }}';
+
+/* ── new backup ── */
+async function doNewBackup(btn) {
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="sa-spinner"></span> جاري النسخ...';
+  btn.disabled = true;
+  try {
+    const resp = await fetch(`/sysadmin/backup/${CENTER_PK}/create/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF },
+    });
+    const data = await resp.json();
+    showToast(data.success ? `✓ ${data.message}` : (data.message || 'فشل النسخ'), data.success);
+    if (data.success) setTimeout(() => location.reload(), 1400);
+  } catch {
+    showToast('حدث خطأ في الاتصال', false);
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled  = false;
+  }
+}
+
+document.getElementById('btnNewBackup')?.addEventListener('click', function () { doNewBackup(this); });
+document.getElementById('btnNewBackupEmpty')?.addEventListener('click', function () { doNewBackup(this); });
+
+/* ── restore ── */
+let pendingRestoreId = null;
+
+document.querySelectorAll('.bk-btn-restore').forEach(btn => {
+  btn.addEventListener('click', function () {
+    pendingRestoreId = this.dataset.id;
+    document.getElementById('restoreFilename').textContent = this.dataset.filename;
+    openModal('modal-restore');
+  });
+});
+
+document.getElementById('btnConfirmRestore')?.addEventListener('click', async function () {
+  if (!pendingRestoreId) return;
+  const orig = this.innerHTML;
+  this.innerHTML = '<span class="sa-spinner"></span> جاري الاستعادة...';
+  this.disabled  = true;
+  closeModal('modal-restore');
+  try {
+    const resp = await fetch(`/sysadmin/backup/restore/${pendingRestoreId}/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF },
+    });
+    const data = await resp.json();
+    showToast(data.message, data.success);
+    if (data.success) setTimeout(() => location.reload(), 1800);
+  } catch {
+    showToast('حدث خطأ في الاتصال', false);
+  } finally {
+    this.innerHTML = orig;
+    this.disabled  = false;
+    pendingRestoreId = null;
+  }
+});
+
+/* ── delete ── */
+let pendingDeleteId = null;
+
+document.querySelectorAll('.bk-btn-delete').forEach(btn => {
+  btn.addEventListener('click', function () {
+    pendingDeleteId = this.dataset.id;
+    document.getElementById('deleteFilename').textContent = this.dataset.filename;
+    openModal('modal-delete');
+  });
+});
+
+document.getElementById('btnConfirmDelete')?.addEventListener('click', async function () {
+  if (!pendingDeleteId) return;
+  const id   = pendingDeleteId;
+  const orig = this.innerHTML;
+  this.innerHTML = '<span class="sa-spinner"></span> جاري الحذف...';
+  this.disabled  = true;
+  closeModal('modal-delete');
+  try {
+    const resp = await fetch(`/sysadmin/backup/delete/${id}/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF },
+    });
+    const data = await resp.json();
+    if (data.success) {
+      document.getElementById(`row-${id}`)?.remove();
+      showToast(data.message);
+    } else {
+      showToast(data.message, false);
+    }
+  } catch {
+    showToast('حدث خطأ في الاتصال', false);
+  } finally {
+    this.innerHTML = orig;
+    this.disabled  = false;
+    pendingDeleteId = null;
+  }
+});
+</script>
+{% endblock %}

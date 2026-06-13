@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}الإعدادات{% endblock %}
+{% block page_title %}إعدادات المركز{% endblock %}
+{% block nav_store_settings %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+<style>
+/* ── Toggle switch ─────────────────── */
+.toggle-wrap { display:flex; align-items:center; gap:10px; }
+.toggle { position:relative; width:44px; height:24px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; position:absolute; }
+.toggle-slider {
+  position:absolute; inset:0; cursor:pointer;
+  background:#cbd5e1; border-radius:24px; transition:.25s;
+}
+.toggle-slider::before {
+  content:''; position:absolute;
+  width:18px; height:18px; border-radius:50%;
+  right:3px; top:3px; background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.18);
+  transition:.25s;
+}
+.toggle input:checked + .toggle-slider { background:var(--rose); }
+.toggle input:checked + .toggle-slider::before { right:23px; }
+.toggle-label { font-size:13px; font-weight:600; color:var(--slate-700); cursor:pointer; }
+
+/* ── Day chips ─────────────────────── */
+.day-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.day-chip-label { cursor:pointer; }
+.day-chip-label input[type=checkbox] { display:none; }
+.day-chip-box {
+  padding:8px 14px; border-radius:20px; font-size:12px; font-weight:700;
+  border:2px solid var(--slate-200); background:#fff; color:var(--slate-500);
+  transition:all .15s; user-select:none;
+}
+.day-chip-label input:checked + .day-chip-box {
+  background:var(--rose); color:#fff; border-color:var(--rose);
+}
+.day-chip-label:hover .day-chip-box { border-color:var(--rose); color:var(--rose); }
+
+/* ── Section icon header ───────────── */
+.section-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.section-icon--rose   { background:linear-gradient(135deg,#fce7f3,#fbcfe8); color:var(--rose); }
+.section-icon--blue   { background:linear-gradient(135deg,#dbeafe,#bfdbfe); color:#3b82f6; }
+.section-icon--purple { background:linear-gradient(135deg,#ede9fe,#ddd6fe); color:#8b5cf6; }
+.section-icon--green  { background:linear-gradient(135deg,#dcfce7,#bbf7d0); color:#16a34a; }
+.section-icon--amber  { background:linear-gradient(135deg,#fef9c3,#fde68a); color:#d97706; }
+.section-icon--slate  { background:linear-gradient(135deg,#f1f5f9,#e2e8f0); color:#64748b; }
+
+.card-section-head {
+  display:flex; align-items:center; gap:12px;
+  padding:16px 20px;
+  border-bottom:1px solid var(--slate-100);
+}
+.card-section-head h3 { font-size:14px; font-weight:800; margin:0; }
+.card-section-head p  { font-size:11px; color:var(--slate-400); margin:2px 0 0; }
+
+/* ── Store link preview ────────────── */
+.store-link-box {
+  background:linear-gradient(135deg,#fdf2f8,#fff);
+  border:1.5px solid #fce7f3;
+  border-radius:14px;
+  padding:16px;
+}
+.store-link-url {
+  font-size:12px; color:var(--rose); font-weight:600;
+  word-break:break-all; margin:8px 0 12px;
+  padding:8px 12px; background:#fff;
+  border-radius:8px; border:1px solid #fce7f3;
+}
+.store-link-actions { display:flex; gap:8px; }
+
+/* ── Settings sticky header ─────────── */
+.settings-sticky {
+  position:sticky; top:var(--topbar-h); z-index:40;
+  background:rgba(255,255,255,.95); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--slate-100);
+  padding:10px 0;
+  margin-bottom:24px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+}
+.settings-tabs { display:flex; gap:4px; overflow-x:auto; }
+.settings-tab {
+  padding:7px 14px; border-radius:20px; font-size:12px; font-weight:700;
+  color:var(--slate-500); cursor:pointer; white-space:nowrap; border:none;
+  background:transparent; transition:all .15s; font-family:inherit;
+}
+.settings-tab.active, .settings-tab:hover { background:var(--rose); color:#fff; }
+
+/* ── Color input ───────────────────── */
+.color-input-wrap { display:flex; align-items:center; gap:10px; }
+.color-swatch {
+  width:36px; height:36px; border-radius:10px;
+  border:2px solid var(--slate-200); overflow:hidden; cursor:pointer; flex-shrink:0;
+}
+.color-swatch input[type=color] {
+  width:200%; height:200%; margin:-25%; border:none; cursor:pointer; padding:0;
+}
+@media (max-width:768px) {
+  .settings-sticky { flex-direction:column; align-items:stretch; }
+  .settings-tabs   { padding-bottom:2px; }
+  .store-link-actions { flex-direction:column; }
+  .store-link-actions .btn { width:100%; justify-content:center; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cx-hero" style="margin-bottom:20px;">
+  <div class="cx-hero-inner">
+    <div class="cx-hero-left">
+      <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#ec4899,#f472b6);box-shadow:0 4px 14px rgba(236,72,153,.32);">
+        <i class="fas fa-sliders-h"></i>
+      </div>
+      <div>
+        <h1 class="cx-hero-title">إعدادات المركز</h1>
+        <p class="cx-hero-desc">{{ center.name }}</p>
+      </div>
+    </div>
+    <div class="cx-hero-right">
+      <div class="cx-hero-actions">
+        <button type="submit" form="settings-form" class="btn btn--primary">
+          <i class="fas fa-save"></i> حفظ الإعدادات
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form method="post" id="settings-form" enctype="multipart/form-data">
+{% csrf_token %}
+
+<!-- ════════════════════════════════════════
+     1. بيانات المركز
+════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-section-head">
+    <div class="section-icon section-icon--rose"><i class="fas fa-store"></i></div>
+    <div>
+      <h3>بيانات المركز</h3>
+      <p>الاسم والموقع ومعلومات التواصل</p>
+    </div>
+  </div>
+  <div class="card__body">
+    <div class="form-grid-2" style="gap:16px;">
+      <div class="form-group">
+        <label class="form-label">اسم المركز</label>
+        <input class="form-control" type="text" value="{{ center.name }}" disabled
+               style="background:var(--slate-50);color:var(--slate-400);">
+      </div>
+      <div class="form-group">
+        <label class="form-label">المدينة</label>
+        <input class="form-control" type="text" name="city" value="{{ center.city|default:'' }}" placeholder="مثال: الخرطوم">
+      </div>
+      <div class="form-group">
+        <label class="form-label">رقم الهاتف</label>
+        <input class="form-control" type="tel" name="phone" value="{{ center.phone|default:'' }}" placeholder="+966...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input class="form-control" type="email" name="email" value="{{ center.email|default:'' }}" placeholder="info@example.com">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">العنوان التفصيلي</label>
+      <textarea class="form-control" name="address" rows="2" placeholder="الشارع، الحي، المدينة...">{{ center.address|default:'' }}</textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label class="form-label">شعار المركز</label>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        {% if center.logo %}
+        <img src="{{ center.logo.url }}" alt="شعار" style="height:72px;border-radius:14px;object-fit:cover;border:2px solid var(--slate-200);">
+        {% else %}
+        <div style="width:72px;height:72px;border-radius:14px;background:var(--rose-bg);display:flex;align-items:center;justify-content:center;color:var(--rose);font-size:24px;border:2px dashed #fda4af;">
+          <i class="fas fa-spa"></i>
+        </div>
+        {% endif %}
+        <div style="flex:1;min-width:180px;">
+          <input class="form-control" type="file" name="logo" accept="image/*">
+          <div style="font-size:11px;color:var(--slate-400);margin-top:6px;">PNG أو JPG، مربع مفضل (200×200 أو أكبر)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     2. أوقات العمل
+════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-section-head">
+    <div class="section-icon section-icon--blue"><i class="fas fa-clock"></i></div>
+    <div>
+      <h3>أوقات وأيام العمل</h3>
+      <p>تُستخدم لتوليد مواعيد الحجز في المتجر</p>
+    </div>
+  </div>
+  <div class="card__body">
+
+    <!-- أيام الأسبوع -->
+    <div class="form-group">
+      <label class="form-label" style="margin-bottom:10px;">
+        أيام الدوام
+        <span style="font-size:11px;font-weight:400;color:var(--slate-400);margin-right:6px;">اختر الأيام التي يفتح فيها المركز</span>
+      </label>
+      <div class="day-chips">
+        {% with wd=settings_obj.work_days %}
+        <label class="day-chip-label"><input type="checkbox" name="work_days" value="0" {% if "0" in wd %}checked{% endif %}><div class="day-chip-box">الأحد</div></label>
+        <label class="day-chip-label"><input type="checkbox" name="work_days" value="1" {% if "1" in wd %}checked{% endif %}><div class="day-chip-box">الاثنين</div></label>
+        <label class="day-chip-label"><input type="checkbox" name="work_days" value="2" {% if "2" in wd %}checked{% endif %}><div class="day-chip-box">الثلاثاء</div></label>
+        <label class="day-chip-label"><input type="checkbox" name="work_days" value="3" {% if "3" in wd %}checked{% endif %}><div class="day-chip-box">الأربعاء</div></label>
+        <label class="day-chip-label"><input type="checkbox" name="work_days" value="4" {% if "4" in wd %}checked{% endif %}><div class="day-chip-box">الخميس</div></label>
+        <label class="day-chip-label"><input type="checkbox" name="work_days" value="5" {% if "5" in wd %}checked{% endif %}><div class="day-chip-box">الجمعة</div></label>
+        <label class="day-chip-label"><input type="checkbox" name="work_days" value="6" {% if "6" in wd %}checked{% endif %}><div class="day-chip-box">السبت</div></label>
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- ساعات الدوام -->
+    <div class="form-grid-2" style="gap:16px;">
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-sun" style="color:#f59e0b;margin-left:6px;"></i>بداية الدوام</label>
+        <input class="form-control" type="time" name="work_start"
+               value="{{ settings_obj.work_start|default:'' }}"
+               placeholder="09:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-moon" style="color:#8b5cf6;margin-left:6px;"></i>نهاية الدوام</label>
+        <input class="form-control" type="time" name="work_end"
+               value="{{ settings_obj.work_end|default:'' }}"
+               placeholder="18:00">
+      </div>
+    </div>
+
+    {% if settings_obj.work_start and settings_obj.work_end %}
+    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;margin-top:4px;">
+      <i class="fas fa-check-circle" style="color:#16a34a;"></i>
+      <span>ساعات الدوام: <strong>{{ settings_obj.work_start|time:"H:i" }}</strong> — <strong>{{ settings_obj.work_end|time:"H:i" }}</strong></span>
+    </div>
+    {% else %}
+    <div style="background:#fef9c3;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;margin-top:4px;">
+      <i class="fas fa-exclamation-triangle" style="color:#d97706;"></i>
+      <span>لم تُحدَّد أوقات الدوام — لن تظهر خانات الوقت في صفحة الحجز.</span>
+    </div>
+    {% endif %}
+
+    <div style="border-top:1px solid var(--slate-100);margin-top:20px;padding-top:20px;">
+      <div class="form-grid-2" style="gap:16px;">
+        <div class="form-group">
+          <label class="form-label">مدة الفترة الزمنية للحجز</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            {% with sm=settings_obj.slot_minutes %}
+            <label style="cursor:pointer;"><input type="radio" name="slot_minutes" value="15" style="display:none;" {% if sm == 15 %}checked{% endif %}><span class="slot-radio-chip {% if sm == 15 %}active{% endif %}">15 دقيقة</span></label>
+            <label style="cursor:pointer;"><input type="radio" name="slot_minutes" value="20" style="display:none;" {% if sm == 20 %}checked{% endif %}><span class="slot-radio-chip {% if sm == 20 %}active{% endif %}">20 دقيقة</span></label>
+            <label style="cursor:pointer;"><input type="radio" name="slot_minutes" value="30" style="display:none;" {% if sm == 30 %}checked{% endif %}><span class="slot-radio-chip {% if sm == 30 %}active{% endif %}">30 دقيقة</span></label>
+            <label style="cursor:pointer;"><input type="radio" name="slot_minutes" value="45" style="display:none;" {% if sm == 45 %}checked{% endif %}><span class="slot-radio-chip {% if sm == 45 %}active{% endif %}">45 دقيقة</span></label>
+            <label style="cursor:pointer;"><input type="radio" name="slot_minutes" value="60" style="display:none;" {% if sm == 60 %}checked{% endif %}><span class="slot-radio-chip {% if sm == 60 %}active{% endif %}">ساعة</span></label>
+            {% endwith %}
+          </div>
+          <input class="form-control" type="number" name="slot_minutes" min="5" max="120" step="5"
+                 value="{{ settings_obj.slot_minutes }}" placeholder="أو أدخل قيمة مخصصة بالدقائق">
+        </div>
+        <div class="form-group">
+          <label class="form-label">أقصى حجز مسبق</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input class="form-control" type="number" name="booking_advance_days" min="1" max="365"
+                   value="{{ settings_obj.booking_advance_days }}" style="flex:1;">
+            <span style="font-size:13px;color:var(--slate-500);white-space:nowrap;">يوم مقدماً</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <label class="toggle-wrap">
+        <span class="toggle">
+          <input type="checkbox" name="booking_enabled" {% if settings_obj.booking_enabled %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </span>
+        <span class="toggle-label">تفعيل الحجز الإلكتروني عبر المتجر العام</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     3. المتجر الإلكتروني
+════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-section-head">
+    <div class="section-icon section-icon--purple"><i class="fas fa-shopping-bag"></i></div>
+    <div>
+      <h3>المتجر الإلكتروني</h3>
+      <p>إعدادات الواجهة العامة للمتجر</p>
+    </div>
+  </div>
+  <div class="card__body">
+
+    <label class="toggle-wrap" style="margin-bottom:20px;">
+      <span class="toggle">
+        <input type="checkbox" name="store_enabled" {% if settings_obj.store_enabled %}checked{% endif %}>
+        <span class="toggle-slider"></span>
+      </span>
+      <span class="toggle-label">تفعيل المتجر الإلكتروني</span>
+    </label>
+
+    <div class="form-group">
+      <label class="form-label">اسم المتجر <span style="font-weight:400;color:var(--slate-400);">(يظهر في صفحة المتجر)</span></label>
+      <input class="form-control" type="text" name="store_name"
+             value="{{ settings_obj.store_name|default:'' }}"
+             placeholder="{{ center.name }}">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">صورة غلاف المتجر</label>
+      {% if settings_obj.store_cover %}
+      <div style="margin-bottom:10px;border-radius:14px;overflow:hidden;max-height:140px;">
+        <img src="{{ settings_obj.store_cover.url }}" alt="غلاف المتجر"
+             style="width:100%;height:140px;object-fit:cover;">
+      </div>
+      {% endif %}
+      <input class="form-control" type="file" name="store_cover" accept="image/*">
+      <div style="font-size:11px;color:var(--slate-400);margin-top:5px;">صورة عريضة مثالية: 1200×400 بكسل</div>
+    </div>
+
+    {% if center.slug %}
+    <div class="store-link-box">
+      <div style="font-size:12px;font-weight:700;color:var(--slate-600);display:flex;align-items:center;gap:6px;">
+        <i class="fas fa-link" style="color:var(--rose);"></i> رابط المتجر العام
+      </div>
+      <div class="store-link-url">{{ request.scheme }}://{{ request.get_host }}{% url 'store:home' slug=center.slug %}</div>
+      <div class="store-link-actions">
+        <button type="button" onclick="copyStoreLink('{{ request.scheme }}://{{ request.get_host }}{% url 'store:home' slug=center.slug %}')"
+                class="btn btn--outline btn--sm">
+          <i class="fas fa-copy"></i> نسخ الرابط
+        </button>
+        <a href="{% url 'store:home' slug=center.slug %}" target="_blank" rel="noopener noreferrer"
+           class="btn btn--primary btn--sm">
+          <i class="fas fa-external-link-alt"></i> فتح المتجر
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     4. الفواتير
+════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-section-head">
+    <div class="section-icon section-icon--amber"><i class="fas fa-file-invoice"></i></div>
+    <div>
+      <h3>إعدادات الفواتير</h3>
+      <p>الترقيم والضريبة والمظهر</p>
+    </div>
+  </div>
+  <div class="card__body">
+    <div class="form-grid-2" style="gap:16px;">
+      <div class="form-group">
+        <label class="form-label">بادئة رقم الفاتورة</label>
+        <input class="form-control" type="text" name="invoice_prefix"
+               value="{{ settings_obj.invoice_prefix|default:'INV' }}"
+               placeholder="INV" style="text-transform:uppercase;">
+        <div style="font-size:11px;color:var(--slate-400);margin-top:5px;">مثال: INV-00001</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">لون الفاتورة</label>
+        <div class="color-input-wrap">
+          <div class="color-swatch">
+            <input type="color" name="invoice_color"
+                   value="{{ settings_obj.invoice_color|default:'#ec4899' }}"
+                   id="invoice-color-input">
+          </div>
+          <input class="form-control" type="text" id="invoice-color-text"
+                 value="{{ settings_obj.invoice_color|default:'#ec4899' }}"
+                 style="flex:1;font-family:monospace;" maxlength="7" placeholder="#ec4899">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">تذييل الفاتورة</label>
+      <textarea class="form-control" name="invoice_footer" rows="2"
+                placeholder="شكراً لزيارتكم...">{{ settings_obj.invoice_footer|default:'' }}</textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <label class="toggle-wrap">
+        <span class="toggle">
+          <input type="checkbox" name="show_tax_on_invoice" id="show-tax-cb"
+                 {% if settings_obj.show_tax_on_invoice %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </span>
+        <span class="toggle-label">إظهار الضريبة في الفاتورة</span>
+      </label>
+      <div class="form-group" style="margin-bottom:0;flex:1;min-width:140px;" id="tax-rate-group"
+           {% if not settings_obj.show_tax_on_invoice %}style="display:none;"{% endif %}>
+        <label class="form-label">نسبة الضريبة %</label>
+        <input class="form-control" type="number" name="tax_percent"
+               min="0" max="100" step="0.01"
+               value="{{ settings_obj.tax_percent|default:'0' }}">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     5. متنوع (نقاط + تذكير)
+════════════════════════════════════════ -->
+<div class="form-grid-2" style="gap:20px;margin-bottom:20px;">
+  <div class="card">
+    <div class="card-section-head">
+      <div class="section-icon section-icon--green"><i class="fas fa-star"></i></div>
+      <div>
+        <h3>نظام النقاط</h3>
+        <p>مكافأة العملاء المتكررين</p>
+      </div>
+    </div>
+    <div class="card__body">
+      <label class="toggle-wrap" style="margin-bottom:16px;">
+        <span class="toggle">
+          <input type="checkbox" name="loyalty_enabled" {% if settings_obj.loyalty_enabled %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </span>
+        <span class="toggle-label">تفعيل نقاط الولاء</span>
+      </label>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">نقاط لكل وحدة نقد</label>
+        <input class="form-control" type="number" name="points_per_currency"
+               min="1" value="{{ settings_obj.points_per_currency }}">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-section-head">
+      <div class="section-icon section-icon--slate"><i class="fas fa-bell"></i></div>
+      <div>
+        <h3>التذكير بالمواعيد</h3>
+        <p>إشعار العميل قبل موعده</p>
+      </div>
+    </div>
+    <div class="card__body">
+      <label class="toggle-wrap" style="margin-bottom:16px;">
+        <span class="toggle">
+          <input type="checkbox" name="reminder_enabled" {% if settings_obj.reminder_enabled %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </span>
+        <span class="toggle-label">تفعيل التذكير</span>
+      </label>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">التذكير قبل الموعد بـ (ساعة)</label>
+        <input class="form-control" type="number" name="reminder_hours_before"
+               min="1" value="{{ settings_obj.reminder_hours_before }}">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- save footer -->
+<div style="display:flex;justify-content:flex-end;padding:8px 0 24px;">
+  <button type="submit" form="settings-form" class="btn btn--primary" style="padding:12px 32px;font-size:15px;">
+    <i class="fas fa-save"></i> حفظ جميع الإعدادات
+  </button>
+</div>
+
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  /* ── Color input sync ──────────────────────────────── */
+  var colorInput = document.getElementById('invoice-color-input');
+  var colorText  = document.getElementById('invoice-color-text');
+  if (colorInput && colorText) {
+    colorInput.addEventListener('input', function () { colorText.value = colorInput.value; });
+    colorText.addEventListener('input', function () {
+      if (/^#[0-9a-fA-F]{6}$/.test(colorText.value)) colorInput.value = colorText.value;
+    });
+  }
+
+  /* ── Tax rate toggle ───────────────────────────────── */
+  var taxCb    = document.getElementById('show-tax-cb');
+  var taxGroup = document.getElementById('tax-rate-group');
+  if (taxCb && taxGroup) {
+    taxGroup.style.display = taxCb.checked ? '' : 'none';
+    taxCb.addEventListener('change', function () {
+      taxGroup.style.display = taxCb.checked ? '' : 'none';
+    });
+  }
+
+  /* ── Day chip: radio-style mutual exclusion for slot_minutes ─ */
+  document.querySelectorAll('[name=slot_minutes][type=radio]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      document.querySelectorAll('[name=slot_minutes][type=radio]').forEach(function (x) {
+        var chip = x.nextElementSibling;
+        if (chip) chip.classList.toggle('active', x.checked);
+      });
+      /* sync number input */
+      var numInput = document.querySelector('input[name=slot_minutes][type=number]');
+      if (numInput) numInput.value = r.value;
+    });
+  });
+
+  /* ── Remove duplicate slot_minutes on submit (keep only one) ── */
+  document.getElementById('settings-form').addEventListener('submit', function () {
+    var checked = document.querySelector('[name=slot_minutes][type=radio]:checked');
+    var numInput = document.querySelector('[name=slot_minutes][type=number]');
+    if (checked && numInput) numInput.disabled = true;
+  });
+})();
+</script>
+<style>
+.slot-radio-chip {
+  display:inline-block; padding:7px 14px; border-radius:20px;
+  font-size:12px; font-weight:700;
+  border:2px solid var(--slate-200); background:#fff; color:var(--slate-500);
+  cursor:pointer; transition:all .15s;
+}
+.slot-radio-chip.active,
+input[type=radio]:checked + .slot-radio-chip {
+  background:var(--rose); color:#fff; border-color:var(--rose);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/services.css' %}">{% endblock %}
+{% block title %}{% if instance %}تعديل تصنيف{% else %}إضافة تصنيف جديد{% endif %}{% endblock %}
+{% block page_title %}{% if instance %}تعديل تصنيف{% else %}إضافة تصنيف جديد{% endif %}{% endblock %}
+{% block nav_service_cats %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <a href="{% url 'services:categories' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;"><i class="fas fa-arrow-right"></i></a>
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#a855f7,#c084fc);box-shadow:0 4px 14px rgba(168,85,247,.32);">
+          <i class="fas fa-tags"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">{% if instance %}تعديل تصنيف{% else %}إضافة تصنيف جديد{% endif %}</h1>
+          {% if instance %}<p class="cx-hero-desc">{{ instance.name }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cx-panel">
+    <div class="card__body">
+      <form method="post" action="{% url 'services:category_save' %}">
+        {% csrf_token %}
+        {% if instance %}
+          <input type="hidden" name="pk" value="{{ instance.pk }}">
+        {% endif %}
+        <div class="form-group">
+          <label class="form-label">اسم التصنيف</label>
+          <input class="form-control" name="name" type="text" value="{{ instance.name|default_if_none:'' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الترتيب</label>
+          <input class="form-control" name="order" type="number" value="{{ instance.order|default:0 }}" min="0">
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+            <input type="checkbox" name="is_active" {% if instance and instance.is_active %}checked{% elif not instance %}checked{% endif %}>
+            نشط
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:20px;">
+          <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ</button>
+          <a href="{% url 'services:categories' %}" class="btn btn--ghost">إلغاء</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

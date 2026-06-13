@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block page_title %}خطأ قواعد البيانات — المالية{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card__body">
+    <h3>خدمة المالية غير متاحة حالياً</h3>
+    <p>يبدو أن قاعدة البيانات غير مهيأة لتطبيق المالية بعد. الرجاء تشغيل الترحيلات التالية على الخادم:</p>
+    <pre style="background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e6edf3;">python3 manage.py makemigrations finance
+python3 manage.py migrate</pre>
+    <p>تفاصيل الخطأ (مفيدة للمطورين):</p>
+    <pre style="background:#fff7ed;padding:10px;border-radius:6px;border:1px solid #fde8d6;color:#7a3e00;">{{ error }}</pre>
+  </div>
+</div>
+{% endblock %}

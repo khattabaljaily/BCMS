@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/products.css' %}">{% endblock %}
+{% block title %}{% if edit_mode %}تعديل فاتورة {{ inv.number }}{% else %}فاتورة مشتريات جديدة{% endif %}{% endblock %}
+{% block page_title %}{% if edit_mode %}تعديل الفاتورة{% else %}فاتورة مشتريات جديدة{% endif %}{% endblock %}
+{% block nav_purchase %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <a href="{% url 'products:purchase_list' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;"><i class="fas fa-arrow-right"></i></a>
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 4px 14px rgba(16,185,129,.32);">
+          <i class="fas fa-truck-loading"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">{% if edit_mode %}تعديل الفاتورة {{ inv.number }}{% else %}فاتورة مشتريات جديدة{% endif %}</h1>
+          <p class="cx-hero-desc">{% if edit_mode %}تعديل البنود يعيد احتساب المخزون والخزينة{% else %}تسجيل مشتريات وتحديث المخزون والخزينة{% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cx-panel p-4 purchase-panel">
+    <form method="post" id="purchase-form">
+      {% csrf_token %}
+
+      <div class="purchase-meta-grid">
+        <div style="display:grid;gap:12px;">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">المورد <span class="form-optional">اختياري</span></label>
+              <input class="form-control" type="text" name="supplier" placeholder="اسم المورد أو الشركة"
+                     value="{{ inv.supplier|default:'' }}">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">طريقة الدفع</label>
+              <select class="form-control" name="payment_method">
+                <option value="cash"        {% if inv.payment_method == 'cash'        or not edit_mode %}selected{% endif %}>نقد</option>
+                <option value="card_or_bank"{% if inv.payment_method == 'card_or_bank'                %}selected{% endif %}>بطاقة / بنك</option>
+                <option value="credit"      {% if inv.payment_method == 'credit'                      %}selected{% endif %}>آجل</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
+            <input class="form-control" type="text" name="notes" placeholder="رقم الفاتورة أو أي ملاحظة"
+                   value="{{ inv.notes|default:'' }}">
+          </div>
+
+        </div>
+
+        <aside class="purchase-summary">
+          <div class="summary-header">
+            <div>
+              <h2>ملخص الشراء</h2>
+              <p class="summary-sub">تابع كمية المنتجات والتكلفة قبل الحفظ</p>
+            </div>
+            <div class="summary-icon"><i class="fas fa-boxes"></i></div>
+          </div>
+          <div class="summary-row"><span>عدد المنتجات</span><strong id="summary-products">0</strong></div>
+          <div class="summary-row"><span>إجمالي الكمية</span><strong id="summary-quantity">0.00</strong></div>
+          <div class="summary-row"><span>إجمالي التكلفة</span><strong id="summary-total">0.00</strong></div>
+          <div class="summary-note">يمكنك تعديل التكلفة أو الكمية في أي سطر لتحديث المجموع.</div>
+        </aside>
+      </div>
+
+      <div class="purchase-table-wrap">
+        <table class="purchase-table" id="lines-table">
+          <thead>
+            <tr>
+              <th>المنتج</th>
+              <th>الكمية</th>
+              <th>سعر الوحدة</th>
+              <th>إجمالي السطر</th>
+              <th>المخزون</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="lines-body">
+
+            {% if edit_mode and existing_lines %}
+              {% for line in existing_lines %}
+              <tr class="line-row" data-index="{{ forloop.counter0 }}"
+                  data-product-id="{{ line.product.pk }}"
+                  data-product-name="{{ line.product.name }}{% if line.product.sku %} ({{ line.product.sku }}){% endif %}"
+                  data-product-cost="{{ line.unit_cost }}"
+                  data-product-stock="{{ line.product.stock }}"
+                  data-qty="{{ line.quantity }}"
+                  data-cost="{{ line.unit_cost }}">
+                <td class="product-cell">
+                  <input type="text" class="form-control product-search" placeholder="اكتب اسم المنتج..." autocomplete="off">
+                  <input type="hidden" name="product_id[]" class="product-id-input">
+                  <div class="product-dropdown"></div>
+                </td>
+                <td><input class="form-control qty-input"  type="number" name="quantity[]" min="0.01" step="0.01" placeholder="0" required></td>
+                <td><input class="form-control cost-input" type="number" name="cost[]"     min="0"    step="0.01" placeholder="—"></td>
+                <td class="line-total-cell">0.00</td>
+                <td class="stock-cell">—</td>
+                <td>
+                  <button type="button" class="btn btn--danger btn--icon btn--sm remove-line" onclick="removeLine(this)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr class="line-row" data-index="0">
+                <td class="product-cell">
+                  <input type="text" class="form-control product-search" placeholder="اكتب اسم المنتج..." autocomplete="off">
+                  <input type="hidden" name="product_id[]" class="product-id-input">
+                  <div class="product-dropdown"></div>
+                </td>
+                <td><input class="form-control qty-input"  type="number" name="quantity[]" min="0.01" step="0.01" placeholder="0" required></td>
+                <td><input class="form-control cost-input" type="number" name="cost[]"     min="0"    step="0.01" placeholder="—"></td>
+                <td class="line-total-cell">0.00</td>
+                <td class="stock-cell">—</td>
+                <td>
+                  <button type="button" class="btn btn--danger btn--icon btn--sm remove-line" style="display:none;" onclick="removeLine(this)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            {% endif %}
+
+          </tbody>
+        </table>
+      </div>
+
+      <div class="purchase-actions">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="addLine()">
+          <i class="fas fa-plus"></i> إضافة منتج آخر
+        </button>
+        <div class="purchase-actions-right">
+          <a href="{% if edit_mode %}{% url 'products:purchase_detail' inv.pk %}{% else %}{% url 'products:purchase_list' %}{% endif %}"
+             class="btn btn--ghost">إلغاء</a>
+          <button type="submit" class="btn btn--primary">
+            <i class="fas fa-save"></i>
+            {% if edit_mode %}حفظ التعديلات{% else %}حفظ وتحديث المخزون{% endif %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PRODUCTS = {{ products_json|safe }};
+
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function filterProducts(q) {
+  q = q.trim().toLowerCase();
+  if (!q) return [];
+  return PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q))).slice(0, 12);
+}
+
+let GLOBAL_DROPDOWN = null;
+function ensureGlobalDropdown() {
+  if (GLOBAL_DROPDOWN) return GLOBAL_DROPDOWN;
+  GLOBAL_DROPDOWN = document.createElement('div');
+  GLOBAL_DROPDOWN.id = 'global-product-dropdown';
+  GLOBAL_DROPDOWN.style.cssText = 'position:absolute;z-index:99999;min-width:260px;max-height:300px;overflow-y:auto;background:#fff;border:1px solid var(--slate-200);border-radius:10px;box-shadow:0 16px 36px rgba(15,23,42,.08);display:none;';
+  document.body.appendChild(GLOBAL_DROPDOWN);
+  window.addEventListener('scroll', () => { GLOBAL_DROPDOWN.style.display = 'none'; }, true);
+  window.addEventListener('resize', () => { GLOBAL_DROPDOWN.style.display = 'none'; });
+  return GLOBAL_DROPDOWN;
+}
+
+function openGlobalDropdown(inputEl, itemsHtml) {
+  const dd = ensureGlobalDropdown();
+  dd.innerHTML = itemsHtml;
+  dd.style.display = 'block';
+  const rect = inputEl.getBoundingClientRect();
+  dd.style.top  = (rect.bottom + window.scrollY + 8) + 'px';
+  dd.style.left = (rect.left  + window.scrollX)      + 'px';
+  dd.style.minWidth = Math.max(rect.width, 260) + 'px';
+}
+
+function closeGlobalDropdown() {
+  if (GLOBAL_DROPDOWN) GLOBAL_DROPDOWN.style.display = 'none';
+}
+
+function refreshTotals() {
+  let productCount = 0, totalQty = 0, totalCost = 0;
+  document.querySelectorAll('.line-row').forEach(row => {
+    const qty  = parseFloat((row.querySelector('.qty-input')  || {}).value || '0') || 0;
+    const cost = parseFloat((row.querySelector('.cost-input') || {}).value || '0') || 0;
+    const lineTotal = qty * cost;
+    if ((row.querySelector('.product-id-input') || {}).value) productCount++;
+    totalQty  += qty;
+    totalCost += lineTotal;
+    const lt = row.querySelector('.line-total-cell');
+    if (lt) lt.textContent = formatNumber(lineTotal);
+  });
+  document.getElementById('summary-products').textContent = productCount;
+  document.getElementById('summary-quantity').textContent = formatNumber(totalQty);
+  document.getElementById('summary-total').textContent    = formatNumber(totalCost);
+}
+
+function wireRow(row) {
+  const searchInput   = row.querySelector('.product-search');
+  const idInput       = row.querySelector('.product-id-input');
+  const qtyInput      = row.querySelector('.qty-input');
+  const costInput     = row.querySelector('.cost-input');
+  const stockCell     = row.querySelector('.stock-cell');
+  const lineTotalCell = row.querySelector('.line-total-cell');
+
+  function updateLineTotal() {
+    const qty  = parseFloat(qtyInput.value  || '0') || 0;
+    const cost = parseFloat(costInput.value || '0') || 0;
+    if (lineTotalCell) lineTotalCell.textContent = formatNumber(qty * cost);
+    refreshTotals();
+  }
+
+  function selectProductObj(p) {
+    searchInput.value = p.name + (p.sku ? ` (${p.sku})` : '');
+    idInput.value = p.id;
+    if (!costInput.value) costInput.value = p.cost || '';
+    if (stockCell) stockCell.textContent = p.stock;
+    closeGlobalDropdown();
+    updateLineTotal();
+  }
+
+  function renderAndOpen(results) {
+    if (!results.length) { closeGlobalDropdown(); return; }
+    const html = results.map(p => `
+      <div class="pd-item" data-id="${p.id}" style="padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--slate-100);font-size:13px;">
+        <strong>${p.name}</strong>
+        <span style="color:var(--slate-400);font-size:11px;">${p.stock} وحدة</span>
+      </div>`).join('');
+    openGlobalDropdown(searchInput, html);
+    const dd = ensureGlobalDropdown();
+    dd.querySelectorAll('.pd-item').forEach(item => {
+      item.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const p = PRODUCTS.find(x => x.id == item.dataset.id);
+        if (p) selectProductObj(p);
+      });
+    });
+  }
+
+  searchInput.addEventListener('input', () => {
+    idInput.value = '';
+    if (stockCell) stockCell.textContent = '—';
+    renderAndOpen(filterProducts(searchInput.value));
+  });
+  searchInput.addEventListener('focus',  () => { if (searchInput.value) renderAndOpen(filterProducts(searchInput.value)); });
+  searchInput.addEventListener('blur',   () => { setTimeout(closeGlobalDropdown, 160); });
+  qtyInput  && qtyInput.addEventListener('input',  updateLineTotal);
+  costInput && costInput.addEventListener('input',  updateLineTotal);
+}
+
+// Pre-populate edit-mode rows from data attributes, then wire
+document.querySelectorAll('.line-row').forEach(row => {
+  const pid   = row.dataset.productId;
+  const pname = row.dataset.productName;
+  const qty   = row.dataset.qty;
+  const cost  = row.dataset.cost;
+  const stock = row.dataset.productStock;
+  if (pid) {
+    row.querySelector('.product-id-input').value = pid;
+    row.querySelector('.product-search').value   = pname;
+    row.querySelector('.qty-input').value        = qty;
+    row.querySelector('.cost-input').value       = cost;
+    if (row.querySelector('.stock-cell')) row.querySelector('.stock-cell').textContent = stock;
+  }
+  wireRow(row);
+});
+
+function buildNewRow(idx) {
+  const tr = document.createElement('tr');
+  tr.className = 'line-row';
+  tr.dataset.index = idx;
+  tr.innerHTML = `
+    <td class="product-cell">
+      <input type="text" class="form-control product-search" placeholder="اكتب اسم المنتج..." autocomplete="off">
+      <input type="hidden" name="product_id[]" class="product-id-input">
+      <div class="product-dropdown"></div>
+    </td>
+    <td><input class="form-control qty-input"  type="number" name="quantity[]" min="0.01" step="0.01" placeholder="0" required></td>
+    <td><input class="form-control cost-input" type="number" name="cost[]"     min="0"    step="0.01" placeholder="—"></td>
+    <td class="line-total-cell">0.00</td>
+    <td class="stock-cell">—</td>
+    <td>
+      <button type="button" class="btn btn--danger btn--icon btn--sm remove-line" onclick="removeLine(this)">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>`;
+  wireRow(tr);
+  return tr;
+}
+
+function addLine() {
+  const tbody = document.getElementById('lines-body');
+  const rows  = tbody.querySelectorAll('.line-row');
+  tbody.appendChild(buildNewRow(rows.length));
+  if (tbody.querySelectorAll('.line-row').length > 1) {
+    tbody.querySelectorAll('.remove-line').forEach(b => b.style.display = '');
+  }
+  refreshTotals();
+}
+
+function removeLine(btn) {
+  const tbody = document.getElementById('lines-body');
+  if (tbody.querySelectorAll('.line-row').length <= 1) return;
+  btn.closest('.line-row').remove();
+  if (tbody.querySelectorAll('.line-row').length === 1) {
+    tbody.querySelectorAll('.remove-line').forEach(b => b.style.display = 'none');
+  }
+  refreshTotals();
+}
+
+// If only one row in edit mode, hide its remove button
+(function(){
+  const tbody = document.getElementById('lines-body');
+  if (tbody.querySelectorAll('.line-row').length <= 1) {
+    tbody.querySelectorAll('.remove-line').forEach(b => b.style.display = 'none');
+  }
+})();
+
+refreshTotals();
+</script>
+{% endblock %}

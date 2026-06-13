@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/services.css' %}">{% endblock %}
+{% block title %}الخدمات{% endblock %}
+{% block page_title %}الخدمات{% endblock %}
+{% block nav_services %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- Page Header -->
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap">
+          <i class="fas fa-spa"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">الخدمات</h1>
+          <p class="cx-hero-desc">{{ services.count }} خدمة مسجلة</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <a href="{% url 'services:categories' %}" class="btn btn--ghost btn--sm">
+            <i class="fas fa-tags"></i> التصنيفات
+          </a>
+          <button class="btn btn--primary" onclick="openAddService()">
+            <i class="fas fa-plus"></i> خدمة جديدة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="cx-panel">
+    <!-- Desktop Table -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>الخدمة</th>
+            <th>التصنيف</th>
+            <th>المدة</th>
+            <th>السعر</th>
+            <th>متجر</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for svc in services %}
+          <tr>
+            <td>
+              <strong>{{ svc.name }}</strong>
+              {% if svc.description %}
+              <br><small class="text-muted">{{ svc.description|truncatechars:60 }}</small>
+              {% endif %}
+            </td>
+            <td>
+              {% if svc.category %}
+              <span class="badge badge--slate">{{ svc.category.name }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-muted"><i class="fas fa-clock" style="color:var(--slate-400);font-size:11px;"></i> {{ svc.duration_display }}</td>
+            <td><strong style="color:var(--rose);">{{ svc.price|format_number:2 }}</strong></td>
+            <td>
+              {% if svc.show_in_store %}
+              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نعم</span>
+              {% else %}
+              <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>لا</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if svc.is_active %}
+              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+              {% else %}
+              <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="cx-row-actions">
+                <button type="button" class="cx-act" title="تعديل"
+                        onclick="openEditService({{ svc.pk }}, '{{ svc.name|escapejs }}', {{ svc.category_id|default:'null' }}, {{ svc.duration }}, '{{ svc.price }}', '{{ svc.description|escapejs }}', {{ svc.show_in_store|yesno:'true,false' }}, {{ svc.is_active|yesno:'true,false' }})">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <form method="post" action="{% url 'services:service_delete' svc.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الخدمة؟')">
+                  {% csrf_token %}
+                  <button type="submit" class="cx-act cx-act--del" title="حذف"><i class="fas fa-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-spa"></i>
+                <p>لا توجد خدمات بعد</p>
+                <button class="btn btn--primary" onclick="openAddService()" style="margin-top:12px;">
+                  <i class="fas fa-plus"></i> إضافة أول خدمة
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for svc in services %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">{{ svc.name }}</div>
+            <div class="cx-card-sub">{{ svc.category.name|default:"بدون تصنيف" }}</div>
+          </div>
+          <div class="cx-card-actions">
+            <button type="button" class="cx-act"
+                    onclick="openEditService({{ svc.pk }}, '{{ svc.name|escapejs }}', {{ svc.category_id|default:'null' }}, {{ svc.duration }}, '{{ svc.price }}', '{{ svc.description|escapejs }}', {{ svc.show_in_store|yesno:'true,false' }}, {{ svc.is_active|yesno:'true,false' }})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <form method="post" action="{% url 'services:service_delete' svc.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف الخدمة؟')">
+              {% csrf_token %}
+              <button type="submit" class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">السعر</span>
+            <span class="cx-card-meta-value" style="color:var(--rose);font-weight:800;">{{ svc.price|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">المدة</span>
+            <span class="cx-card-meta-value">{{ svc.duration_display }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الحالة</span>
+            <span class="cx-card-meta-value">
+              {% if svc.is_active %}
+              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+              {% else %}
+              <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>
+              {% endif %}
+            </span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">المتجر</span>
+            <span class="cx-card-meta-value">
+              {% if svc.show_in_store %}<span class="cx-status cx-status--on"><span class="cx-status-dot"></span>يظهر</span>
+              {% else %}<span class="cx-status cx-status--off"><span class="cx-status-dot"></span>مخفي</span>{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty">
+        <i class="fas fa-spa"></i>
+        <p>لا توجد خدمات بعد</p>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Service Modal -->
+<div class="modal-overlay" id="modal-svc" style="display:none;">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <span class="modal-title" id="svc-modal-title">خدمة جديدة</span>
+      <button class="modal-close" onclick="closeModal('modal-svc')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" action="{% url 'services:service_save' %}">
+      {% csrf_token %}
+      <input type="hidden" name="pk" id="svc-pk">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">اسم الخدمة <span style="color:var(--red)">*</span></label>
+          <input class="form-control" type="text" name="name" id="svc-name" required autofocus>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">التصنيف</label>
+            <select class="form-control" name="category_id" id="svc-cat">
+              <option value="">— بدون تصنيف —</option>
+              {% for cat in categories %}
+              <option value="{{ cat.pk }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">المدة (دقيقة)</label>
+            <input class="form-control" type="number" name="duration" id="svc-duration" value="60" min="5">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">السعر <span style="color:var(--red)">*</span></label>
+            <input class="form-control" type="number" name="price" id="svc-price" step="0.01" required>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;padding-top:24px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+              <input type="checkbox" name="show_in_store" id="svc-store" value="1">
+              يظهر في المتجر
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوصف <span class="form-optional">اختياري</span></label>
+          <textarea class="form-control" name="description" id="svc-desc" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+            <input type="checkbox" name="is_active" id="svc-active">
+            الخدمة نشطة
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="closeModal('modal-svc')">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openAddService() {
+  document.getElementById('svc-modal-title').textContent = 'خدمة جديدة';
+  document.getElementById('svc-pk').value = '';
+  document.getElementById('svc-cat').value = '';
+  document.getElementById('svc-name').value = '';
+  document.getElementById('svc-duration').value = 60;
+  document.getElementById('svc-price').value = '';
+  document.getElementById('svc-desc').value = '';
+  document.getElementById('svc-store').checked = true;
+  document.getElementById('svc-active').checked = true;
+  openModal('modal-svc');
+}
+function openEditService(pk, name, catId, duration, price, desc, showInStore, isActive) {
+  document.getElementById('svc-modal-title').textContent = 'تعديل الخدمة';
+  document.getElementById('svc-pk').value = pk;
+  document.getElementById('svc-cat').value = catId || '';
+  document.getElementById('svc-name').value = name;
+  document.getElementById('svc-duration').value = duration;
+  document.getElementById('svc-price').value = price;
+  document.getElementById('svc-desc').value = desc || '';
+  document.getElementById('svc-store').checked = showInStore === true || showInStore === 'true';
+  document.getElementById('svc-active').checked = isActive === true || isActive === 'true';
+  openModal('modal-svc');
+}
+</script>
+{% endblock %}

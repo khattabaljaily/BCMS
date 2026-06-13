@@ -1,0 +1,23 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>تم الحجز</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+<link rel="stylesheet" href="{% static 'css/store.css' %}">
+</head>
+<body class="store-page">
+<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+  <div style="text-align:center;background:#fff;padding:48px 40px;border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,.1);max-width:400px;">
+    <div style="width:70px;height:70px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:var(--green);">
+      <i class="fas fa-check"></i>
+    </div>
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;">تم إرسال طلب الحجز!</h2>
+    <p style="color:var(--slate-500);font-size:14px;">سيتواصل معك فريقنا لتأكيد الموعد قريباً.</p>
+    <a href="{% url 'store:home' slug=center.slug %}" class="btn btn--primary" style="margin-top:20px;">
+      العودة للمتجر
+    </a>
+  </div>
+</div>
+</body>
+</html>

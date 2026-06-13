@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/staff.css' %}">{% endblock %}
+{% block title %}فريق العمل{% endblock %}
+{% block page_title %}فريق العمل{% endblock %}
+{% block nav_staff %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- Page Header -->
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#3b82f6,#60a5fa);box-shadow:0 4px 14px rgba(59,130,246,.32);">
+          <i class="fas fa-user-friends"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">فريق العمل</h1>
+          <p class="cx-hero-desc">{{ specialists.count }} فرد في الفريق</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <button class="btn btn--primary" onclick="openAddSpecialist()">
+            <i class="fas fa-plus"></i> إضافة فرد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="cx-panel">
+    <!-- Desktop Table -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>الهاتف</th>
+            <th>التخصص</th>
+            <th>الخدمات</th>
+            <th>ساعات العمل</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sp in specialists %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#1d4ed8;flex-shrink:0;">
+                  {{ sp.name|first }}
+                </div>
+                <strong>{{ sp.name }}</strong>
+              </div>
+            </td>
+            <td class="text-muted">{{ sp.phone|default:'—' }}</td>
+            <td>{{ sp.specialty|default:'—' }}</td>
+            <td>
+              {% if sp.services.all %}
+                {% for svc in sp.services.all|slice:':3' %}
+                  <span class="badge badge--slate" style="margin:1px;">{{ svc.name }}</span>
+                {% endfor %}
+                {% if sp.services.count > 3 %}
+                <span class="text-muted" style="font-size:11px;">+{{ sp.services.count|add:'-3' }}</span>
+                {% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-muted">
+              {% if sp.work_start %}{{ sp.work_start|time:"H:i" }} — {{ sp.work_end|time:"H:i" }}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if sp.is_active %}
+              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+              {% else %}
+              <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="cx-row-actions">
+                <button type="button" class="cx-act" title="تعديل"
+                        onclick="openEditSpecialist({{ sp.pk }}, '{{ sp.name|escapejs }}', '{{ sp.phone|default:''|escapejs }}', '{{ sp.specialty|default:''|escapejs }}', '{{ sp.work_start|time:"H:i"|default:'' }}', '{{ sp.work_end|time:"H:i"|default:'' }}', '{{ sp.bio|default:''|escapejs }}', {{ sp.is_active|yesno:'true,false' }}, '{% for svc in sp.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <form method="post" action="{% url 'staff:delete' sp.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف فرد الفريق؟')" style="display:inline;">
+                  {% csrf_token %}
+                  <button class="cx-act cx-act--del" title="حذف"><i class="fas fa-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-user-friends"></i>
+                <p>لا يوجد أعضاء فريق بعد</p>
+                <button class="btn btn--primary" onclick="openAddSpecialist()" style="margin-top:12px;">
+                  <i class="fas fa-plus"></i> إضافة أول فرد
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for sp in specialists %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#1d4ed8;flex-shrink:0;">
+              {{ sp.name|first }}
+            </div>
+            <div>
+              <div class="cx-card-title">{{ sp.name }}</div>
+              <div class="cx-card-sub">{{ sp.specialty|default:sp.phone|default:"—" }}</div>
+            </div>
+          </div>
+          <div class="cx-card-actions">
+            <button type="button" class="cx-act"
+                    onclick="openEditSpecialist({{ sp.pk }}, '{{ sp.name|escapejs }}', '{{ sp.phone|default:''|escapejs }}', '{{ sp.specialty|default:''|escapejs }}', '{{ sp.work_start|time:"H:i"|default:'' }}', '{{ sp.work_end|time:"H:i"|default:'' }}', '{{ sp.bio|default:''|escapejs }}', {{ sp.is_active|yesno:'true,false' }}, '{% for svc in sp.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <form method="post" action="{% url 'staff:delete' sp.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف فرد الفريق؟')" style="display:inline;">
+              {% csrf_token %}
+              <button class="cx-act cx-act--del"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">الهاتف</span>
+            <span class="cx-card-meta-value">{{ sp.phone|default:"—" }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الدوام</span>
+            <span class="cx-card-meta-value">
+              {% if sp.work_start %}{{ sp.work_start|time:"H:i" }} — {{ sp.work_end|time:"H:i" }}{% else %}—{% endif %}
+            </span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الحالة</span>
+            <span class="cx-card-meta-value">
+              {% if sp.is_active %}
+              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+              {% else %}
+              <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty">
+        <i class="fas fa-user-friends"></i>
+        <p>لا يوجد أعضاء فريق بعد</p>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Staff Modal -->
+<div class="modal-overlay" id="modal-specialist" style="display:none;">
+  <div class="modal-dialog" style="max-width:680px;">
+    <div class="modal-header">
+      <span class="modal-title" id="specialist-modal-title">عضو جديد</span>
+      <button class="modal-close" onclick="closeModal('modal-specialist')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" enctype="multipart/form-data" id="specialist-form" action="{% url 'staff:add' %}">
+      {% csrf_token %}
+      <input type="hidden" id="specialist-pk" name="pk" value="">
+      <div class="modal-body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">الاسم <span style="color:var(--red)">*</span></label>
+            <input class="form-control" type="text" name="name" id="specialist-name" required autofocus>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الهاتف</label>
+            <input class="form-control" type="tel" name="phone" id="specialist-phone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">التخصص</label>
+          <input class="form-control" type="text" name="specialty" id="specialist-specialty" placeholder="متخصصة شعر، مكياج ...">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">بداية الدوام</label>
+            <input class="form-control" type="time" name="work_start" id="specialist-work-start">
+          </div>
+          <div class="form-group">
+            <label class="form-label">نهاية الدوام</label>
+            <input class="form-control" type="time" name="work_end" id="specialist-work-end">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">نبذة <span class="form-optional">اختياري</span></label>
+          <textarea class="form-control" name="bio" id="specialist-bio" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الصورة <span class="form-optional">اختياري</span></label>
+          <input class="form-control" type="file" name="photo" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الخدمات المتخصصة</label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;border:1.5px solid var(--slate-200);border-radius:8px;max-height:150px;overflow-y:auto;">
+            {% for svc in services %}
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:5px 10px;background:var(--slate-50);border-radius:8px;border:1px solid var(--slate-200);">
+              <input type="checkbox" name="services" value="{{ svc.pk }}" data-service-id="{{ svc.pk }}">
+              {{ svc.name }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+            <input type="checkbox" name="is_active" id="specialist-active">
+            الفرد نشط
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="closeModal('modal-specialist')">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const specialistAddUrl = "{% url 'staff:add' %}";
+const specialistEditUrlTemplate = "{% url 'staff:edit' 0 %}";
+
+function openAddSpecialist() {
+  document.getElementById('specialist-modal-title').textContent = 'إضافة فرد';
+  const form = document.getElementById('specialist-form');
+  form.action = specialistAddUrl;
+  document.getElementById('specialist-pk').value = '';
+  document.getElementById('specialist-name').value = '';
+  document.getElementById('specialist-phone').value = '';
+  document.getElementById('specialist-specialty').value = '';
+  document.getElementById('specialist-work-start').value = '';
+  document.getElementById('specialist-work-end').value = '';
+  document.getElementById('specialist-bio').value = '';
+  document.getElementById('specialist-active').checked = true;
+  document.querySelectorAll('[name="services"]').forEach(el => el.checked = false);
+  openModal('modal-specialist');
+}
+
+function openEditSpecialist(pk, name, phone, specialty, workStart, workEnd, bio, isActive, servicesCsv) {
+  document.getElementById('specialist-modal-title').textContent = 'تعديل الفرد';
+  const form = document.getElementById('specialist-form');
+  form.action = specialistEditUrlTemplate.replace('/0/', '/' + pk + '/');
+  document.getElementById('specialist-pk').value = pk;
+  document.getElementById('specialist-name').value = name;
+  document.getElementById('specialist-phone').value = phone;
+  document.getElementById('specialist-specialty').value = specialty;
+  document.getElementById('specialist-work-start').value = workStart || '';
+  document.getElementById('specialist-work-end').value = workEnd || '';
+  document.getElementById('specialist-bio').value = bio || '';
+  document.getElementById('specialist-active').checked = isActive === true || isActive === 'true';
+  const selected = servicesCsv ? String(servicesCsv).split(',').filter(Boolean) : [];
+  document.querySelectorAll('[name="services"]').forEach(el => {
+    el.checked = selected.includes(String(el.value));
+  });
+  openModal('modal-specialist');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/appointments.css' %}">{% endblock %}
+{% block title %}{% if instance %}تعديل موعد{% else %}موعد جديد{% endif %}{% endblock %}
+{% block page_title %}{% if instance %}تعديل الموعد{% else %}موعد جديد{% endif %}{% endblock %}
+{% block nav_appointments %}active{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:700px;">
+  <div class="card__header">
+    <span class="card__title">{% if instance %}تعديل الموعد{% else %}إضافة موعد جديد{% endif %}</span>
+    <a href="{% url 'appointments:list' %}" class="btn btn--ghost btn--sm"><i class="fas fa-arrow-right"></i> رجوع</a>
+  </div>
+  <div class="card__body">
+    <form method="post" action="{% url 'appointments:save' %}">
+      {% csrf_token %}
+      {% if instance %}<input type="hidden" name="pk" value="{{ instance.pk }}">{% endif %}
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">العميل</label>
+          <select class="form-control" name="client_id" id="clientSelect">
+            <option value="">— زيارة مباشرة (بدون ملف) —</option>
+            {% for c in clients %}
+              <option value="{{ c.pk }}"
+                {% if instance and instance.client_id == c.pk %}selected
+                {% elif not instance and prefill_client_id == c.pk|stringformat:"s" %}selected
+                {% endif %}>{{ c.name }} — {{ c.phone }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الفنية/الفني</label>
+          <select class="form-control" name="specialist_id">
+            <option value="">— غير محدد —</option>
+            {% for sp in specialists %}
+              <option value="{{ sp.pk }}" {% if instance and instance.specialist_id == sp.pk %}selected{% endif %}>{{ sp.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div id="walk-in-section" style="display:none;">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">اسم الزائر</label>
+            <input class="form-control" type="text" name="walk_in_name" value="{{ instance.walk_in_name|default:'' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">هاتف الزائر</label>
+            <input class="form-control" type="tel" name="walk_in_phone" value="{{ instance.walk_in_phone|default:'' }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">التاريخ</label>
+          <input class="form-control" type="date" name="date"
+            value="{{ instance.date|date:'Y-m-d'|default:today }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">وقت البدء</label>
+          <input class="form-control" type="time" name="start_time"
+            value="{{ instance.start_time|time:'H:i'|default:'' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">وقت الانتهاء</label>
+          <input class="form-control" type="time" name="end_time"
+            value="{{ instance.end_time|time:'H:i'|default:'' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الخدمات</label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;max-height:250px;overflow-y:auto;border:1.5px solid var(--slate-200);border-radius:8px;padding:12px;">
+          {% for svc in services %}
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px;border-radius:6px;transition:background .1s;"
+                 onmouseover="this.style.background='#fff1f2'" onmouseout="this.style.background='transparent'">
+            <input type="checkbox" name="service_ids" value="{{ svc.pk }}"
+              {% if svc.pk in selected_service_ids %}checked{% endif %}>
+            <div>
+              <div style="font-size:12px;font-weight:600;">{{ svc.name }}</div>
+              <div style="font-size:11px;color:var(--slate-500);">{{ svc.price|format_number:2 }}</div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">الحالة</label>
+          <select class="form-control" name="status">
+            <option value="pending"     {% if instance.status == 'pending'     %}selected{% endif %}>قيد الانتظار</option>
+            <option value="confirmed"   {% if not instance or instance.status == 'confirmed' %}selected{% endif %}>مؤكد</option>
+            <option value="in_progress" {% if instance.status == 'in_progress' %}selected{% endif %}>جارٍ</option>
+            <option value="completed"   {% if instance.status == 'completed'   %}selected{% endif %}>مكتمل</option>
+            <option value="cancelled"   {% if instance.status == 'cancelled'   %}selected{% endif %}>ملغي</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <input class="form-control" type="text" name="notes"
+            value="{{ instance.notes|default:'' }}" placeholder="أي ملاحظات إضافية...">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <a href="{% url 'appointments:list' %}" class="btn btn--ghost">إلغاء</a>
+        <button type="submit" class="btn btn--primary">
+          <i class="fas fa-save"></i> حفظ الموعد
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const clientSelect  = document.getElementById('clientSelect');
+const walkInSection = document.getElementById('walk-in-section');
+function toggleWalkIn() {
+  walkInSection.style.display = clientSelect.value ? 'none' : 'block';
+}
+clientSelect.addEventListener('change', toggleWalkIn);
+toggleWalkIn();
+</script>
+{% endblock %}

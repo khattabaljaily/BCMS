@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block page_title %}تعيين الرصيد الافتتاحي — {{ treasury.name }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card__header">
+    <h3>تعيين الرصيد الافتتاحي</h3>
+    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">{{ treasury.name }}</p>
+  </div>
+  <div class="card__body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="alert alert--info" style="margin-bottom: 1.5rem;">
+        <strong>ملاحظة:</strong> الرصيد الافتتاحي هو المبلغ الأولي للخزينة عند البدء.
+        يتم تسجيله كحركة افتتاحية في السجل.
+      </div>
+      
+      <div class="form-group">
+        <label for="initial_balance">الرصيد الافتتاحي *</label>
+        <input 
+          type="number" 
+          id="initial_balance"
+          name="initial_balance" 
+          class="form-control" 
+          step="0.01"
+          value="{{ treasury.initial_balance }}"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="notes">ملاحظات</label>
+        <textarea 
+          id="notes"
+          name="notes" 
+          class="form-control"
+          rows="4"
+          placeholder="مثال: رصيد افتتاحي من صندوق النقد"
+        ></textarea>
+      </div>
+
+      <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn--primary">حفظ الرصيد</button>
+        <a href="{% url 'finance:treasury_detail' treasury.pk %}" class="btn btn--secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

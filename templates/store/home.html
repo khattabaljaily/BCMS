@@ -1,0 +1,579 @@
+{% load static number_format %}<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ center.name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;}
+:root{
+  --rose:#f43f5e;--rose-d:#be123c;--pink:#ec4899;
+  --rose-50:#fff1f2;--rose-100:#ffe4e6;
+  --sl50:#f8fafc;--sl100:#f1f5f9;--sl200:#e2e8f0;
+  --sl400:#94a3b8;--sl500:#64748b;--sl700:#334155;--sl800:#1e293b;
+  --green:#10b981;
+}
+html{scroll-behavior:smooth;}
+body{margin:0;font-family:Cairo,sans-serif;background:var(--sl50);color:var(--sl800);direction:rtl;min-height:100vh;}
+a{text-decoration:none;color:inherit;}
+img{max-width:100%;}
+h1,h2,h3,h4{margin:0;font-weight:700;line-height:1.3;}
+p{margin:0;}
+
+/* ── Header ─────────────────────────────────── */
+.st-header{
+  background:linear-gradient(145deg,#1a0a2e 0%,#831843 55%,#be185d 100%);
+  padding:40px 20px 50px;text-align:center;position:relative;overflow:hidden;
+}
+.st-header::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle at 20% 80%,rgba(236,72,153,.2) 0,transparent 50%),
+                   radial-gradient(circle at 80% 20%,rgba(168,85,247,.15) 0,transparent 50%);
+}
+.st-logo{
+  width:72px;height:72px;border-radius:18px;overflow:hidden;
+  background:rgba(255,255,255,.15);display:inline-flex;align-items:center;justify-content:center;
+  font-size:32px;color:#fff;margin-bottom:14px;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);position:relative;
+}
+.st-logo img{width:100%;height:100%;object-fit:cover;}
+.st-name{font-size:22px;font-weight:900;color:#fff;margin-bottom:4px;position:relative;}
+.st-type{font-size:13px;color:rgba(255,255,255,.6);position:relative;}
+.st-phone{font-size:12px;color:rgba(255,255,255,.45);margin-top:8px;position:relative;}
+
+/* ── Tabs ────────────────────────────────────── */
+.st-tabs-wrap{background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.07);position:sticky;top:0;z-index:50;}
+.st-tabs{display:flex;max-width:640px;margin:0 auto;}
+.st-tab{
+  flex:1;padding:15px 12px;text-align:center;font-size:14px;font-weight:700;
+  color:var(--sl500);cursor:pointer;border-bottom:3px solid transparent;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.st-tab.active{color:var(--rose);border-color:var(--rose);}
+.st-tab-badge{
+  background:var(--rose);color:#fff;border-radius:20px;
+  font-size:10px;padding:1px 7px;font-weight:800;
+}
+
+/* ── Panels ──────────────────────────────────── */
+.st-panel{display:none;max-width:640px;margin:0 auto;padding:24px 16px 120px;}
+.st-panel.active{display:block;}
+
+/* ── Errors ──────────────────────────────────── */
+.st-error{background:#fee2e2;color:#991b1b;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;}
+
+/* ── BOOKING ─────────────────────────────────── */
+.step-header{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;font-weight:800;color:var(--sl700);margin-bottom:12px;
+}
+.step-num{
+  width:28px;height:28px;border-radius:50%;background:var(--rose);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;
+}
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.svc-card{
+  background:#fff;border:2px solid var(--sl200);border-radius:12px;
+  padding:14px;cursor:pointer;transition:all .18s;position:relative;
+}
+.svc-card:hover{border-color:var(--rose-d);background:var(--rose-50);}
+.svc-card.selected{border-color:var(--rose);background:var(--rose-50);}
+.svc-card.selected::after{
+  content:'\f00c';font-family:'Font Awesome 6 Free';font-weight:900;
+  position:absolute;top:8px;left:8px;
+  background:var(--rose);color:#fff;border-radius:50%;
+  width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;
+}
+.svc-card__name{font-size:13px;font-weight:700;margin-bottom:3px;}
+.svc-card__meta{font-size:11px;color:var(--sl500);display:flex;gap:8px;}
+.svc-card__price{color:var(--rose);font-weight:800;}
+.svc-skip{font-size:12px;color:var(--sl400);cursor:pointer;text-align:center;margin-top:8px;text-decoration:underline;}
+
+.date-input{
+  width:100%;padding:12px 16px;border:2px solid var(--sl200);border-radius:12px;
+  font-family:Cairo,sans-serif;font-size:15px;background:#fff;color:var(--sl800);
+  transition:border .18s;cursor:pointer;
+}
+.date-input:focus{outline:none;border-color:var(--rose);}
+
+.slots-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:360px){.slots-grid{grid-template-columns:repeat(3,1fr);}}
+.slot{
+  padding:10px 6px;border-radius:10px;border:2px solid var(--sl200);background:#fff;
+  text-align:center;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;
+}
+.slot:hover{border-color:var(--rose);color:var(--rose);}
+.slot.selected{background:var(--rose);color:#fff;border-color:var(--rose);}
+.slot-empty{color:var(--sl400);font-size:13px;text-align:center;padding:20px;grid-column:1/-1;}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.field label{font-size:12px;font-weight:800;color:var(--sl700);}
+.field input,.field textarea{
+  padding:11px 14px;border:2px solid var(--sl200);border-radius:10px;
+  font-family:Cairo,sans-serif;font-size:14px;background:#fff;color:var(--sl800);transition:border .18s;
+}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--rose);box-shadow:0 0 0 3px rgba(244,63,94,.1);}
+
+.booking-summary{
+  background:var(--rose-50);border:1px solid var(--rose-100);
+  border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.9;
+}
+.booking-summary strong{color:var(--rose-d);}
+
+.btn-submit{
+  width:100%;padding:15px;background:var(--rose);color:#fff;
+  border:none;border-radius:12px;font-family:Cairo,sans-serif;font-size:16px;font-weight:800;
+  cursor:pointer;transition:background .18s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-submit:hover{background:var(--rose-d);}
+
+.booking-step{margin-bottom:4px;}
+
+/* ── PRODUCTS ────────────────────────────────── */
+.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.prod-card{
+  background:#fff;border-radius:12px;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.07);transition:transform .18s,box-shadow .18s;
+}
+.prod-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.prod-img{
+  width:100%;aspect-ratio:1;background:var(--sl100);
+  display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--sl400);overflow:hidden;
+}
+.prod-img img{width:100%;height:100%;object-fit:cover;}
+.prod-body{padding:10px;}
+.prod-name{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.4;}
+.prod-price{font-size:14px;font-weight:800;color:var(--rose);margin-bottom:8px;}
+.btn-add{
+  width:100%;padding:8px;border-radius:8px;background:var(--rose);color:#fff;
+  border:none;font-family:Cairo,sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;transition:background .18s;display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.btn-add:hover{background:var(--rose-d);}
+.btn-add.in-cart{background:var(--green);}
+
+/* ── Cart bar ────────────────────────────────── */
+.cart-bar{
+  position:fixed;bottom:0;right:0;left:0;z-index:100;
+  background:#1a0a2e;color:#fff;padding:14px 20px;
+  display:none;align-items:center;justify-content:space-between;gap:12px;
+  box-shadow:0 -4px 20px rgba(0,0,0,.25);
+}
+.cart-bar.visible{display:flex;}
+.cart-bar__count{font-weight:800;color:var(--pink);}
+.cart-bar__total{font-size:12px;opacity:.65;margin-top:1px;}
+.btn-checkout{
+  padding:10px 20px;background:var(--rose);color:#fff;border:none;
+  border-radius:10px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;
+}
+
+/* ── Cart sheet ──────────────────────────────── */
+.cart-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;}
+.cart-bg.open{display:block;}
+.cart-sheet{
+  position:fixed;bottom:0;right:0;left:0;z-index:201;
+  background:#fff;border-radius:20px 20px 0 0;
+  padding:24px 20px;max-height:90vh;overflow-y:auto;display:none;
+}
+.cart-sheet.open{display:block;}
+.cart-sheet__title{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.cart-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--sl100);}
+.cart-item__name{flex:1;font-size:13px;font-weight:600;}
+.cart-item__price{font-size:13px;color:var(--rose);font-weight:700;white-space:nowrap;}
+.qty-control{display:flex;align-items:center;gap:6px;}
+.qty-btn{
+  width:28px;height:28px;border-radius:8px;border:1px solid var(--sl200);background:#fff;
+  font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.qty-val{min-width:24px;text-align:center;font-weight:700;font-size:14px;}
+.cart-divider{border:none;border-top:1px solid var(--sl200);margin:14px 0;}
+.cart-total-row{display:flex;justify-content:space-between;font-size:15px;font-weight:800;margin-bottom:16px;}
+.cart-close-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--sl400);line-height:1;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="st-header">
+  <div class="st-logo">
+    {% if center.logo %}<img src="{{ center.logo.url }}" alt="{{ center.name }}">
+    {% else %}<i class="fas fa-spa"></i>{% endif %}
+  </div>
+  <div class="st-name">{{ center.name }}</div>
+  <div class="st-type">{{ center.service_type.name }}</div>
+  {% if center.phone %}<div class="st-phone"><i class="fas fa-phone-alt"></i> {{ center.phone }}</div>{% endif %}
+</div>
+
+<!-- Tabs -->
+<div class="st-tabs-wrap">
+  <div class="st-tabs">
+    {% if settings_obj.booking_enabled %}
+    <div class="st-tab {% if active_tab != 'products' %}active{% endif %}" id="tab-booking" onclick="switchTab('booking')">
+      <i class="fas fa-calendar-plus"></i> احجز موعد
+    </div>
+    {% endif %}
+    {% if settings_obj.store_enabled %}
+    <div class="st-tab {% if active_tab == 'products' %}active{% endif %}" id="tab-products" onclick="switchTab('products')">
+      <i class="fas fa-shopping-bag"></i> المنتجات
+      <span class="st-tab-badge" id="cart-badge" style="display:none;">0</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     BOOKING PANEL
+══════════════════════════════════════════ -->
+{% if settings_obj.booking_enabled %}
+<div class="st-panel {% if active_tab != 'products' %}active{% endif %}" id="panel-booking">
+
+  {% if booking_error %}<div class="st-error"><i class="fas fa-exclamation-circle"></i> {{ booking_error }}</div>{% endif %}
+
+  <form method="post" id="booking-form">
+    {% csrf_token %}
+    <input type="hidden" name="_form" value="booking">
+    <input type="hidden" name="service" id="hid-service">
+    <input type="hidden" name="time"    id="hid-time">
+
+    {% if services %}
+    <!-- Step 1: Service -->
+    <div class="booking-step" id="step-service">
+      <div class="step-header">
+        <div class="step-num">1</div> اختاري الخدمة
+      </div>
+      <div class="svc-grid">
+        {% for svc in services %}
+        <div class="svc-card"
+             data-id="{{ svc.pk }}"
+             data-name="{{ svc.name|escapejs }}"
+             data-dur="{{ svc.duration }}"
+             data-price="{{ svc.price }}"
+             onclick="selectService(this)">
+          <div class="svc-card__name">{{ svc.name }}</div>
+          <div class="svc-card__meta">
+            <span class="svc-card__price">{{ svc.price|format_number:0 }}</span>
+            <span><i class="fas fa-clock" style="font-size:10px;"></i> {{ svc.duration }}د</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="svc-skip" onclick="skipService()">تجاوز — لم أحدد الخدمة بعد</div>
+    </div>
+    {% endif %}
+
+    <!-- Step 2: Date -->
+    <div class="booking-step" id="step-date" {% if services %}style="display:none;"{% endif %}>
+      <div class="step-header">
+        <div class="step-num">{% if services %}2{% else %}1{% endif %}</div> اختاري التاريخ
+      </div>
+      <input type="date" name="date" id="booking-date" class="date-input"
+             min="{{ today }}" max="{{ max_date }}" required
+             onchange="onDateChange(this.value)">
+      {% if settings_obj.work_days %}
+      <div style="font-size:12px;color:var(--slate-400);margin-top:8px;">
+        <i class="fas fa-info-circle"></i>
+        أيام الدوام:
+        {% for d in settings_obj.work_days_list %}
+          {% if d == 0 %}الأحد{% elif d == 1 %}الاثنين{% elif d == 2 %}الثلاثاء{% elif d == 3 %}الأربعاء{% elif d == 4 %}الخميس{% elif d == 5 %}الجمعة{% elif d == 6 %}السبت{% endif %}{% if not forloop.last %}، {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div id="date-error-msg" style="display:none;margin-top:8px;padding:10px 14px;background:#fef2f2;border-radius:10px;font-size:13px;color:#dc2626;">
+        <i class="fas fa-exclamation-circle"></i> <span></span>
+      </div>
+    </div>
+
+    <!-- Step 3: Time slots -->
+    <div class="booking-step" id="step-time" style="display:none;">
+      <div class="step-header">
+        <div class="step-num">{% if services %}3{% else %}2{% endif %}</div> اختاري الوقت
+      </div>
+      <div class="slots-grid" id="slots-grid">
+        <div class="slot-empty">اختاري تاريخاً أولاً</div>
+      </div>
+    </div>
+
+    <!-- Step 4: Contact -->
+    <div class="booking-step" id="step-contact" style="display:none;">
+      <div class="step-header">
+        <div class="step-num">{% if services %}4{% else %}3{% endif %}</div> بياناتك
+      </div>
+
+      <div class="booking-summary" id="booking-summary"></div>
+
+      <div class="field">
+        <label>الاسم الكامل *</label>
+        <input type="text" name="name" required placeholder="اسمك الكامل">
+      </div>
+      <div class="field">
+        <label>رقم الهاتف *</label>
+        <input type="tel" name="phone" required placeholder="09xxxxxxxx">
+      </div>
+      <div class="field">
+        <label>ملاحظات</label>
+        <textarea name="notes" rows="2" placeholder="أي طلبات خاصة..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit">
+        <i class="fas fa-calendar-check"></i> تأكيد الحجز
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endif %}
+
+<!-- ══════════════════════════════════════
+     PRODUCTS PANEL
+══════════════════════════════════════════ -->
+{% if settings_obj.store_enabled %}
+<div class="st-panel {% if active_tab == 'products' %}active{% endif %}" id="panel-products">
+
+  {% if order_error %}<div class="st-error"><i class="fas fa-exclamation-circle"></i> {{ order_error }}</div>{% endif %}
+
+  {% if products %}
+  <div class="prod-grid">
+    {% for p in products %}
+    <div class="prod-card">
+      <div class="prod-img">
+        {% if p.image %}<img src="{{ p.image.url }}" alt="{{ p.name }}">
+        {% else %}<i class="fas fa-box"></i>{% endif %}
+      </div>
+      <div class="prod-body">
+        <div class="prod-name">{{ p.name }}</div>
+        <div class="prod-price">{{ p.price|format_number:0 }}</div>
+        <button class="btn-add" id="btn-p{{ p.pk }}"
+                onclick="addToCart({{ p.pk }}, '{{ p.name|escapejs }}', {{ p.price }})">
+          <i class="fas fa-plus"></i> أضف للسلة
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px 20px;color:var(--sl400);">
+    <i class="fas fa-box-open" style="font-size:40px;margin-bottom:12px;display:block;"></i>
+    لا توجد منتجات متاحة حالياً
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Cart bar -->
+<div class="cart-bar" id="cart-bar">
+  <div>
+    <div style="font-size:14px;font-weight:700;">
+      <i class="fas fa-shopping-cart"></i>
+      <span class="cart-bar__count" id="bar-count">0</span> منتجات
+    </div>
+    <div class="cart-bar__total" id="bar-total"></div>
+  </div>
+  <button class="btn-checkout" onclick="openCart()">
+    عرض السلة <i class="fas fa-chevron-up"></i>
+  </button>
+</div>
+
+<!-- Cart backdrop -->
+<div class="cart-bg" id="cart-bg" onclick="closeCart()"></div>
+
+<!-- Cart sheet -->
+<div class="cart-sheet" id="cart-sheet">
+  <div class="cart-sheet__title">
+    <span><i class="fas fa-shopping-cart"></i> السلة</span>
+    <button class="cart-close-btn" onclick="closeCart()">×</button>
+  </div>
+  <div id="cart-items-list"></div>
+  <hr class="cart-divider">
+  <div class="cart-total-row">
+    <span>الإجمالي</span>
+    <span id="cart-grand-total">0</span>
+  </div>
+  <form method="post" id="order-form">
+    {% csrf_token %}
+    <input type="hidden" name="_form" value="order">
+    <input type="hidden" name="cart" id="hid-cart">
+    <div class="field">
+      <label>الاسم الكامل *</label>
+      <input type="text" name="name" required placeholder="اسمك">
+    </div>
+    <div class="field">
+      <label>رقم الهاتف *</label>
+      <input type="tel" name="phone" required placeholder="09xxxxxxxx">
+    </div>
+    <div class="field">
+      <label>عنوان التوصيل</label>
+      <input type="text" name="address" placeholder="اختياري">
+    </div>
+    <button type="submit" class="btn-submit" onclick="prepareOrder()">
+      <i class="fas fa-check-circle"></i> إرسال الطلب
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<script>
+/* ── Tabs ─────────────────────────── */
+function switchTab(tab) {
+  document.querySelectorAll('.st-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.st-panel').forEach(p => p.classList.remove('active'));
+  const t = document.getElementById('tab-'+tab);
+  const p = document.getElementById('panel-'+tab);
+  if (t) t.classList.add('active');
+  if (p) p.classList.add('active');
+}
+
+/* ── Booking ──────────────────────── */
+const ALL_SLOTS  = {{ time_slots|safe }};
+const WORK_DAYS  = {{ work_days|safe }};
+let selService = null, selDate = null, selTime = null;
+
+function selectService(card) {
+  document.querySelectorAll('.svc-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selService = {id: card.dataset.id, name: card.dataset.name, price: card.dataset.price, dur: card.dataset.dur};
+  document.getElementById('hid-service').value = selService.id;
+  show('step-date');
+}
+function skipService() {
+  selService = null;
+  document.getElementById('hid-service').value = '';
+  document.querySelectorAll('.svc-card').forEach(c => c.classList.remove('selected'));
+  show('step-date');
+}
+function show(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'block';
+  setTimeout(() => el.scrollIntoView({behavior:'smooth', block:'nearest'}), 80);
+}
+function onDateChange(val) {
+  /* validate: is the chosen date a work day? */
+  if (val && WORK_DAYS.length) {
+    const d = new Date(val + 'T00:00:00');
+    const jsDay = d.getDay();  // 0=Sun...6=Sat, matches our WORK_DAYS convention
+    if (!WORK_DAYS.includes(jsDay)) {
+      const dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+      const openDayNames = WORK_DAYS.map(n => dayNames[n]).join('، ');
+      document.getElementById('booking-date').value = '';
+      const msgEl = document.getElementById('date-error-msg');
+      if (msgEl) {
+        const sp = msgEl.querySelector('span');
+        if (sp) sp.textContent = `هذا اليوم ليس من أيام الدوام. أيام العمل: ${openDayNames}`;
+        else msgEl.childNodes[msgEl.childNodes.length-1].textContent = ` هذا اليوم ليس من أيام الدوام.`;
+        msgEl.style.display = 'block';
+        setTimeout(() => { msgEl.style.display = 'none'; }, 4500);
+      }
+      return;
+    }
+  }
+  const msgEl = document.getElementById('date-error-msg');
+  if (msgEl) msgEl.style.display = 'none';
+  selDate = val; selTime = null;
+  document.getElementById('hid-time').value = '';
+  renderSlots();
+  show('step-time');
+}
+function renderSlots() {
+  const grid = document.getElementById('slots-grid');
+  if (!ALL_SLOTS.length) {
+    grid.innerHTML = '<div class="slot-empty">لم تُحدَّد أوقات دوام — يمكنك الحجز بدون تحديد وقت</div>';
+    updateSummary(); show('step-contact'); return;
+  }
+  grid.innerHTML = ALL_SLOTS.map(s =>
+    `<div class="slot" onclick="selectSlot(this,'${s}')">${s}</div>`
+  ).join('');
+}
+function selectSlot(el, time) {
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selTime = time;
+  document.getElementById('hid-time').value = time;
+  updateSummary(); show('step-contact');
+}
+function updateSummary() {
+  const el = document.getElementById('booking-summary');
+  if (!el) return;
+  let html = '';
+  if (selService) html += `<div>🌸 <strong>الخدمة:</strong> ${selService.name} — ${parseFloat(selService.price).toFixed(0)}</div>`;
+  if (selDate)    html += `<div>📅 <strong>التاريخ:</strong> ${fmtDate(selDate)}</div>`;
+  if (selTime)    html += `<div>🕐 <strong>الوقت:</strong> ${selTime}</div>`;
+  el.innerHTML = html || '';
+}
+function fmtDate(d) {
+  try { return new Date(d+'T00:00:00').toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
+  catch(e) { return d; }
+}
+
+/* ── Cart ─────────────────────────── */
+let cart = {};
+
+function addToCart(id, name, price) {
+  if (cart[id]) cart[id].qty++;
+  else cart[id] = {name, price: parseFloat(price), qty: 1};
+  const btn = document.getElementById('btn-p'+id);
+  if (btn) { btn.innerHTML = `<i class="fas fa-check"></i> في السلة (${cart[id].qty})`; btn.classList.add('in-cart'); }
+  updateCartUI();
+}
+function changeQty(id, delta) {
+  if (!cart[id]) return;
+  cart[id].qty += delta;
+  if (cart[id].qty <= 0) {
+    delete cart[id];
+    const btn = document.getElementById('btn-p'+id);
+    if (btn) { btn.innerHTML = '<i class="fas fa-plus"></i> أضف للسلة'; btn.classList.remove('in-cart'); }
+  } else {
+    const btn = document.getElementById('btn-p'+id);
+    if (btn) btn.innerHTML = `<i class="fas fa-check"></i> في السلة (${cart[id].qty})`;
+  }
+  updateCartUI();
+}
+function updateCartUI() {
+  const keys = Object.keys(cart);
+  const qty   = keys.reduce((s,k) => s+cart[k].qty, 0);
+  const total = keys.reduce((s,k) => s+cart[k].price*cart[k].qty, 0);
+
+  document.getElementById('bar-count').textContent = qty;
+  document.getElementById('bar-total').textContent = 'الإجمالي: '+total.toFixed(0);
+  document.getElementById('cart-grand-total').textContent = total.toFixed(0);
+  document.getElementById('cart-bar').classList.toggle('visible', qty > 0);
+
+  const badge = document.getElementById('cart-badge');
+  if (badge) { badge.style.display = qty>0?'inline':'none'; badge.textContent = qty; }
+  renderCartItems();
+}
+function renderCartItems() {
+  const list = document.getElementById('cart-items-list');
+  if (!list) return;
+  const keys = Object.keys(cart);
+  if (!keys.length) { list.innerHTML = '<div style="text-align:center;color:var(--sl400);padding:16px;">السلة فارغة</div>'; return; }
+  list.innerHTML = keys.map(id => `
+    <div class="cart-item">
+      <div class="cart-item__name">${cart[id].name}</div>
+      <div class="qty-control">
+        <button class="qty-btn" type="button" onclick="changeQty(${id},-1)">−</button>
+        <div class="qty-val">${cart[id].qty}</div>
+        <button class="qty-btn" type="button" onclick="changeQty(${id},1)">+</button>
+      </div>
+      <div class="cart-item__price">${(cart[id].price*cart[id].qty).toFixed(0)}</div>
+    </div>`).join('');
+}
+function openCart() {
+  document.getElementById('cart-bg').classList.add('open');
+  document.getElementById('cart-sheet').classList.add('open');
+}
+function closeCart() {
+  document.getElementById('cart-bg').classList.remove('open');
+  document.getElementById('cart-sheet').classList.remove('open');
+}
+function prepareOrder() {
+  const items = Object.keys(cart).map(id => ({id:parseInt(id), qty:cart[id].qty}));
+  document.getElementById('hid-cart').value = JSON.stringify(items);
+}
+
+{% if active_tab == 'products' %}switchTab('products');{% endif %}
+</script>
+</body>
+</html>

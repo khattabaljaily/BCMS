@@ -1,0 +1,12 @@
+asgiref==3.11.1
+Django==4.2.7
+django-cors-headers==4.3.0
+django-debug-toolbar==4.2.0
+greenlet==3.5.1
+mysqlclient==2.2.4
+Pillow==10.1.0
+playwright==1.60.0
+pyee==13.0.1
+sqlparse==0.5.5
+typing_extensions==4.15.0
+whitenoise==6.6.0

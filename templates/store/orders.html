@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/store.css' %}">{% endblock %}
+{% block title %}طلبات المتجر{% endblock %}
+{% block page_title %}طلبات المتجر{% endblock %}
+{% block nav_orders %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- Page Header -->
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#3b82f6,#60a5fa);box-shadow:0 4px 14px rgba(59,130,246,.32);">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">طلبات المتجر</h1>
+          <p class="cx-hero-desc">{{ orders.count }} طلب</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="cx-panel">
+    {% if orders %}
+    <!-- Desktop Table -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>العميل</th>
+            <th>الهاتف</th>
+            <th>العنوان</th>
+            <th>الإجمالي</th>
+            <th>الحالة</th>
+            <th>التاريخ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td><strong style="font-family:monospace;">#{{ order.pk }}</strong></td>
+            <td><strong>{{ order.client_name }}</strong></td>
+            <td class="text-muted">{{ order.client_phone }}</td>
+            <td class="text-muted">{{ order.client_address|default:"—" }}</td>
+            <td><strong style="color:var(--rose);">{{ order.total|format_number:2 }}</strong></td>
+            <td>
+              <span class="badge badge--{% if order.status == 'delivered' %}green{% elif order.status == 'confirmed' %}blue{% elif order.status == 'cancelled' %}red{% else %}yellow{% endif %}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+            <td class="text-muted">{{ order.created_at|date:"j/n/Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for order in orders %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">#{{ order.pk }} — {{ order.client_name }}</div>
+            <div class="cx-card-sub">{{ order.client_phone }}</div>
+          </div>
+          <span class="badge badge--{% if order.status == 'delivered' %}green{% elif order.status == 'confirmed' %}blue{% elif order.status == 'cancelled' %}red{% else %}yellow{% endif %}">
+            {{ order.get_status_display }}
+          </span>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">الإجمالي</span>
+            <span class="cx-card-meta-value" style="color:var(--rose);font-weight:800;">{{ order.total|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">التاريخ</span>
+            <span class="cx-card-meta-value">{{ order.created_at|date:"j/n/Y" }}</span>
+          </div>
+          {% if order.client_address %}
+          <div style="grid-column:1/-1;">
+            <span class="cx-card-meta-label">العنوان</span>
+            <span class="cx-card-meta-value">{{ order.client_address }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="cx-empty">
+      <i class="fas fa-shopping-bag"></i>
+      <p>لا توجد طلبات بعد</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

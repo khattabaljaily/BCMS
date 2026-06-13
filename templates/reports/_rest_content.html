@@ -1,0 +1,226 @@
+{% load static number_format %}
+
+  <!-- Revenue + Appointments charts -->
+  <div class="reports-grid-2">
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-chart-area" style="color:var(--green);"></i> الإيرادات
+        </div>
+        {% if chart_rev_data != '[]' %}
+        <canvas id="revChart" height="160"></canvas>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-chart-area"></i><p>لا بيانات</p></div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-calendar-check" style="color:var(--rose);"></i> المواعيد
+        </div>
+        {% if chart_appt_data != '[]' %}
+        <canvas id="apptChart" height="160"></canvas>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-calendar"></i><p>لا بيانات</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment method + Status pie + Expense categories -->
+  <div class="reports-grid-3">
+    <!-- Payment method -->
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-credit-card" style="color:var(--green);"></i> طرق الدفع
+        </div>
+        {% if chart_method_data != '[]' %}
+        <canvas id="methodChart" height="200"></canvas>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-credit-card"></i><p>لا بيانات</p></div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Status pie -->
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-chart-pie" style="color:var(--blue);"></i> حالات المواعيد
+        </div>
+        {% if chart_status_data != '[]' %}
+        <canvas id="statusChart" height="200"></canvas>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-chart-pie"></i><p>لا بيانات</p></div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Expense categories -->
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-receipt" style="color:#ef4444;"></i> المصروفات حسب الفئة
+        </div>
+        {% if expense_cats %}
+        <table class="cx-table" style="font-size:13px;">
+          <tbody>
+            {% for e in expense_cats %}
+            <tr>
+              <td style="color:var(--slate-600);">{{ e.category }}</td>
+              <td style="font-weight:700;color:#ef4444;text-align:left;">{{ e.total|format_number:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-receipt"></i><p>لا مصروفات</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Top services + Top products -->
+  <div class="reports-grid-2">
+    <!-- Top services -->
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-spa" style="color:var(--rose);"></i> أكثر الخدمات طلباً
+        </div>
+        {% if top_services %}
+        <table class="cx-table" style="font-size:13px;">
+          <thead><tr><th>#</th><th>الخدمة</th><th>المرات</th><th>الإيراد</th></tr></thead>
+          <tbody>
+            {% for s in top_services %}
+            <tr>
+              <td style="color:var(--slate-400);font-weight:600;">{{ forloop.counter }}</td>
+              <td><strong>{{ s.service__name }}</strong></td>
+              <td><span class="badge badge--rose">{{ s.count }}</span></td>
+              <td style="font-weight:700;color:var(--green);">{{ s.revenue|format_number:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-spa"></i><p>لا بيانات</p></div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Top products -->
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-box" style="color:#8b5cf6;"></i> أكثر المنتجات مبيعاً
+        </div>
+        {% if top_products %}
+        <table class="cx-table" style="font-size:13px;">
+          <thead><tr><th>#</th><th>المنتج</th><th>الكمية</th><th>الإيراد</th></tr></thead>
+          <tbody>
+            {% for p in top_products %}
+            <tr>
+              <td style="color:var(--slate-400);font-weight:600;">{{ forloop.counter }}</td>
+              <td><strong>{{ p.product__name }}</strong></td>
+              <td><span class="badge badge--blue">{{ p.qty|format_number:0 }}</span></td>
+              <td style="font-weight:700;color:var(--green);">{{ p.revenue|format_number:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-box"></i><p>لا مبيعات منتجات</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff performance -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card__body">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+        <i class="fas fa-user-check" style="color:#8b5cf6;"></i> أداء الفنيات
+      </div>
+      {% if staff_perf %}
+      <div class="cx-table-wrap">
+        <table class="cx-table" style="font-size:13px;">
+          <thead>
+            <tr><th>الفنية</th><th>إجمالي المواعيد</th><th>المكتملة</th><th>معدل الإنجاز</th><th>الإيراد</th></tr>
+          </thead>
+          <tbody>
+            {% for s in staff_perf %}
+            <tr>
+              <td>
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ s.specialist__color }};margin-left:6px;"></span>
+                <strong>{{ s.specialist__name }}</strong>
+              </td>
+              <td>{{ s.count }}</td>
+              <td><span class="badge badge--green">{{ s.completed }}</span></td>
+              <td>
+                {% if s.count %}
+                {% widthratio s.completed s.count 100 %}%
+                {% else %}—{% endif %}
+              </td>
+              <td style="font-weight:700;color:var(--green);">{{ s.revenue|default:0|format_number:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="cx-empty" style="padding:32px;"><i class="fas fa-user-check"></i><p>لا بيانات</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Top clients + Low stock -->
+  <div class="reports-grid-2">
+    <!-- Top clients -->
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-crown" style="color:#f59e0b;"></i> أفضل العملاء
+        </div>
+        {% if top_clients %}
+        <table class="cx-table" style="font-size:13px;">
+          <thead><tr><th>#</th><th>العميلة</th><th>مواعيد</th><th>الإنفاق</th></tr></thead>
+          <tbody>
+            {% for c in top_clients %}
+            <tr>
+              <td style="color:var(--slate-400);font-weight:600;">{{ forloop.counter }}</td>
+              <td><a href="{% url 'clients:detail' c.pk %}" style="color:var(--rose);font-weight:600;">{{ c.name }}</a></td>
+              <td>{{ c.period_appts }}</td>
+              <td style="font-weight:700;color:var(--green);">{{ c.period_paid|format_number:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-users"></i><p>لا بيانات</p></div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Low stock -->
+    <div class="card">
+      <div class="card__body">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--slate-700);">
+          <i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> منتجات مخزونها منخفض
+        </div>
+        {% if low_stock %}
+        <table class="cx-table" style="font-size:13px;">
+          <thead><tr><th>المنتج</th><th>المخزون</th><th>الحد الأدنى</th></tr></thead>
+          <tbody>
+            {% for p in low_stock %}
+            <tr>
+              <td><strong>{{ p.name }}</strong></td>
+              <td><span class="badge badge--red">{{ p.stock|format_number:0 }}</span></td>
+              <td style="color:var(--slate-500);">{{ p.min_stock|format_number:0 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="cx-empty" style="padding:32px;"><i class="fas fa-box"></i><p>المخزون بخير</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>

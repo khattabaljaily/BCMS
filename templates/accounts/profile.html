@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/profile.css' %}">{% endblock %}
+{% block title %}الملف الشخصي{% endblock %}
+{% block page_title %}الملف الشخصي{% endblock %}
+{% block nav_dashboard %}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:500px;">
+  <div class="card__header"><span class="card__title">بيانات المستخدم</span></div>
+  <div class="card__body">
+    <p><strong>الاسم:</strong> {{ user.full_name }}</p>
+    <p><strong>اسم المستخدم:</strong> {{ user.username }}</p>
+    <p><strong>الهاتف:</strong> {{ user.phone|default:"—" }}</p>
+    <p><strong>الدور:</strong> {{ user.role|default:"مالك" }}</p>
+  </div>
+</div>
+{% endblock %}

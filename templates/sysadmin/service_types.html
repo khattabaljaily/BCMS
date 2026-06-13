@@ -1,0 +1,83 @@
+{% extends "sysadmin/base.html" %}
+{% block title %}أنواع المراكز{% endblock %}
+{% block page_title %}أنواع المراكز{% endblock %}
+{% block nav_service_types %}active{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'sysadmin:service_type_add' %}" class="btn btn-primary btn-sm">
+  <i class="fas fa-plus"></i> إضافة نوع
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="sa-page-header">
+  <div>
+    <h2>أنواع المراكز</h2>
+    <div style="font-size:12px;color:var(--sa-muted);margin-top:3px;">{{ types.count }} نوع</div>
+  </div>
+  <a href="{% url 'sysadmin:service_type_add' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> إضافة نوع جديد
+  </a>
+</div>
+
+<div class="sa-card">
+  <div class="sa-table-wrap">
+    <table class="sa-table">
+      <thead>
+        <tr>
+          <th>الأيقونة</th>
+          <th>الاسم</th>
+          <th>الوصف</th>
+          <th>عدد المراكز</th>
+          <th>الترتيب</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in types %}
+        <tr>
+          <td>
+            <div style="width:40px;height:40px;border-radius:10px;background:{{ t.color }}20;display:flex;align-items:center;justify-content:center;color:{{ t.color }};font-size:16px;">
+              <i class="{{ t.icon }}"></i>
+            </div>
+          </td>
+          <td style="font-weight:700;">{{ t.name }}</td>
+          <td style="font-size:12px;color:var(--sa-muted);max-width:220px;">{{ t.description|truncatechars:60|default:"—" }}</td>
+          <td>
+            <span class="badge badge-blue">{{ t.centers.count }}</span>
+          </td>
+          <td style="font-size:12px;color:var(--sa-muted);">{{ t.order }}</td>
+          <td>
+            {% if t.is_active %}<span class="badge badge-green">نشط</span>
+            {% else %}<span class="badge badge-gray">غير نشط</span>{% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:5px;">
+              <a href="{% url 'sysadmin:service_type_edit' t.pk %}" class="btn btn-primary btn-icon btn-sm" title="تعديل">
+                <i class="fas fa-pencil"></i>
+              </a>
+              <form method="post" action="{% url 'sysadmin:service_type_delete' t.pk %}"
+                    onsubmit="return confirm('حذف نوع {{ t.name }}؟');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-icon btn-sm" title="حذف">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center;padding:40px;color:var(--sa-muted);">
+            لا توجد أنواع مراكز بعد
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

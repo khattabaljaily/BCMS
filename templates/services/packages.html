@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/services.css' %}">{% endblock %}
+{% block title %}الباقات{% endblock %}
+{% block page_title %}الباقات{% endblock %}
+{% block nav_packages %}active{% endblock %}
+
+{% block content %}
+<div class="cx-hero" style="margin-bottom:20px;">
+  <div class="cx-hero-inner">
+    <div class="cx-hero-left">
+      <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#a855f7,#c084fc);box-shadow:0 4px 14px rgba(168,85,247,.32);">
+        <i class="fas fa-box-open"></i>
+      </div>
+      <div>
+        <h1 class="cx-hero-title">الباقات</h1>
+        <p class="cx-hero-desc">{{ packages.count }} باقة</p>
+      </div>
+    </div>
+    <div class="cx-hero-right">
+      <div class="cx-hero-actions">
+        <button class="btn btn--primary" onclick="openAddPackage()"><i class="fas fa-plus"></i> باقة جديدة</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if packages %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
+  {% for pkg in packages %}
+  <div class="card">
+    <div style="height:4px;background:linear-gradient(90deg,var(--rose),var(--pink));"></div>
+    <div class="card__body">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px;">{{ pkg.name }}</div>
+          {% if pkg.description %}<div style="font-size:12px;color:var(--slate-500);margin-bottom:10px;">{{ pkg.description }}</div>{% endif %}
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button type="button" class="btn btn--ghost btn--icon btn--sm"
+                  onclick="openEditPackage({{ pkg.pk }}, '{{ pkg.name|escapejs }}', '{{ pkg.description|escapejs }}', '{{ pkg.price }}', {{ pkg.is_active|yesno:'true,false' }}, {{ pkg.show_in_store|yesno:'true,false' }})">
+            <i class="fas fa-edit"></i>
+          </button>
+          <form method="post" action="{% url 'services:package_delete' pkg.pk %}" onsubmit="return BCMS.confirmFormSubmit(this, 'حذف {{ pkg.name }}؟')">
+            {% csrf_token %}
+            <button class="btn btn--danger btn--icon btn--sm"><i class="fas fa-trash"></i></button>
+          </form>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        {% for ps in pkg.package_services.all %}
+          <span style="display:inline-block;background:var(--rose-50);color:var(--rose-dark);padding:3px 8px;border-radius:4px;font-size:11px;margin:2px;">{{ ps.service.name }}</span>
+        {% endfor %}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--slate-100);">
+        <div>
+          <div style="font-size:20px;font-weight:900;color:var(--rose);">{{ pkg.price|format_number:2 }}</div>
+          {% if pkg.savings > 0 %}
+          <div style="font-size:11px;color:var(--green);">وفّر {{ pkg.savings|format_number:2 }}</div>
+          {% endif %}
+        </div>
+        {% if not pkg.is_active %}<span class="badge badge--red">موقوف</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <i class="fas fa-box-open"></i>
+  <p>لا باقات مضافة — أنشئ باقات جذابة لعملاءك</p>
+  <button class="btn btn--primary" onclick="openAddPackage()" style="margin-top:12px;"><i class="fas fa-plus"></i> باقة جديدة</button>
+</div>
+{% endif %}
+
+<div class="modal-overlay" id="modal-package" style="display:none;">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <span class="modal-title" id="package-modal-title">باقة جديدة</span>
+      <button class="btn btn--ghost btn--icon" onclick="BCMS.closeModal('modal-package')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" action="{% url 'services:package_save' %}">
+      {% csrf_token %}
+      <input type="hidden" name="pk" id="package-pk">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">اسم الباقة</label>
+          <input class="form-control" type="text" name="name" id="package-name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوصف <span class="form-optional">اختياري</span></label>
+          <textarea class="form-control" name="description" id="package-description" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">السعر</label>
+          <input class="form-control" type="number" name="price" id="package-price" min="0" step="0.01" required>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" name="is_active" id="package-active"> نشط
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" name="show_in_store" id="package-store"> يظهر في المتجر
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="BCMS.closeModal('modal-package')">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openAddPackage() {
+  document.getElementById('package-modal-title').textContent = 'باقة جديدة';
+  document.getElementById('package-pk').value = '';
+  document.getElementById('package-name').value = '';
+  document.getElementById('package-description').value = '';
+  document.getElementById('package-price').value = '';
+  document.getElementById('package-active').checked = true;
+  document.getElementById('package-store').checked = true;
+  BCMS.openModal('modal-package');
+}
+
+function openEditPackage(pk, name, description, price, isActive, showInStore) {
+  document.getElementById('package-modal-title').textContent = 'تعديل باقة';
+  document.getElementById('package-pk').value = pk;
+  document.getElementById('package-name').value = name;
+  document.getElementById('package-description').value = description;
+  document.getElementById('package-price').value = price;
+  document.getElementById('package-active').checked = isActive === true || isActive === 'true';
+  document.getElementById('package-store').checked = showInStore === true || showInStore === 'true';
+  BCMS.openModal('modal-package');
+}
+</script>
+{% endblock %}

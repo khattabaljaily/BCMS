@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block page_title %}لوحة التحكم{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <div class="wb-left">
+    <div class="welcome-banner__title">مرحباً، {{ request.user.full_name }} 👋</div>
+    <div class="welcome-banner__sub">
+      {% if center %}{{ center.name }} &mdash; {% endif %}اليوم {{ today|date:"l، j F Y" }}
+    </div>
+  </div>
+  <div class="wb-illustration"><i class="fas fa-spa"></i></div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-grid">
+  <div class="stat-card stat-card--purple">
+    <div class="stat-card__icon"><i class="fas fa-users"></i></div>
+    <div class="stat-card__body">
+      <div class="stat-card__value">{{ stats.total_clients }}</div>
+      <div class="stat-card__label">إجمالي العملاء</div>
+    </div>
+    {% if stats.new_clients %}<div class="stat-card__badge stat-card__badge--green">+{{ stats.new_clients }} هذا الشهر</div>{% endif %}
+  </div>
+  <div class="stat-card stat-card--amber">
+    <div class="stat-card__icon"><i class="fas fa-coins"></i></div>
+    <div class="stat-card__body">
+      <div class="stat-card__value">{{ today_revenue|format_number:2 }}</div>
+      <div class="stat-card__label">إيرادات اليوم</div>
+    </div>
+  </div>
+  <div class="stat-card stat-card--red">
+    <div class="stat-card__icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="stat-card__body">
+      <div class="stat-card__value">{{ unpaid_total|format_number:2 }}</div>
+      <div class="stat-card__label">فواتير غير مدفوعة</div>
+    </div>
+    {% if unpaid_count %}<div class="stat-card__badge">{{ unpaid_count }} فاتورة</div>{% endif %}
+  </div>
+  <div class="stat-card stat-card--slate">
+    <div class="stat-card__icon"><i class="fas fa-arrow-trend-down"></i></div>
+    <div class="stat-card__body">
+      <div class="stat-card__value">{{ today_expenses|format_number:2 }}</div>
+      <div class="stat-card__label">مصاريف اليوم</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row: revenue wide + status donut -->
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;">
+
+  <div class="dash-card chart-card">
+    <div class="dash-card__header">
+      <div class="dash-card__title">
+        <span class="dash-card__title-icon dash-card__title-icon--yellow"><i class="fas fa-chart-area"></i></span>
+        الإيرادات والمصاريف — آخر 30 يوماً
+      </div>
+      <span class="chart-kpi">{{ rev_30_total|format_number:2 }}</span>
+    </div>
+    <div class="dash-card__body chart-body">
+      <canvas id="revenueChart"></canvas>
+    </div>
+  </div>
+
+  <div class="dash-card chart-card">
+    <div class="dash-card__header">
+      <div class="dash-card__title">
+        <span class="dash-card__title-icon dash-card__title-icon--blue"><i class="fas fa-chart-pie"></i></span>
+        توزيع المواعيد — هذا الشهر
+      </div>
+    </div>
+    <div class="dash-card__body donut-body">
+      {% if chart_status_data != '[]' %}
+      <canvas id="statusChart"></canvas>
+      {% else %}
+      <div class="cx-empty" style="padding:24px 16px;">
+        <i class="fas fa-chart-pie"></i><p>لا توجد بيانات بعد</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Row: today | upcoming | low stock -->
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+
+  <!-- Today's appointments -->
+  <div class="dash-card">
+    <div class="dash-card__header">
+      <div class="dash-card__title">
+        <span class="dash-card__title-icon dash-card__title-icon--rose"><i class="fas fa-calendar-day"></i></span>
+        مواعيد اليوم
+        {% if stats.today_count %}<span class="badge badge--rose" style="font-size:10px;">{{ stats.today_count }}</span>{% endif %}
+      </div>
+      <a href="{% url 'appointments:list' %}" class="btn btn--ghost btn--sm">عرض الكل</a>
+    </div>
+    <div class="dash-card__body" style="padding:0;">
+      {% if today_appointments %}
+        {% for appt in today_appointments %}
+        <div class="appt-row">
+          <div class="appt-row__time">{{ appt.start_time|time:"H:i" }}</div>
+          <div class="appt-row__dot appt-row__dot--{{ appt.status }}"></div>
+          <div class="appt-row__info">
+            <div class="appt-row__name">{{ appt.client_display }}</div>
+            {% if appt.specialist %}<div class="appt-row__meta">{{ appt.specialist.name }}</div>{% endif %}
+          </div>
+          <span class="badge badge--{% if appt.status == 'completed' %}green{% elif appt.status == 'confirmed' %}blue{% elif appt.status == 'cancelled' %}gray{% else %}yellow{% endif %}">
+            {{ appt.get_status_display }}
+          </span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="cx-empty" style="padding:32px 16px;">
+          <i class="fas fa-calendar-check"></i>
+          <p>لا توجد مواعيد اليوم</p>
+          <a href="{% url 'appointments:save' %}" class="btn btn--primary btn--sm" style="margin-top:10px;">
+            <i class="fas fa-plus"></i> إضافة موعد
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Upcoming -->
+  <div class="dash-card">
+    <div class="dash-card__header">
+      <div class="dash-card__title">
+        <span class="dash-card__title-icon dash-card__title-icon--blue"><i class="fas fa-clock"></i></span>
+        المواعيد القادمة
+        <span style="font-size:11px;font-weight:500;color:var(--slate-400);">7 أيام</span>
+      </div>
+      <a href="{% url 'appointments:calendar' %}" class="btn btn--ghost btn--sm"><i class="fas fa-calendar-alt"></i> التقويم</a>
+    </div>
+    <div class="dash-card__body" style="padding:8px 12px;">
+      {% if upcoming %}
+        {% for appt in upcoming %}
+        <div class="upcoming-row">
+          <div class="upcoming-row__date">
+            <div class="upcoming-row__date-day">{{ appt.date|date:"j" }}</div>
+            <div class="upcoming-row__date-month">{{ appt.date|date:"M" }}</div>
+          </div>
+          <div class="upcoming-row__info">
+            <div class="upcoming-row__name">{{ appt.client_display }}</div>
+            <div class="upcoming-row__meta">{{ appt.specialist.name|default:"أي فنية" }}</div>
+          </div>
+          <div class="upcoming-row__time">{{ appt.start_time|time:"H:i" }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="cx-empty" style="padding:24px 16px;">
+          <i class="fas fa-calendar"></i><p>لا توجد مواعيد قادمة</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Low stock -->
+  <div class="dash-card">
+    <div class="dash-card__header">
+      <div class="dash-card__title">
+        <span class="dash-card__title-icon dash-card__title-icon--amber"><i class="fas fa-boxes"></i></span>
+        منتجات منخفضة المخزون
+      </div>
+    </div>
+    <div class="dash-card__body">
+      {% if low_stock_products %}
+        <ul class="list-compact">
+          {% for p in low_stock_products %}
+            <li>{{ p.name }} <span class="muted">({{ p.stock }})</span></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="cx-empty" style="padding:18px 12px;"><i class="fas fa-box"></i><p>جميع المنتجات بمخزون جيد</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.font.family = "Cairo, 'Segoe UI', sans-serif";
+Chart.defaults.color = '#64748b';
+const rose = '#f43f5e';
+
+/* Revenue + Expenses area */
+(function(){
+  const ctx = document.getElementById('revenueChart');
+  if (!ctx) return;
+  const grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 180);
+  grad.addColorStop(0, 'rgba(244,63,94,.18)');
+  grad.addColorStop(1, 'rgba(244,63,94,.0)');
+  const gradExp = ctx.getContext('2d').createLinearGradient(0, 0, 0, 180);
+  gradExp.addColorStop(0, 'rgba(239,68,68,.10)');
+  gradExp.addColorStop(1, 'rgba(239,68,68,.0)');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_rev_labels|safe }},
+      datasets: [
+        { label: 'الإيرادات', data: {{ chart_rev_data|safe }}, fill: true,
+          backgroundColor: grad, borderColor: rose, borderWidth: 2.5,
+          pointRadius: 0, pointHoverRadius: 5, tension: 0.4 },
+        { label: 'المصاريف', data: {{ chart_exp_data|safe }}, fill: true,
+          backgroundColor: gradExp, borderColor: '#ef4444', borderWidth: 1.8,
+          borderDash: [4,3], pointRadius: 0, pointHoverRadius: 4, tension: 0.4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: {
+        // format numbers consistently as 1,000.00 regardless of browser locale
+        function formatNumberJS(n, decimals=0) {
+          try {
+            const num = Number(n || 0);
+            return num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+          } catch (e) { return n; }
+        }
+        callbacks: { label: c => ' ' + formatNumberJS(c.parsed.y, 0) }
+      }},
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 7, font: { size: 10 } } },
+        y: { grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 10 },
+             callback: v => v >= 1000 ? (v/1000).toFixed(1)+'k' : v } }
+      }
+    }
+  });
+})();
+
+/* Status donut */
+(function(){
+  const ctx = document.getElementById('statusChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ chart_status_labels|safe }},
+      datasets: [{ data: {{ chart_status_data|safe }},
+        backgroundColor: {{ chart_status_colors|safe }},
+        borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: {
+        position: 'bottom',
+        labels: { font: { size: 11 }, padding: 10, boxWidth: 10, boxHeight: 10 }
+      }}
+    }
+  });
+})();
+</script>
+{% endblock %}

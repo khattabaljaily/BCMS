@@ -1,0 +1,144 @@
+/* ================================================
+   EnjazBCMS — Appointments
+   ================================================ */
+
+/* ── Status row color indicators ─────────────── */
+.appt-row--pending    { border-right: 3px solid var(--yellow) !important; }
+.appt-row--confirmed  { border-right: 3px solid var(--blue) !important; }
+.appt-row--in_progress{ border-right: 3px solid var(--purple) !important; }
+.appt-row--completed  { border-right: 3px solid var(--green) !important; }
+.appt-row--cancelled  { border-right: 3px solid var(--slate-300) !important; }
+.appt-row--no_show    { border-right: 3px solid var(--red) !important; }
+
+/* ── Calendar ──────────────────────────────────── */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-header-day {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--slate-400);
+  padding: 6px 0;
+  text-transform: uppercase;
+}
+.cal-day {
+  min-height: 90px;
+  padding: 6px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--slate-100);
+  transition: background .15s;
+}
+.cal-day:hover { background: var(--rose-bg); }
+.cal-day.today { border-color: var(--rose); }
+.cal-day.other-month { opacity: .4; }
+.cal-day__num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--slate-600);
+  margin-bottom: 4px;
+}
+.cal-day.today .cal-day__num {
+  background: var(--rose);
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cal-appt-dot {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.cal-appt-dot--pending   { background: #fef9c3; color: #854d0e; }
+.cal-appt-dot--confirmed { background: #dbeafe; color: #1e40af; }
+.cal-appt-dot--completed { background: #dcfce7; color: #166534; }
+.cal-appt-dot--cancelled { background: var(--slate-100); color: var(--slate-500); }
+
+/* ── Appointment detail sheet ──────────────────── */
+.appt-detail-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--slate-100);
+  font-size: 13px;
+}
+.appt-detail-row:last-child { border-bottom: none; }
+.appt-detail-label {
+  width: 110px;
+  flex-shrink: 0;
+  color: var(--slate-400);
+  font-weight: 600;
+}
+
+/* ── Time slot grid ────────────────────────────── */
+.time-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+.time-slot {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--slate-200);
+  cursor: pointer;
+  transition: all .15s;
+}
+.time-slot:hover { border-color: var(--rose); background: var(--rose-bg); }
+.time-slot.selected { background: var(--rose); color: #fff; border-color: var(--rose); }
+.time-slot.taken { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+/* ── Mobile: calendar collapses to list ─────────── */
+@media (max-width: 768px) {
+  .cal-grid { grid-template-columns: 1fr; }
+  .cal-header-day { display: none; }
+  .cal-day { min-height: unset; }
+  .cal-day.empty { display: none; }
+}
+
+/* Make appointment detail rows stack on small screens so controls don't get hidden */
+@media (max-width: 600px) {
+  .appt-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .appt-detail-label {
+    width: 100%;
+    flex-shrink: 0;
+    font-size: 13px;
+    margin-bottom: 0;
+  }
+  .appt-detail-row .form-control,
+  .appt-detail-row select,
+  .appt-detail-row input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* Ensure mobile table-card rows don't clip native dropdowns (status select) */
+@media (max-width: 768px) {
+  .table-wrap > table tr,
+  .cx-table-wrap > table tr {
+    overflow: visible !important;
+  }
+  .table-wrap > table td select,
+  .cx-table-wrap > table td select {
+    position: relative; z-index: 9999;
+  }
+}

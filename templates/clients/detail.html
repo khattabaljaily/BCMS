@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% load static number_format %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/clients.css' %}">{% endblock %}
+{% block title %}{{ client.name }}{% endblock %}
+{% block page_title %}كشف حساب العميل{% endblock %}
+{% block nav_clients %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- ── Hero ───────────────────────────────────────────────────── -->
+  <div class="cx-hero" style="margin-bottom:24px;">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <a href="{% url 'clients:list' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;"><i class="fas fa-arrow-right"></i></a>
+        <div class="client-avatar-lg" style="flex-shrink:0;">{{ client.name|first|upper }}</div>
+        <div>
+          <h1 class="cx-hero-title">{{ client.name }}</h1>
+          <p class="cx-hero-desc">
+            <i class="fas fa-phone" style="font-size:10px;"></i> {{ client.phone }}
+            {% if client.email %} &nbsp;·&nbsp; <i class="fas fa-envelope" style="font-size:10px;"></i> {{ client.email }}{% endif %}
+            {% if client.last_visit %} &nbsp;·&nbsp; آخر زيارة {{ client.last_visit|date:"j/n/Y" }}{% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <a href="{% url 'appointments:save' %}?client={{ client.pk }}" class="btn btn--primary btn--sm">
+            <i class="fas fa-plus"></i> موعد جديد
+          </a>
+          <button type="button"
+                  onclick="openClientModal({{ client.pk }}, '{{ client.name|escapejs }}', '{{ client.phone|escapejs }}', '{{ client.email|escapejs }}', '{{ client.birthdate|default:'' }}', '{{ client.notes|escapejs }}', '{{ client.referral }}')"
+                  class="btn btn--ghost btn--sm">
+            <i class="fas fa-edit"></i> تعديل
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stat cards ─────────────────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;">
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--rose-100);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-calendar-check" style="color:var(--rose);font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:22px;font-weight:900;color:var(--rose);line-height:1;">{{ client.visit_count }}</div>
+        <div style="font-size:11px;color:var(--slate-400);margin-top:2px;">زيارة مكتملة</div>
+      </div>
+    </div>
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-coins" style="color:#059669;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:20px;font-weight:900;color:#059669;line-height:1;">{{ client.total_spent|format_number:2 }}</div>
+        <div style="font-size:11px;color:var(--slate-400);margin-top:2px;">إجمالي الإنفاق</div>
+      </div>
+    </div>
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-file-invoice-dollar" style="color:#d97706;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:20px;font-weight:900;color:#d97706;line-height:1;">{{ client.due_amount|format_number:2 }}</div>
+        <div style="font-size:11px;color:var(--slate-400);margin-top:2px;">مستحق للتحصيل</div>
+      </div>
+    </div>
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-star" style="color:#7c3aed;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:22px;font-weight:900;color:#7c3aed;line-height:1;">{{ client.points }}</div>
+        <div style="font-size:11px;color:var(--slate-400);margin-top:2px;">نقاط الولاء</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Two-column layout ──────────────────────────────────────── -->
+  <div class="client-layout">
+
+    <!-- LEFT: profile sidebar -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Contact & info -->
+      <div class="cx-panel">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--slate-100);font-size:13px;font-weight:700;color:var(--slate-600);">
+          <i class="fas fa-id-card" style="margin-left:6px;color:var(--rose);"></i> بيانات العميل
+        </div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <i class="fas fa-phone" style="width:16px;color:var(--slate-400);text-align:center;"></i>
+            <span style="color:var(--slate-600);">{{ client.phone }}</span>
+          </div>
+
+          {% if client.email %}
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <i class="fas fa-envelope" style="width:16px;color:var(--slate-400);text-align:center;"></i>
+            <span style="color:var(--slate-600);">{{ client.email }}</span>
+          </div>
+          {% endif %}
+
+          {% if client.birthdate %}
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <i class="fas fa-birthday-cake" style="width:16px;color:var(--slate-400);text-align:center;"></i>
+            <span style="color:var(--slate-600);">{{ client.birthdate|date:"j F Y" }}</span>
+          </div>
+          {% endif %}
+
+          {% if client.referral %}
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <i class="fas fa-share-nodes" style="width:16px;color:var(--slate-400);text-align:center;"></i>
+            <span style="color:var(--slate-600);">{{ client.get_referral_display }}</span>
+          </div>
+          {% endif %}
+
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <i class="fas fa-calendar-plus" style="width:16px;color:var(--slate-400);text-align:center;"></i>
+            <span style="color:var(--slate-500);">عميل منذ {{ client.created_at|date:"j/n/Y" }}</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <i class="fas fa-circle" style="width:16px;color:{% if client.is_active %}#10b981{% else %}#ef4444{% endif %};text-align:center;font-size:8px;"></i>
+            <span style="color:var(--slate-600);">{% if client.is_active %}نشط{% else %}غير نشط{% endif %}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Notes -->
+      {% if client.notes %}
+      <div class="cx-panel">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--slate-100);font-size:13px;font-weight:700;color:var(--slate-600);">
+          <i class="fas fa-sticky-note" style="margin-left:6px;color:var(--rose);"></i> ملاحظات
+        </div>
+        <div style="padding:16px 20px;font-size:13px;color:var(--slate-600);line-height:1.7;">
+          {{ client.notes }}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Quick links -->
+      <div class="cx-panel" style="padding:16px 20px;">
+        <a href="{% url 'billing:create' %}?client={{ client.pk }}" class="btn btn--ghost btn--sm" style="width:100%;justify-content:center;margin-bottom:8px;">
+          <i class="fas fa-file-invoice"></i> فاتورة جديدة
+        </a>
+        <a href="{% url 'finance:client_payments' %}?client={{ client.pk }}" class="btn btn--ghost btn--sm" style="width:100%;justify-content:center;">
+          <i class="fas fa-money-bill-wave"></i> تسجيل دفعة
+        </a>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: history -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Appointments -->
+      <div class="cx-panel">
+        <div style="padding:18px 20px 14px;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:14px;font-weight:700;color:var(--slate-700);">
+            <i class="fas fa-calendar-alt" style="margin-left:8px;color:var(--rose);"></i> سجل المواعيد
+          </span>
+          <span style="font-size:12px;color:var(--slate-400);">{{ appointments|length }} موعد</span>
+        </div>
+        {% if appointments %}
+        <div class="cx-table-wrap">
+          <table class="cx-table">
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>الخدمات</th>
+                <th>الفنية</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for appt in appointments %}
+              <tr>
+                <td style="white-space:nowrap;color:var(--slate-500);">{{ appt.date|date:"j/n/Y" }}</td>
+                <td>
+                  {% for s in appt.appointment_services.all %}
+                    <span style="display:inline-block;background:var(--rose-50);color:var(--rose);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;margin:1px;">{{ s.service.name }}</span>
+                  {% empty %}—{% endfor %}
+                </td>
+                <td style="font-size:12px;color:var(--slate-600);">{{ appt.specialist.name|default:"—" }}</td>
+                <td>
+                  <span class="badge badge--{% if appt.status == 'completed' %}green{% elif appt.status == 'cancelled' %}red{% elif appt.status == 'no_show' %}orange{% else %}blue{% endif %}">
+                    {{ appt.get_status_display }}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="cx-empty" style="padding:40px 24px;">
+          <i class="fas fa-calendar"></i>
+          <p>لا مواعيد بعد</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Invoices -->
+      <div class="cx-panel">
+        <div style="padding:18px 20px 14px;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:14px;font-weight:700;color:var(--slate-700);">
+            <i class="fas fa-file-invoice-dollar" style="margin-left:8px;color:var(--rose);"></i> الفواتير
+          </span>
+          <span style="font-size:12px;color:var(--slate-400);">{{ invoices|length }} فاتورة</span>
+        </div>
+        {% if invoices %}
+        <div class="cx-table-wrap">
+          <table class="cx-table">
+            <thead>
+              <tr>
+                <th>رقم الفاتورة</th>
+                <th>التاريخ</th>
+                <th>الإجمالي</th>
+                <th>المدفوع</th>
+                <th>الحالة</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inv in invoices %}
+              <tr>
+                <td><strong style="color:var(--rose);">{{ inv.number }}</strong></td>
+                <td style="color:var(--slate-500);white-space:nowrap;">{{ inv.date|date:"j/n/Y" }}</td>
+                <td style="font-weight:700;">{{ inv.total|format_number:2 }}</td>
+                <td style="color:#059669;">{{ inv.paid_amount|format_number:2 }}</td>
+                <td>
+                  <span class="badge badge--{% if inv.status == 'paid' %}green{% elif inv.status == 'cancelled' %}red{% elif inv.status == 'partial' %}yellow{% else %}gray{% endif %}">
+                    {{ inv.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  <a href="{% url 'billing:detail' inv.pk %}" class="btn btn--ghost btn--icon btn--sm" title="عرض الفاتورة">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="cx-empty" style="padding:40px 24px;">
+          <i class="fas fa-file-invoice"></i>
+          <p>لا فواتير بعد</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Payments -->
+      <div class="cx-panel">
+        <div style="padding:18px 20px 14px;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:14px;font-weight:700;color:var(--slate-700);">
+            <i class="fas fa-hand-holding-dollar" style="margin-left:8px;color:var(--rose);"></i> سجل المدفوعات
+          </span>
+          <span style="font-size:12px;color:var(--slate-400);">{{ payments|length }} دفعة</span>
+        </div>
+        {% if payments %}
+        <div class="cx-table-wrap">
+          <table class="cx-table">
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>الفاتورة</th>
+                <th>المبلغ</th>
+                <th>طريقة الدفع</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pay in payments %}
+              <tr>
+                <td style="color:var(--slate-500);white-space:nowrap;">{{ pay.date|date:"j/n/Y" }}</td>
+                <td>
+                  {% if pay.invoice %}
+                    <a href="{% url 'billing:detail' pay.invoice.pk %}" style="color:var(--rose);font-weight:600;text-decoration:none;">{{ pay.invoice.number }}</a>
+                  {% else %}—{% endif %}
+                </td>
+                <td style="font-weight:700;color:#059669;">{{ pay.amount|format_number:2 }}</td>
+                <td style="font-size:12px;color:var(--slate-600);">{{ pay.get_method_display }}</td>
+                <td>
+                  <span class="badge badge--{% if pay.status == 'confirmed' %}green{% else %}red{% endif %}">
+                    {{ pay.get_status_display }}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="cx-empty" style="padding:40px 24px;">
+          <i class="fas fa-receipt"></i>
+          <p>لا مدفوعات مسجّلة</p>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

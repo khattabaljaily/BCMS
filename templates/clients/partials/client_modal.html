@@ -1,0 +1,53 @@
+{% comment %}Reusable client add/edit modal — included in base.html sitewide{% endcomment %}
+<div class="modal-overlay" id="client-modal" style="display:none;">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <span class="modal-title" id="client-modal-title">عميل جديد</span>
+      <button class="modal-close" onclick="BCMS.closeModal('client-modal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" action="{% url 'clients:save' %}" id="client-form">
+      {% csrf_token %}
+      <input type="hidden" name="pk" id="client-pk">
+      <div class="modal-body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">الاسم <span style="color:var(--red)">*</span></label>
+            <input class="form-control" type="text" name="name" id="client-name" required autofocus>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف <span style="color:var(--red)">*</span></label>
+            <input class="form-control" type="tel" name="phone" id="client-phone" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">البريد الإلكتروني <span class="form-optional">اختياري</span></label>
+          <input class="form-control" type="email" name="email" id="client-email">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">تاريخ الميلاد <span class="form-optional">اختياري</span></label>
+            <input class="form-control" type="date" name="birthdate" id="client-birthdate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">المصدر</label>
+            <select class="form-control" name="referral" id="client-referral">
+              <option value="">—</option>
+              <option value="walk_in">زيارة مباشرة</option>
+              <option value="referral">توصية</option>
+              <option value="social">وسائل التواصل</option>
+              <option value="website">الموقع</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
+          <textarea class="form-control" name="notes" id="client-notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="BCMS.closeModal('client-modal')">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>

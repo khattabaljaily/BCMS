@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% load humanize %}
+{% block nav_finance_payments %}active{% endblock %}
+{% block page_title %}مدفوعات العملاء{% endblock %}
+{% block nav_finance_open %}open{% endblock %}
+{% block title %}مدفوعات العملاء{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <!-- Page Header -->
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 4px 14px rgba(16,185,129,.32);">
+          <i class="fas fa-hand-holding-dollar"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">مدفوعات العملاء</h1>
+          <p class="cx-hero-desc">{{ payments.count }} دفعة مسجلة</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <button type="button" class="btn btn--primary" onclick="BCMS.loadRemoteModal('{% url 'finance:client_payment_create' %}')">
+            <i class="fas fa-plus"></i> سجل دفعة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="cx-panel">
+    <!-- Desktop Table -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>العميل</th>
+            <th>الفاتورة</th>
+            <th>المبلغ</th>
+            <th>الطريقة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td class="text-muted">{{ p.date }}</td>
+            <td><strong>{{ p.client }}</strong></td>
+            <td>
+              <a href="{% url 'billing:detail' p.invoice.pk %}" style="color:var(--rose);font-weight:700;">
+                #{{ p.invoice.number }}
+              </a>
+            </td>
+            <td><strong style="color:var(--green);">{{ p.amount|format_number:2 }}</strong></td>
+            <td>{{ p.method }}</td>
+            <td>
+              <div class="cx-row-actions">
+                <button class="cx-act" title="تعديل"
+                        onclick="BCMS.loadRemoteModal('{% url 'finance:client_payment_edit' p.pk %}')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="cx-act cx-act--del" title="إلغاء"
+                        onclick="BCMS.confirmDelete('إلغاء الدفعة؟').then(function(ok){ if (ok) { fetch('{% url 'finance:client_payment_delete' p.pk %}', {method:'POST', headers: {'X-Requested-With':'XMLHttpRequest','X-CSRFToken': document.querySelector('input[name=csrfmiddlewaretoken]')?.value||''}}).then(r=>r.json()).then(j=>{ if (j.success) { BCMS.toast('تم إلغاء الدفعة','success'); setTimeout(()=>location.reload(),400); } }); } });">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-hand-holding-dollar"></i>
+                <p>لا دفعات مسجلة بعد</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for p in payments %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">{{ p.client }}</div>
+            <div class="cx-card-sub">{{ p.date }}</div>
+          </div>
+          <div class="cx-card-actions">
+            <button class="cx-act" onclick="BCMS.loadRemoteModal('{% url 'finance:client_payment_edit' p.pk %}')">
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">المبلغ</span>
+            <span class="cx-card-meta-value" style="color:var(--green);font-weight:800;">{{ p.amount|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الفاتورة</span>
+            <span class="cx-card-meta-value">
+              <a href="{% url 'billing:detail' p.invoice.pk %}" style="color:var(--rose);font-weight:700;">#{{ p.invoice.number }}</a>
+            </span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الطريقة</span>
+            <span class="cx-card-meta-value">{{ p.method }}</span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty">
+        <i class="fas fa-hand-holding-dollar"></i>
+        <p>لا دفعات مسجلة</p>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+
+{% csrf_token %}
+{% endblock %}
