@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import Specialist
 from apps.services.models import Service
+from django.template.loader import render_to_string
 
 
 def _is_ajax(request):
@@ -49,7 +50,19 @@ def specialist_save(request, pk=None):
         service_ids = data.getlist('services')
         instance.services.set(service_ids)
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم حفظ بيانات الفرد بنجاح.'})
+            try:
+                row_html = render_to_string('staff/_row.html', {'s': instance}, request=request)
+                card_html = render_to_string('staff/_card.html', {'s': instance}, request=request)
+            except Exception:
+                row_html = ''
+                card_html = ''
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حفظ بيانات الفرد بنجاح.',
+                'row_id': 'row-%s' % instance.pk,
+                'row_html': row_html,
+                'card_html': card_html,
+            })
         messages.success(request, 'تم إضافة عضو فريق جديد بنجاح.' if not pk else 'تم تحديث عضو الفريق بنجاح.')
         return redirect('staff:list')
 
@@ -67,6 +80,6 @@ def specialist_delete(request, pk):
         obj.is_active = False
         obj.save(update_fields=['is_active'])
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم إزالة الفرد من الفريق.'})
+            return JsonResponse({'success': True, 'message': 'تم إزالة الفرد من الفريق.', 'row_id': 'row-%s' % obj.pk})
         messages.success(request, 'تم حذف عضو الفريق بنجاح.')
     return redirect('staff:list')

@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q, Sum
 from .models import Client
+from django.template.loader import render_to_string
 
 
 def _is_ajax(request):
@@ -64,7 +65,19 @@ def client_save(request):
 
     obj.save()
     if ajax:
-        return JsonResponse({'success': True, 'message': 'تم حفظ بيانات العميل بنجاح.'})
+        try:
+            row_html = render_to_string('clients/_row.html', {'cl': obj}, request=request)
+            card_html = render_to_string('clients/_card.html', {'cl': obj}, request=request)
+        except Exception:
+            row_html = ''
+            card_html = ''
+        return JsonResponse({
+            'success': True,
+            'message': 'تم حفظ بيانات العميل بنجاح.',
+            'row_id': 'row-%s' % obj.pk,
+            'row_html': row_html,
+            'card_html': card_html,
+        })
     messages.success(request, 'تم الحفظ.')
     return redirect('clients:list')
 

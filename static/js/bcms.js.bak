@@ -387,6 +387,7 @@ const BCMS = {
                             }
                         } catch (e) {}
                     }
+                    }
                     if (options.onSuccess) {
                         options.onSuccess(json);
                     } else {

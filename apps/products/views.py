@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import Product, ProductCategory, StockMovement, PurchaseInvoice, PurchaseInvoiceLine
+from django.template.loader import render_to_string
 
 
 def _is_ajax(request):
@@ -55,7 +56,19 @@ def product_save(request, pk=None):
             instance.image = request.FILES['image']
         instance.save()
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم حفظ المنتج بنجاح.'})
+            try:
+                row_html = render_to_string('products/_row.html', {'p': instance}, request=request)
+                card_html = render_to_string('products/_card.html', {'p': instance}, request=request)
+            except Exception:
+                row_html = ''
+                card_html = ''
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حفظ المنتج بنجاح.',
+                'row_id': 'row-%s' % instance.pk,
+                'row_html': row_html,
+                'card_html': card_html,
+            })
         return redirect('products:list')
 
     return render(request, 'products/form.html', {
@@ -71,7 +84,7 @@ def product_delete(request, pk):
         product.is_active = False
         product.save(update_fields=['is_active'])
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم حذف المنتج بنجاح.'})
+            return JsonResponse({'success': True, 'message': 'تم حذف المنتج بنجاح.', 'row_id': 'row-%s' % product.pk})
     return redirect('products:list')
 
 

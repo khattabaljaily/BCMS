@@ -1,0 +1,22 @@
+<tr id="row-{{ s.pk }}">
+  <td>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="client-avatar" style="width:36px;height:36px;font-size:14px;flex-shrink:0;">{{ s.name|first }}</div>
+      <div>
+        <strong>{{ s.name }}</strong>
+        {% if s.phone %}<br><small class="text-muted">{{ s.phone }}</small>{% endif %}
+      </div>
+    </div>
+  </td>
+  <td>{{ s.specialty }}</td>
+  <td>
+    {% if s.is_active %}<span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+    {% else %}<span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>{% endif %}
+  </td>
+  <td>
+    <div class="cx-row-actions">
+      <button type="button" class="cx-act" title="تعديل" onclick="openEditSpecialist({{ s.pk }})"><i class="fas fa-edit"></i></button>
+      <button type="button" class="cx-act cx-act--del" title="حذف" onclick="BCMS.ajaxDelete('{% url 'staff:delete' s.pk %}', 'حذف عضو الفريق {{ s.name|escapejs }}؟', 'row-{{ s.pk }}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </td>
+</tr>

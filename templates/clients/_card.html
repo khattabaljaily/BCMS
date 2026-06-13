@@ -1,0 +1,45 @@
+{% load number_format %}
+<div class="cx-card" id="card-{{ cl.pk }}">
+  <div class="cx-card-head">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="client-avatar" style="width:40px;height:40px;flex-shrink:0;">{{ cl.name|first }}</div>
+      <div>
+        <div class="cx-card-title">{{ cl.name }}</div>
+        <div class="cx-card-sub">{{ cl.phone }}</div>
+      </div>
+    </div>
+    <div class="cx-card-actions">
+      <a href="{% url 'clients:detail' cl.pk %}" class="cx-act"><i class="fas fa-eye"></i></a>
+      <button type="button" class="cx-act"
+              onclick="openEditClient({{ cl.pk }}, '{{ cl.name|escapejs }}', '{{ cl.phone }}', '{{ cl.email|default:''|escapejs }}', '{{ cl.gender }}', '{{ cl.birthdate|date:'Y-m-d'|default:''|escapejs }}', '{{ cl.referral|default:''|escapejs }}', '{{ cl.notes|default:''|escapejs }}')">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button type="button" class="cx-act cx-act--del"
+              onclick="BCMS.ajaxDelete('{% url 'clients:delete' cl.pk %}', 'حذف العميل {{ cl.name|escapejs }}؟', 'row-{{ cl.pk }}')">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+  </div>
+  <div class="cx-card-meta">
+    <div>
+      <span class="cx-card-meta-label">الزيارات</span>
+      <span class="cx-card-meta-value"><span class="badge badge--blue">{{ cl.visit_count }}</span></span>
+    </div>
+    <div>
+      <span class="cx-card-meta-label">المديونية</span>
+      <span class="cx-card-meta-value">
+        {% if cl.claims_amount %}<span class="badge badge--red">{{ cl.claims_amount|format_number:2 }}</span>{% else %}—{% endif %}
+      </span>
+    </div>
+    <div>
+      <span class="cx-card-meta-label">آخر زيارة</span>
+      <span class="cx-card-meta-value">{{ cl.last_visit|date:"j/n/Y"|default:"—" }}</span>
+    </div>
+    {% if cl.points %}
+    <div>
+      <span class="cx-card-meta-label">النقاط</span>
+      <span class="cx-card-meta-value"><span class="badge badge--yellow">{{ cl.points }} نق.</span></span>
+    </div>
+    {% endif %}
+  </div>
+</div>

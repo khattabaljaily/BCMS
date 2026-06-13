@@ -1,0 +1,26 @@
+<div class="cx-card" id="card-{{ svc.pk }}">
+  <div class="cx-card-head">
+    <div>
+      <div class="cx-card-title">{{ svc.name }}</div>
+      <div class="cx-card-sub">{{ svc.category.name|default:"بدون تصنيف" }}</div>
+    </div>
+    <div class="cx-card-actions">
+      <button type="button" class="cx-act" onclick="openEditService({{ svc.pk }}, '{{ svc.name|escapejs }}', {{ svc.category_id|default:'null' }}, {{ svc.duration }}, '{{ svc.price }}', '{{ svc.description|escapejs }}', {{ svc.show_in_store|yesno:'true,false' }}, {{ svc.is_active|yesno:'true,false' }})"><i class="fas fa-edit"></i></button>
+      <button type="button" class="cx-act cx-act--del" onclick="BCMS.ajaxDelete('{% url 'services:service_delete' svc.pk %}', 'حذف الخدمة {{ svc.name|escapejs }}؟', 'row-{{ svc.pk }}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>
+  <div class="cx-card-meta">
+    <div>
+      <span class="cx-card-meta-label">السعر</span>
+      <span class="cx-card-meta-value" style="color:var(--rose);font-weight:800;">{{ svc.price|format_number:2 }}</span>
+    </div>
+    <div>
+      <span class="cx-card-meta-label">المدة</span>
+      <span class="cx-card-meta-value">{{ svc.duration_display }}</span>
+    </div>
+    <div>
+      <span class="cx-card-meta-label">الحالة</span>
+      <span class="cx-card-meta-value">{% if svc.is_active %}نشط{% else %}موقوف{% endif %}</span>
+    </div>
+  </div>
+</div>

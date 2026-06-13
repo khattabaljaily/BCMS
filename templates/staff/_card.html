@@ -1,0 +1,25 @@
+<div class="cx-card" id="card-{{ s.pk }}">
+  <div class="cx-card-head">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="client-avatar" style="width:40px;height:40px;flex-shrink:0;">{{ s.name|first }}</div>
+      <div>
+        <div class="cx-card-title">{{ s.name }}</div>
+        <div class="cx-card-sub">{{ s.specialty }}</div>
+      </div>
+    </div>
+    <div class="cx-card-actions">
+      <button type="button" class="cx-act" onclick="openEditSpecialist({{ s.pk }})"><i class="fas fa-edit"></i></button>
+      <button type="button" class="cx-act cx-act--del" onclick="BCMS.ajaxDelete('{% url 'staff:delete' s.pk %}', 'حذف عضو الفريق {{ s.name|escapejs }}؟', 'row-{{ s.pk }}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>
+  <div class="cx-card-meta">
+    <div>
+      <span class="cx-card-meta-label">التخصص</span>
+      <span class="cx-card-meta-value">{{ s.specialty }}</span>
+    </div>
+    <div>
+      <span class="cx-card-meta-label">الحالة</span>
+      <span class="cx-card-meta-value">{% if s.is_active %}نشط{% else %}موقوف{% endif %}</span>
+    </div>
+  </div>
+</div>

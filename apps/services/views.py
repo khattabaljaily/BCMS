@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import ServiceCategory, Service
+from django.template.loader import render_to_string
 
 
 def _is_ajax(request):
@@ -48,7 +49,13 @@ def category_save(request):
     obj.is_active = 'is_active' in request.POST
     obj.save()
     if _is_ajax(request):
-        return JsonResponse({'success': True, 'message': 'تم حفظ التصنيف بنجاح.'})
+        try:
+            row_html = render_to_string('services/_row.html', {'svc': obj}, request=request)
+            card_html = render_to_string('services/_card.html', {'svc': obj}, request=request)
+        except Exception:
+            row_html = ''
+            card_html = ''
+        return JsonResponse({'success': True, 'message': 'تم حفظ التصنيف بنجاح.', 'row_id': 'row-%s' % obj.pk, 'row_html': row_html, 'card_html': card_html})
     messages.success(request, 'تم الحفظ.')
     return redirect('services:categories')
 
@@ -59,7 +66,7 @@ def category_delete(request, pk):
     if request.method == 'POST':
         obj.delete()
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم حذف التصنيف بنجاح.'})
+            return JsonResponse({'success': True, 'message': 'تم حذف التصنيف بنجاح.', 'row_id': 'row-%s' % obj.pk})
         messages.success(request, 'تم الحذف.')
     return redirect('services:categories')
 
@@ -83,7 +90,13 @@ def service_save(request):
     obj.order         = int(request.POST.get('order', 0))
     obj.save()
     if _is_ajax(request):
-        return JsonResponse({'success': True, 'message': 'تم حفظ الخدمة بنجاح.'})
+        try:
+            row_html = render_to_string('services/_row.html', {'svc': obj}, request=request)
+            card_html = render_to_string('services/_card.html', {'svc': obj}, request=request)
+        except Exception:
+            row_html = ''
+            card_html = ''
+        return JsonResponse({'success': True, 'message': 'تم حفظ الخدمة بنجاح.', 'row_id': 'row-%s' % obj.pk, 'row_html': row_html, 'card_html': card_html})
     messages.success(request, 'تم الحفظ.')
     return redirect('services:list')
 
@@ -94,6 +107,6 @@ def service_delete(request, pk):
     if request.method == 'POST':
         obj.delete()
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم حذف الخدمة بنجاح.'})
+            return JsonResponse({'success': True, 'message': 'تم حذف الخدمة بنجاح.', 'row_id': 'row-%s' % obj.pk})
         messages.success(request, 'تم الحذف.')
     return redirect('services:list')
