@@ -11,43 +11,63 @@
 </head>
 <body>
 
-<div class="auth-scene {% block scene_class %}{% endblock %}">
-  <!-- animated background blobs -->
-  <div class="auth-blob auth-blob--1"></div>
-  <div class="auth-blob auth-blob--2"></div>
-  <div class="auth-blob auth-blob--3"></div>
+<div class="auth-scene">
+  <div class="bg-particles" id="bgParticles"></div>
 
-  <!-- centered card wrapper -->
   <div class="auth-wrap {% block wrap_class %}{% endblock %}">
-    <!-- card injected by child templates -->
     {% block body %}{% endblock %}
-
   </div>
 </div>
 
-<!-- Global spinner -->
 <div id="global-spinner" aria-hidden="true" role="status">
-  <div class="global-spinner__ring"></div>
+  <div class="spinner-ring"></div>
 </div>
 
 <style>
   #global-spinner {
     position: fixed; inset: 0; z-index: 99999;
-    background: rgba(255,255,255,.92);
-    backdrop-filter: blur(6px);
+    background: rgba(255,255,255,.88);
+    backdrop-filter: blur(8px);
     display: flex; align-items: center; justify-content: center;
     opacity: 0; pointer-events: none; transition: opacity .2s;
   }
   #global-spinner.active { opacity: 1; pointer-events: auto; }
-  .global-spinner__ring {
-    width: 54px; height: 54px;
+  .spinner-ring {
+    width: 52px; height: 52px;
     border: 4px solid rgba(244,63,94,.15);
     border-top-color: #f43f5e;
     border-radius: 50%;
-    animation: gs-spin .7s linear infinite;
+    animation: spin .7s linear infinite;
   }
-  @keyframes gs-spin { to { transform: rotate(360deg); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
+
+<script>
+(function(){
+  var c = document.getElementById('bgParticles');
+  if(!c) return;
+  var cols = [
+    'rgba(244,63,94,OP)','rgba(236,72,153,OP)',
+    'rgba(251,113,133,OP)','rgba(244,63,94,OP)'
+  ];
+  for(var i=0;i<28;i++){
+    var d = document.createElement('div');
+    d.className = 'bp';
+    var sz  = (Math.random()*7+5).toFixed(1);
+    var col = cols[i%cols.length].replace('OP',(0.45+Math.random()*0.35).toFixed(2));
+    var dur = (Math.random()*14+10).toFixed(1);
+    var del = (-Math.random()*parseFloat(dur)).toFixed(1);
+    d.style.cssText =
+      'width:'+sz+'px;height:'+sz+'px;'+
+      'background:'+col+';'+
+      'left:'+(Math.random()*98)+'%;'+
+      'bottom:-10px;'+
+      'animation-duration:'+dur+'s;'+
+      'animation-delay:'+del+'s;';
+    c.appendChild(d);
+  }
+})();
+</script>
 
 </body>
 </html>

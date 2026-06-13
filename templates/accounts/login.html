@@ -5,73 +5,78 @@
 {% block body %}
 <div class="auth-card">
 
-  <div class="auth-logo-icon"><i class="fas fa-spa"></i></div>
-  <h1 class="auth-card-title">مرحباً بعودتك</h1>
-  <p class="auth-card-sub">سجّل دخولك لإدارة حسابك بكفاءة واحترافية</p>
-
-  {% if form.non_field_errors %}
-  <div class="auth-error">
-    <i class="fas fa-circle-exclamation"></i>
-    <div>
-      <strong>خطأ في المصادقة</strong>
-      <p style="margin:.25rem 0 0;font-weight:500;">{{ form.non_field_errors.0 }}</p>
-    </div>
-  </div>
-  {% endif %}
-
-  <form method="post" novalidate id="loginForm">
-    {% csrf_token %}
-
-    <div class="auth-field">
-      <label for="id_username">اسم المستخدم أو البريد الإلكتروني</label>
-      <div class="auth-input-wrap">
-        <i class="fas fa-at auth-input-icon"></i>
-        <input type="text" name="username" id="id_username"
-               placeholder="أدخل اسم المستخدم أو بريدك الإلكتروني"
-               autofocus autocomplete="username"
-               {% if form.username.errors %}class="is-invalid"{% endif %}>
-      </div>
-      {% if form.username.errors %}
-      <span class="auth-field-error">{{ form.username.errors.0 }}</span>
-      {% endif %}
-    </div>
-
-    <div class="auth-field">
-      <label for="id_password">كلمة المرور</label>
-      <div class="auth-input-wrap">
-        <i class="fas fa-lock auth-input-icon"></i>
-        <input type="password" name="password" id="id_password"
-               placeholder="أدخل كلمة المرور"
-               autocomplete="current-password"
-               {% if form.password.errors %}class="is-invalid"{% endif %}>
-        <button type="button" class="auth-toggle-pass"
-                onclick="togglePass('id_password',this)" title="إظهار/إخفاء">
-          <i class="fas fa-eye"></i>
-        </button>
-      </div>
-      {% if form.password.errors %}
-      <span class="auth-field-error">{{ form.password.errors.0 }}</span>
-      {% endif %}
-    </div>
-
-    <div class="auth-row">
-      <label class="auth-remember">
-        <input type="checkbox" name="remember_me" id="id_remember">
-        تذكرني
-      </label>
-      <a href="javascript:void(0);" class="auth-forgot">نسيت كلمة المرور؟</a>
-    </div>
-
-    <button type="submit" class="auth-btn">
-      <i class="fas fa-sign-in-alt"></i> دخول
-    </button>
-  </form>
-
-  <div class="auth-card-footer">
-    ليس لديك حساب؟
-    <a href="{% url 'accounts:register' %}"><i class="fas fa-rocket" style="margin-left:4px;"></i>أنشئ حسابك الآن</a>
+  <div class="card-hero">
+    <div class="card-hero-icon"><i class="fas fa-spa"></i></div>
+    <h1>مرحباً بعودتك</h1>
+    <p>سجّل دخولك لإدارة حسابك بكفاءة واحترافية</p>
   </div>
 
+  <div class="card-body">
+
+    {% if form.non_field_errors %}
+    <div class="alert-error">
+      <i class="fas fa-circle-exclamation"></i>
+      <div>
+        <strong>خطأ في المصادقة</strong>
+        <p style="margin:.25rem 0 0;font-weight:500;">{{ form.non_field_errors.0 }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate id="loginForm">
+      {% csrf_token %}
+
+      <div class="field">
+        <label for="id_username">اسم المستخدم أو البريد الإلكتروني</label>
+        <div class="field-wrap">
+          <i class="fas fa-at fi"></i>
+          <input type="text" name="username" id="id_username"
+                 placeholder="أدخل اسم المستخدم أو بريدك الإلكتروني"
+                 autofocus autocomplete="username"
+                 {% if form.username.errors %}class="is-invalid"{% endif %}>
+        </div>
+        {% if form.username.errors %}
+        <span class="field-err">{{ form.username.errors.0 }}</span>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label for="id_password">كلمة المرور</label>
+        <div class="field-wrap">
+          <i class="fas fa-lock fi"></i>
+          <input type="password" name="password" id="id_password"
+                 placeholder="أدخل كلمة المرور"
+                 autocomplete="current-password"
+                 {% if form.password.errors %}class="is-invalid"{% endif %}>
+          <button type="button" class="toggle-pass"
+                  onclick="togglePass('id_password',this)" title="إظهار/إخفاء">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        {% if form.password.errors %}
+        <span class="field-err">{{ form.password.errors.0 }}</span>
+        {% endif %}
+      </div>
+
+      <div class="remember-row">
+        <label class="check-label">
+          <input type="checkbox" name="remember_me" id="id_remember">
+          تذكرني
+        </label>
+        <a href="javascript:void(0);" class="link-forgot">نسيت كلمة المرور؟</a>
+      </div>
+
+      <button type="submit" class="btn-submit">
+        <i class="fas fa-sign-in-alt"></i> دخول
+      </button>
+    </form>
+
+    <div class="card-footer">
+      ليس لديك حساب؟
+      <a href="{% url 'accounts:register' %}"><i class="fas fa-rocket" style="margin-left:4px;"></i>أنشئ حسابك الآن</a>
+    </div>
+
+  </div>
 </div>
 
 <script>
@@ -86,8 +91,6 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
   var p = document.getElementById('id_password');
   if (!u.value.trim()) { e.preventDefault(); u.classList.add('is-invalid'); u.focus(); }
   if (!p.value)        { e.preventDefault(); p.classList.add('is-invalid'); }
-  
-  // Show spinner and disable button on valid submission
   var btn = this.querySelector('button[type="submit"]');
   if (btn && !e.defaultPrevented) {
     btn.disabled = true;

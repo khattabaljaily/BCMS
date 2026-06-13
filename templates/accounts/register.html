@@ -2,103 +2,61 @@
 {% load static %}
 {% block title %}إنشاء حساب جديد{% endblock %}
 {% block wrap_class %}auth-wrap--register{% endblock %}
-{% block scene_class %}auth-scene--register{% endblock %}
 
 {% block body %}
-<div class="auth-card auth-card--register">
+<div class="auth-card">
 
-  <!-- ══ Left branding panel ══════════════════════════════ -->
-  <div class="reg-brand">
-    <div class="reg-brand-logo">
+  <!-- Hero Header -->
+  <div class="card-hero">
+    <div class="reg-hero-logo">
       <img src="{% static 'img/logo/logo-ffffff.png' %}" alt="EnjazBCMS">
       <span>EnjazBCMS</span>
     </div>
-
-    <h2 class="reg-brand-title">قم بإنشاء حسابك</h2>
-    <p class="reg-brand-sub">منصة متكاملة لإدارة المواعيد والعملاء والمبيعات</p>
-
-    <ul class="reg-features">
-      <li>
-        <span class="reg-feat-icon"><i class="fas fa-calendar-check"></i></span>
-        <span class="reg-feat-text">
-          <strong>إدارة المواعيد</strong>
-          <span>تقويم ذكي مع حجز إلكتروني</span>
-        </span>
-      </li>
-      <li>
-        <span class="reg-feat-icon"><i class="fas fa-users"></i></span>
-        <span class="reg-feat-text">
-          <strong>ملفات العملاء</strong>
-          <span>تاريخ كامل لكل عميلة</span>
-        </span>
-      </li>
-      <li>
-        <span class="reg-feat-icon"><i class="fas fa-chart-bar"></i></span>
-        <span class="reg-feat-text">
-          <strong>تقارير وأرباح</strong>
-          <span>إيرادات، مصروفات، صافي ربح</span>
-        </span>
-      </li>
-    </ul>
-
-    <div class="reg-brand-footer">
-      © 2025 EnjazBCMS · جميع الحقوق محفوظة
+    <h1>إنشاء حساب جديد</h1>
+    <p>أدخل بياناتك وابدأ مجاناً — منصة متكاملة لإدارة مركزك</p>
+    <div class="reg-feats">
+      <div class="reg-feat"><i class="fas fa-calendar-check"></i><span>إدارة المواعيد</span></div>
+      <div class="reg-feat"><i class="fas fa-users"></i><span>ملفات العملاء</span></div>
+      <div class="reg-feat"><i class="fas fa-chart-bar"></i><span>تقارير وأرباح</span></div>
     </div>
   </div>
 
-  <!-- ══ Right form panel ══════════════════════════════════ -->
-  <div class="reg-form" id="regFormPanel">
-  <div class="reg-form-inner">
+  <!-- Form Body -->
+  <div class="card-body">
 
-    <!-- Mobile-only brand header (hidden on desktop) -->
-    <div class="reg-mobile-brand">
-      <div class="reg-mobile-brand-logo">
-        <img src="{% static 'img/logo/logo-ffffff.png' %}" alt="EnjazBCMS">
-        <span>EnjazBCMS</span>
+    {% if form.non_field_errors %}
+    <div class="alert-error">
+      <i class="fas fa-circle-exclamation"></i>
+      <div>
+        <strong>خطأ في البيانات</strong>
+        <p style="margin:.25rem 0 0;font-weight:500;">{{ form.non_field_errors.0 }}</p>
       </div>
-      <h2>إنشاء حساب جديد</h2>
-      <p>أدخل بياناتك وابدأ مجاناً</p>
     </div>
-
-    <h1 class="reg-form-title">إنشاء حساب جديد</h1>
-    <p class="reg-form-sub">أدخل بيانات حسابك وابدأ مجاناً</p>
+    {% endif %}
 
     <form method="post" novalidate id="registerForm">
       {% csrf_token %}
 
-      {% if form.non_field_errors %}
-      <div class="auth-error">
-        <i class="fas fa-circle-exclamation"></i>
-        <div>
-          <strong>خطأ في البيانات</strong>
-          <p style="margin:.25rem 0 0;font-weight:500;">{{ form.non_field_errors.0 }}</p>
-        </div>
-      </div>
-      {% endif %}
+      <div class="grid-2">
 
-      <!-- ① بيانات المركز -->
-      <div class="auth-grid-2">
-
-        <!-- اسم المركز -->
-        <div class="auth-field">
+        <div class="field">
           <label for="id_center_name">اسم المركز</label>
-          <div class="auth-input-wrap">
-            <i class="fas fa-store auth-input-icon"></i>
+          <div class="field-wrap">
+            <i class="fas fa-store fi"></i>
             <input type="text" name="center_name" id="id_center_name"
               placeholder="صالون لينا"
               value="{{ form.center_name.value|default:'' }}" autofocus
               {% if form.center_name.errors %}class="is-invalid"{% endif %}>
           </div>
           {% if form.center_name.errors %}
-          <span class="auth-field-error">{{ form.center_name.errors.0 }}</span>
+          <span class="field-err">{{ form.center_name.errors.0 }}</span>
           {% endif %}
         </div>
 
-        <!-- الدولة -->
-        <div class="auth-field">
+        <div class="field">
           <label for="id_country">الدولة</label>
-          <div class="auth-input-wrap auth-input-wrap--select">
-            <i class="fas fa-globe auth-input-icon"></i>
+          <div class="field-wrap">
+            <i class="fas fa-globe fi"></i>
             <select name="country" id="id_country" onchange="onCountryChange(this.value)"
               {% if form.country.errors %}class="is-invalid"{% endif %}>
               {% for val, label in form.fields.country.choices %}
@@ -107,132 +65,129 @@
             </select>
           </div>
           {% if form.country.errors %}
-          <span class="auth-field-error">{{ form.country.errors.0 }}</span>
+          <span class="field-err">{{ form.country.errors.0 }}</span>
           {% endif %}
         </div>
 
-        <!-- رقم الهاتف -->
-        <div class="auth-field">
+        <div class="field">
           <label for="id_phone">رقم الهاتف</label>
-          <div class="auth-input-wrap">
-            <i class="fas fa-phone auth-input-icon"></i>
+          <div class="field-wrap">
+            <i class="fas fa-phone fi"></i>
             <input type="tel" name="phone" id="id_phone"
               placeholder="05xxxxxxxx"
               value="{{ form.phone.value|default:'' }}"
               {% if form.phone.errors %}class="is-invalid"{% endif %}>
           </div>
           {% if form.phone.errors %}
-          <span class="auth-field-error">{{ form.phone.errors.0 }}</span>
+          <span class="field-err">{{ form.phone.errors.0 }}</span>
           {% endif %}
         </div>
 
-        <!-- المدينة -->
-        <div class="auth-field">
+        <div class="field">
           <label for="id_city">المدينة <span class="opt">اختياري</span></label>
-          <div class="auth-input-wrap">
-            <i class="fas fa-location-dot auth-input-icon"></i>
+          <div class="field-wrap">
+            <i class="fas fa-location-dot fi"></i>
             <input type="text" name="city" id="id_city"
               placeholder="الرياض"
               value="{{ form.city.value|default:'' }}">
           </div>
         </div>
 
-      </div><!-- /auth-grid-2 -->
+      </div><!-- /grid-2 -->
 
-      <!-- ② بيانات الحساب -->
-      <div class="auth-grid-2">
+      <!-- Country info chips -->
+      <div class="country-chips" id="country-chips">
+        <span class="chip chip--tz" id="ci-tz"></span>
+        <span class="chip chip--cur" id="ci-cur"></span>
+        <span class="chip chip--tel" id="ci-phone"></span>
+      </div>
 
-        <!-- الاسم الكامل -->
-        <div class="auth-field">
+      <div class="grid-2" style="margin-top:10px;">
+
+        <div class="field">
           <label for="id_full_name">الاسم الكامل</label>
-          <div class="auth-input-wrap">
-            <i class="fas fa-id-card auth-input-icon"></i>
+          <div class="field-wrap">
+            <i class="fas fa-id-card fi"></i>
             <input type="text" name="full_name" id="id_full_name"
               placeholder="اسمك الكامل"
               value="{{ form.full_name.value|default:'' }}"
               {% if form.full_name.errors %}class="is-invalid"{% endif %}>
           </div>
           {% if form.full_name.errors %}
-          <span class="auth-field-error">{{ form.full_name.errors.0 }}</span>
+          <span class="field-err">{{ form.full_name.errors.0 }}</span>
           {% endif %}
         </div>
 
-        <!-- اسم المستخدم -->
-        <div class="auth-field">
+        <div class="field">
           <label for="id_username">اسم المستخدم</label>
-          <div class="auth-input-wrap">
-            <i class="fas fa-at auth-input-icon"></i>
+          <div class="field-wrap">
+            <i class="fas fa-at fi"></i>
             <input type="text" name="username" id="id_username"
               placeholder="my_salon"
               value="{{ form.username.value|default:'' }}" autocomplete="username"
               {% if form.username.errors %}class="is-invalid"{% endif %}>
           </div>
           {% if form.username.errors %}
-          <span class="auth-field-error">{{ form.username.errors.0 }}</span>
+          <span class="field-err">{{ form.username.errors.0 }}</span>
           {% endif %}
         </div>
 
-        <!-- كلمة المرور -->
-        <div class="auth-field">
+        <div class="field">
           <label for="id_password">كلمة المرور</label>
-          <div class="auth-input-wrap">
-            <i class="fas fa-lock auth-input-icon"></i>
+          <div class="field-wrap">
+            <i class="fas fa-lock fi"></i>
             <input type="password" name="password" id="id_password"
               placeholder="كلمة مرور قوية"
               autocomplete="new-password"
               {% if form.password.errors %}class="is-invalid"{% endif %}>
-            <button type="button" class="auth-toggle-pass" onclick="togglePass('id_password',this)" title="إظهار/إخفاء">
+            <button type="button" class="toggle-pass" onclick="togglePass('id_password',this)" title="إظهار/إخفاء">
               <i class="fas fa-eye"></i>
             </button>
           </div>
           {% if form.password.errors %}
-          <span class="auth-field-error">{{ form.password.errors.0 }}</span>
+          <span class="field-err">{{ form.password.errors.0 }}</span>
           {% endif %}
-          <div class="password-strength" id="passwordStrength">
-            <div class="password-strength-bar"></div>
-            <div class="password-strength-bar"></div>
-            <div class="password-strength-bar"></div>
-            <div class="password-strength-bar"></div>
+          <div class="pw-strength" id="pwStrength">
+            <div class="pw-bar"></div>
+            <div class="pw-bar"></div>
+            <div class="pw-bar"></div>
+            <div class="pw-bar"></div>
           </div>
-          <div class="password-strength-text" id="passwordText"></div>
+          <div class="pw-text" id="pwText"></div>
         </div>
 
-        <!-- تأكيد كلمة المرور -->
-        <div class="auth-field">
+        <div class="field">
           <label for="id_password2">تأكيد كلمة المرور</label>
-          <div class="auth-input-wrap">
-            <i class="fas fa-lock auth-input-icon"></i>
+          <div class="field-wrap">
+            <i class="fas fa-lock fi"></i>
             <input type="password" name="password2" id="id_password2"
               placeholder="أعد كتابة كلمة المرور"
               autocomplete="new-password"
               {% if form.password2.errors %}class="is-invalid"{% endif %}>
-            <button type="button" class="auth-toggle-pass" onclick="togglePass('id_password2',this)" title="إظهار/إخفاء">
+            <button type="button" class="toggle-pass" onclick="togglePass('id_password2',this)" title="إظهار/إخفاء">
               <i class="fas fa-eye"></i>
             </button>
           </div>
           {% if form.password2.errors %}
-          <span class="auth-field-error">{{ form.password2.errors.0 }}</span>
+          <span class="field-err">{{ form.password2.errors.0 }}</span>
           {% endif %}
         </div>
 
-      </div><!-- /auth-grid-2 -->
+      </div><!-- /grid-2 -->
 
-      <button type="submit" class="auth-btn" style="margin-top:20px;">
+      <button type="submit" class="btn-submit" style="margin-top:16px;">
         <i class="fas fa-rocket"></i> إنشاء الحساب الآن
       </button>
+
     </form>
 
-    <div class="auth-card-footer" style="border-top:1px solid #f1f5f9;margin-top:20px;padding-top:18px;text-align:center;font-size:13px;color:#64748b;">
+    <div class="card-footer">
       لديك حساب؟
-      <a href="{% url 'accounts:login' %}" style="color:#f43f5e;font-weight:800;margin-right:4px;">
-        <i class="fas fa-sign-in-alt"></i> سجّل الدخول
-      </a>
+      <a href="{% url 'accounts:login' %}"><i class="fas fa-sign-in-alt"></i> سجّل الدخول</a>
     </div>
-  </div><!-- /reg-form-inner -->
-  <div class="reg-form-fade" id="regFade"></div>
-  </div><!-- /reg-form -->
 
-</div><!-- /auth-card--register -->
+  </div><!-- /card-body -->
+</div>
 
 <script>
 const ARAB_COUNTRIES = {
@@ -263,11 +218,11 @@ const ARAB_COUNTRIES = {
 function onCountryChange(code) {
   const info = ARAB_COUNTRIES[code];
   const chips = document.getElementById('country-chips');
-  if (!info) { chips.classList.remove('visible'); return; }
+  if (!info) { if (chips) chips.classList.remove('visible'); return; }
   document.getElementById('ci-tz').textContent    = info.tz;
   document.getElementById('ci-cur').textContent   = info.cur + ' ' + info.sym;
   document.getElementById('ci-phone').textContent = info.phone;
-  chips.classList.add('visible');
+  if (chips) chips.classList.add('visible');
   const ph = document.getElementById('id_phone');
   if (ph && !ph.value) ph.placeholder = info.phone + ' 5xxxxxxx';
 }
@@ -276,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const sel = document.getElementById('id_country');
   if (sel && sel.value) onCountryChange(sel.value);
 
-  // Password toggle helper
   window.togglePass = function(id, btn) {
     const inp = document.getElementById(id);
     if (!inp) return;
@@ -288,61 +242,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
-  // Password strength — guard against missing elements
-  function checkPasswordStrength() {
-    const pwEl = document.getElementById('id_password');
-    const txt = document.getElementById('passwordText');
-    const bars = document.querySelectorAll('.password-strength-bar');
-    if (!pwEl || !txt || !bars) return;
-    const pw = pwEl.value || '';
+  function checkPwStrength() {
+    const pw = (document.getElementById('id_password') || {}).value || '';
+    const txt = document.getElementById('pwText');
+    const bars = document.querySelectorAll('.pw-bar');
+    if (!txt || !bars.length) return;
     let s = 0;
-    if (pw.length >= 8)         s++;
-    if (/[a-z]/.test(pw))       s++;
-    if (/[A-Z]/.test(pw))       s++;
-    if (/[0-9]/.test(pw))       s++;
-    if (/[!@#$%^&*]/.test(pw))  s++;
+    if (pw.length >= 8)        s++;
+    if (/[a-z]/.test(pw))      s++;
+    if (/[A-Z]/.test(pw))      s++;
+    if (/[0-9]/.test(pw))      s++;
+    if (/[!@#$%^&*]/.test(pw)) s++;
     bars.forEach((b, i) => {
       b.classList.remove('weak','fair','good','strong');
       if (i < s) b.classList.add(s<=2?'weak':s<=3?'fair':s<=4?'good':'strong');
     });
-    const levels = ['','⚠ ضعيفة','⚠ ضعيفة','⚠ متوسطة','✓ جيدة','✓ قوية جداً'];
+    const labels = ['','⚠ ضعيفة','⚠ ضعيفة','⚠ متوسطة','✓ جيدة','✓ قوية جداً'];
     const colors = ['','#dc2626','#dc2626','#f59e0b','#3b82f6','#10b981'];
-    txt.textContent = levels[s] || '';
+    txt.textContent = labels[s] || '';
     txt.style.color = colors[s] || '';
   }
 
   const pwInput = document.getElementById('id_password');
-  if (pwInput) pwInput.addEventListener('input', checkPasswordStrength);
+  if (pwInput) pwInput.addEventListener('input', checkPwStrength);
 
-  // Scroll progress + fade (guarded)
-  (function() {
-    const panel = document.getElementById('regFormPanel');
-    const fade  = document.getElementById('regFade');
-    if (!panel) return;
-    function onScroll() {
-      const max = panel.scrollHeight - panel.clientHeight;
-      const pct = max > 0 ? (panel.scrollTop / max) * 100 : 0;
-      panel.style.setProperty('--scroll-pct', pct.toFixed(1) + '%');
-      if (fade) fade.classList.toggle('hidden', panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 8);
-    }
-    panel.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  })();
-
-  // Form submit validation (passwords match)
   const regForm = document.getElementById('registerForm');
   if (regForm) {
     regForm.addEventListener('submit', function(e) {
-      const p1El = document.getElementById('id_password');
+      const p1 = (document.getElementById('id_password') || {}).value || '';
       const p2El = document.getElementById('id_password2');
-      const p1 = p1El ? p1El.value : '';
       const p2 = p2El ? p2El.value : '';
       if (p1 !== p2) {
         e.preventDefault();
         if (p2El) p2El.classList.add('is-invalid');
       }
-      
-      // Show spinner and disable button on valid submission
       var btn = this.querySelector('button[type="submit"]');
       if (btn && !e.defaultPrevented) {
         btn.disabled = true;
