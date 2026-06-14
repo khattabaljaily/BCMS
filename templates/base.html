@@ -330,6 +330,10 @@
       </div>
       <div class="topbar__actions">
         {% block topbar_actions %}{% endblock %}
+        <div id="live-clock" style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.3;margin-left:4px;">
+          <span id="live-clock-time" style="font-size:14px;font-weight:700;color:var(--slate-800);letter-spacing:.02em;"></span>
+          <span id="live-clock-date" style="font-size:11px;color:var(--slate-400);font-weight:500;"></span>
+        </div>
         <div class="topbar__user">
           <div style="position:relative;">
             <button id="topbar-user-btn" onclick="toggleTopbarMenu()" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;">
@@ -382,6 +386,21 @@
   <div class="global-spinner__ring"></div>
 </div>
 
+<script>
+(function () {
+  var timeFmt = new Intl.DateTimeFormat('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+  var dateFmt = new Intl.DateTimeFormat('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  var tEl = document.getElementById('live-clock-time');
+  var dEl = document.getElementById('live-clock-date');
+  function tick() {
+    var now = new Date();
+    if (tEl) tEl.textContent = timeFmt.format(now);
+    if (dEl) dEl.textContent = dateFmt.format(now);
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
 <script src="{% static 'js/bcms.js' %}?v=2"></script>
 <script src="{% static 'js/pwa.js' %}"></script>
 {% block extra_js %}{% endblock %}
