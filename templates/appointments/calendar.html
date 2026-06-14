@@ -8,22 +8,39 @@
 <link rel="stylesheet" href="{% static 'css/appointments.css' %}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css">
 <style>
-#calendar { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); border:1px solid rgba(226,232,240,.7); }
+#calendar {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(226,232,240,.7);
+}
 .fc-toolbar-title { font-family:Cairo,sans-serif!important; font-size:16px!important; font-weight:800!important; }
 .fc-button {
-  font-family:Cairo,sans-serif!important;
-  border-radius:8px!important;
-  margin: 0 3px !important;
-  padding: 6px 14px !important;
-  font-size: 13px !important;
+  font-family: Cairo,sans-serif!important;
+  border-radius: 8px!important;
+  margin: 0 2px!important;
+  padding: 6px 14px!important;
+  font-size: 13px!important;
 }
-.fc-button-group .fc-button { margin: 0 2px !important; }
-.fc-header-toolbar { gap: 10px; flex-wrap: wrap; }
-.fc-toolbar-chunk { display:flex; align-items:center; gap:4px; }
+.fc-header-toolbar { gap: 8px; flex-wrap: wrap; align-items: center; }
+.fc-toolbar-chunk { display:flex; align-items:center; gap:4px; flex-wrap: wrap; }
 .fc-button-primary { background:linear-gradient(135deg,var(--rose),var(--pink))!important; border-color:var(--rose)!important; }
 .fc-button-primary:not(.fc-button-active):not(:disabled):hover { filter:brightness(1.08)!important; }
 .fc-button-active { background:linear-gradient(135deg,#be123c,#db2777)!important; box-shadow:inset 0 2px 4px rgba(0,0,0,.2)!important; }
 .fc-event { border-radius:6px!important; font-size:12px!important; cursor:pointer; }
+
+/* ── Mobile ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  #calendar { padding: 10px 8px; }
+  .fc-toolbar-title { font-size: 13px!important; }
+  .fc-button { padding: 5px 9px!important; font-size: 12px!important; margin: 0 1px!important; }
+  .fc-header-toolbar { gap: 6px; justify-content: space-between; }
+  .fc .fc-timegrid-slot { height: 2.2em; }
+  .fc-event { font-size: 11px!important; }
+  .fc-list-event-title { font-size: 13px; }
+  .fc-list-day-text, .fc-list-day-side-text { font-size: 12px; }
+}
 </style>
 {% endblock %}
 
@@ -35,23 +52,43 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  const mobile = () => window.innerWidth <= 640;
+
+  const desktopToolbar = {
+    right:  'prev,next today',
+    center: 'title',
+    left:   'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+  };
+  const mobileToolbar = {
+    right:  'prev,next',
+    center: 'title',
+    left:   'today timeGridDay,listWeek',
+  };
+
   const cal = new FullCalendar.Calendar(document.getElementById('calendar'), {
     locale: 'ar',
     direction: 'rtl',
-    initialView: 'timeGridWeek',
-    headerToolbar: {
-      right: 'prev,next today',
-      center: 'title',
-      left: 'dayGridMonth,timeGridWeek,timeGridDay',
-    },
+    initialView: mobile() ? 'timeGridDay' : 'timeGridWeek',
+    headerToolbar: mobile() ? mobileToolbar : desktopToolbar,
     events: '{% url "appointments:calendar_events" %}',
     height: 'auto',
-    slotMinTime: '00:00:00',
+    slotMinTime: '06:00:00',
     slotMaxTime: '24:00:00',
     scrollTime: '08:00:00',
+    nowIndicator: true,
     eventClick(info) {
       const p = info.event.extendedProps;
       BCMS.alertModal(`${info.event.title}<br>الحالة: ${p.status}<br>الفنية: ${p.specialist}<br>الهاتف: ${p.phone}`, 'معلومات الموعد');
+    },
+    windowResize() {
+      if (mobile()) {
+        if (cal.view.type === 'timeGridWeek' || cal.view.type === 'dayGridMonth') {
+          cal.changeView('timeGridDay');
+        }
+        cal.setOption('headerToolbar', mobileToolbar);
+      } else {
+        cal.setOption('headerToolbar', desktopToolbar);
+      }
     },
   });
   cal.render();
