@@ -324,6 +324,10 @@ const BCMS = {
                         };
                         fade(document.getElementById(rowId));
                         fade(document.getElementById(rowId.replace(/^row-/, 'card-')));
+                        var _rid = rowId;
+                        setTimeout(function () {
+                            try { document.dispatchEvent(new CustomEvent('bcms:recordDeleted', { detail: { row_id: _rid } })); } catch (e) {}
+                        }, 250);
                     }
                     BCMS.toast(data.message || 'تم الحذف بنجاح', 'success');
                 } else {

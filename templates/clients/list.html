@@ -48,9 +48,8 @@
       </div>
     </form>
 
-    {% if clients %}
     <!-- Desktop Table -->
-    <div class="cx-table-wrap">
+    <div class="cx-table-wrap" id="cx-table-wrap"{% if not clients %} style="display:none"{% endif %}>
       <table class="cx-table">
         <thead>
           <tr>
@@ -63,7 +62,7 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="clients-tbody">
           {% for cl in clients %}
             {% include 'clients/_row.html' with cl=cl %}
           {% endfor %}
@@ -72,14 +71,14 @@
     </div>
 
     <!-- Mobile Cards -->
-    <div class="cx-mobile-cards">
+    <div class="cx-mobile-cards" id="cx-mobile-cards"{% if not clients %} style="display:none"{% endif %}>
       {% for cl in clients %}
         {% include 'clients/_card.html' with cl=cl %}
       {% endfor %}
     </div>
 
-    {% else %}
-    <div class="cx-empty">
+    <!-- Empty state -->
+    <div class="cx-empty" id="cx-empty"{% if clients %} style="display:none"{% endif %}>
       <i class="fas fa-users"></i>
       <p>{% if q %}لا توجد نتائج للبحث عن "{{ q }}"{% else %}لا يوجد عملاء بعد{% endif %}</p>
       {% if not q %}
@@ -88,7 +87,6 @@
       </button>
       {% endif %}
     </div>
-    {% endif %}
   </div>
 
 </div>
@@ -96,6 +94,36 @@
 
 {% block extra_js %}
 <script>
+// Live-update client list after AJAX create/edit
+document.addEventListener('bcms:recordChanged', function (e) {
+  var json = e.detail;
+  if (!json || !json.row_id) return;
+  var existingRow = document.getElementById(json.row_id);
+  if (!existingRow) {
+    // New client — ajaxForm inserts row into tbody; also insert card into mobile cards
+    var mc = document.getElementById('cx-mobile-cards');
+    if (mc && json.card_html) mc.insertAdjacentHTML('afterbegin', json.card_html);
+    // Show table/cards, hide empty state
+    var tw = document.getElementById('cx-table-wrap');
+    var ce = document.getElementById('cx-empty');
+    if (tw) tw.style.display = '';
+    if (mc) mc.style.display = '';
+    if (ce) ce.style.display = 'none';
+  }
+});
+
+// After delete: show empty state if no rows remain
+document.addEventListener('bcms:recordDeleted', function () {
+  var tbody = document.getElementById('clients-tbody');
+  if (!tbody || tbody.children.length > 0) return;
+  var tw = document.getElementById('cx-table-wrap');
+  var mc = document.getElementById('cx-mobile-cards');
+  var ce = document.getElementById('cx-empty');
+  if (tw) tw.style.display = 'none';
+  if (mc) mc.style.display = 'none';
+  if (ce) ce.style.display = '';
+});
+
 function openAddClient() {
   if (window.BCMS && BCMS.openAddClient) return BCMS.openAddClient();
   var modal = document.getElementById('client-modal');
