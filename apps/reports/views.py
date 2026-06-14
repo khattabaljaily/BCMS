@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Count, Sum, Q
-from django.db.models.functions import TruncDate, TruncMonth
+from django.db.models.functions import ExtractYear, ExtractMonth
 
 
 @login_required
@@ -92,10 +92,10 @@ def _build_reports_context(request):
     if use_monthly:
         rev_rows = (
             paid_invoices
-            .annotate(month=TruncMonth('date'))
-            .values('month').annotate(total=Sum('total')).order_by('month')
+            .annotate(yr=ExtractYear('date'), mo=ExtractMonth('date'))
+            .values('yr', 'mo').annotate(total=Sum('paid_amount')).order_by('yr', 'mo')
         )
-        rev_map = {r['month'].date(): float(r['total']) for r in rev_rows}
+        rev_map = {date(r['yr'], r['mo'], 1): float(r['total']) for r in rev_rows}
         chart_rev_labels, chart_rev_data = [], []
         cur = date_from.replace(day=1)
         end = date_to.replace(day=1)
@@ -108,10 +108,10 @@ def _build_reports_context(request):
                 cur = cur.replace(month=cur.month + 1)
     else:
         rev_rows = (
-            paid_invoices.annotate(day=TruncDate('date'))
-            .values('day').annotate(total=Sum('total')).order_by('day')
+            paid_invoices
+            .values('date').annotate(total=Sum('paid_amount')).order_by('date')
         )
-        rev_map = {r['day']: float(r['total']) for r in rev_rows}
+        rev_map = {r['date']: float(r['total']) for r in rev_rows}
         chart_rev_labels, chart_rev_data = [], []
         for i in range(num_days):
             d = date_from + timedelta(days=i)
@@ -174,10 +174,11 @@ def _build_reports_context(request):
 
     if use_monthly:
         appt_rows = (
-            appointments.annotate(month=TruncMonth('date'))
-            .values('month').annotate(count=Count('id')).order_by('month')
+            appointments
+            .annotate(yr=ExtractYear('date'), mo=ExtractMonth('date'))
+            .values('yr', 'mo').annotate(count=Count('id')).order_by('yr', 'mo')
         )
-        appt_map = {r['month'].date(): r['count'] for r in appt_rows}
+        appt_map = {date(r['yr'], r['mo'], 1): r['count'] for r in appt_rows}
         chart_appt_labels, chart_appt_data = [], []
         cur = date_from.replace(day=1)
         end = date_to.replace(day=1)
@@ -190,10 +191,10 @@ def _build_reports_context(request):
                 cur = cur.replace(month=cur.month + 1)
     else:
         appt_rows = (
-            appointments.annotate(day=TruncDate('date'))
-            .values('day').annotate(count=Count('id')).order_by('day')
+            appointments
+            .values('date').annotate(count=Count('id')).order_by('date')
         )
-        appt_map = {r['day']: r['count'] for r in appt_rows}
+        appt_map = {r['date']: r['count'] for r in appt_rows}
         chart_appt_labels, chart_appt_data = [], []
         for i in range(num_days):
             d = date_from + timedelta(days=i)

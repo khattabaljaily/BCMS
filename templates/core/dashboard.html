@@ -70,16 +70,16 @@
   <div class="dash-card chart-card">
     <div class="dash-card__header">
       <div class="dash-card__title">
-        <span class="dash-card__title-icon dash-card__title-icon--blue"><i class="fas fa-chart-pie"></i></span>
-        توزيع المواعيد — هذا الشهر
+        <span class="dash-card__title-icon dash-card__title-icon--blue"><i class="fas fa-boxes"></i></span>
+        حالة المخزون
       </div>
     </div>
     <div class="dash-card__body donut-body">
-      {% if chart_status_data != '[]' %}
-      <canvas id="statusChart"></canvas>
+      {% if stock_low_count or stock_ok_count %}
+      <canvas id="stockChart"></canvas>
       {% else %}
       <div class="cx-empty" style="padding:24px 16px;">
-        <i class="fas fa-chart-pie"></i><p>لا توجد بيانات بعد</p>
+        <i class="fas fa-boxes"></i><p>لا توجد منتجات</p>
       </div>
       {% endif %}
     </div>
@@ -187,15 +187,13 @@
 <script>
 Chart.defaults.font.family = "Cairo, 'Segoe UI', sans-serif";
 Chart.defaults.color = '#64748b';
-const rose = '#f43f5e';
-
 /* Revenue + Expenses area */
 (function(){
   const ctx = document.getElementById('revenueChart');
   if (!ctx) return;
-  const grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 180);
-  grad.addColorStop(0, 'rgba(244,63,94,.18)');
-  grad.addColorStop(1, 'rgba(244,63,94,.0)');
+  const gradRev = ctx.getContext('2d').createLinearGradient(0, 0, 0, 180);
+  gradRev.addColorStop(0, 'rgba(16,185,129,.20)');
+  gradRev.addColorStop(1, 'rgba(16,185,129,.0)');
   const gradExp = ctx.getContext('2d').createLinearGradient(0, 0, 0, 180);
   gradExp.addColorStop(0, 'rgba(239,68,68,.10)');
   gradExp.addColorStop(1, 'rgba(239,68,68,.0)');
@@ -205,7 +203,7 @@ const rose = '#f43f5e';
       labels: {{ chart_rev_labels|safe }},
       datasets: [
         { label: 'الإيرادات', data: {{ chart_rev_data|safe }}, fill: true,
-          backgroundColor: grad, borderColor: rose, borderWidth: 2.5,
+          backgroundColor: gradRev, borderColor: '#10b981', borderWidth: 2.5,
           pointRadius: 0, pointHoverRadius: 5, tension: 0.4 },
         { label: 'المصاريف', data: {{ chart_exp_data|safe }}, fill: true,
           backgroundColor: gradExp, borderColor: '#ef4444', borderWidth: 1.8,
@@ -215,14 +213,7 @@ const rose = '#f43f5e';
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: {
-        // format numbers consistently as 1,000.00 regardless of browser locale
-        function formatNumberJS(n, decimals=0) {
-          try {
-            const num = Number(n || 0);
-            return num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-          } catch (e) { return n; }
-        }
-        callbacks: { label: c => ' ' + formatNumberJS(c.parsed.y, 0) }
+        callbacks: { label: c => ' ' + Number(c.parsed.y || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
       }},
       scales: {
         x: { grid: { display: false }, ticks: { maxTicksLimit: 7, font: { size: 10 } } },
@@ -233,16 +224,16 @@ const rose = '#f43f5e';
   });
 })();
 
-/* Status donut */
+/* Stock donut */
 (function(){
-  const ctx = document.getElementById('statusChart');
+  const ctx = document.getElementById('stockChart');
   if (!ctx) return;
   new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: {{ chart_status_labels|safe }},
-      datasets: [{ data: {{ chart_status_data|safe }},
-        backgroundColor: {{ chart_status_colors|safe }},
+      labels: ['مخزون جيد', 'مخزون منخفض'],
+      datasets: [{ data: [{{ stock_ok_count }}, {{ stock_low_count }}],
+        backgroundColor: ['#10b981', '#f59e0b'],
         borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]
     },
     options: {
@@ -250,6 +241,8 @@ const rose = '#f43f5e';
       plugins: { legend: {
         position: 'bottom',
         labels: { font: { size: 11 }, padding: 10, boxWidth: 10, boxHeight: 10 }
+      }, tooltip: {
+        callbacks: { label: c => ' ' + c.label + ': ' + c.parsed + ' منتج' }
       }}
     }
   });

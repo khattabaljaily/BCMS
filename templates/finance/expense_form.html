@@ -32,11 +32,10 @@
           <option value="card_or_bank" {% if expense and expense.method == 'card_or_bank' %}selected{% endif %}>بطاقة أو بنك</option>
         </select>
       </div>
-      <div class="form-group"><label>الخزينة (اختياري)</label>
-        <select name="treasury" class="form-control">
-          <option value="">—</option>
+      <div class="form-group"><label>الخزينة</label>
+        <select name="treasury" class="form-control" required>
           {% for t in treasuries %}
-            <option value="{{ t.pk }}" {% if expense and expense.treasury_id == t.pk %}selected{% endif %}>{{ t.name }}</option>
+            <option value="{{ t.pk }}" {% if expense and expense.treasury_id == t.pk %}selected{% elif not expense and forloop.first %}selected{% endif %}>{{ t.name }}</option>
           {% endfor %}
         </select>
       </div>

@@ -192,9 +192,13 @@ def dashboard(request):
     unpaid_total = unpaid_qs.aggregate(t=Sum('total'))['t'] or 0
 
     low_stock_products = []
+    stock_low_count = 0
+    stock_ok_count  = 0
     try:
         from apps.products.models import Product
         low_stock_products = list(Product.objects.filter(center=center, stock__lte=5).order_by('stock')[:6])
+        stock_low_count = Product.objects.filter(center=center, stock__lte=5).count()
+        stock_ok_count  = Product.objects.filter(center=center, stock__gt=5).count()
     except Exception:
         low_stock_products = []
 
@@ -302,6 +306,8 @@ def dashboard(request):
         'unpaid_count':       unpaid_count,
         'unpaid_total':       unpaid_total,
         'low_stock_products': low_stock_products,
+        'stock_low_count':    stock_low_count,
+        'stock_ok_count':     stock_ok_count,
         'recent_clients':     recent_clients,
         # chart data (JSON-safe)
         'today_expenses':        today_expenses,
@@ -316,6 +322,7 @@ def dashboard(request):
         'chart_status_labels':   json.dumps(chart_status_labels),
         'chart_status_data':     json.dumps(chart_status_data),
         'chart_status_colors':   json.dumps(chart_status_colors),
+        'show_clock':            True,
     })
 
 
@@ -389,3 +396,39 @@ def settings(request):
         'center': center,
         'settings_obj': settings_obj,
     })
+
+
+# ── notification API ──────────────────────────────────────────────────────────
+
+@login_required
+def notifications_feed(request):
+    from apps.core.models import Notification
+    center = request.center
+    qs = Notification.objects.filter(center=center)
+    unread_count = qs.filter(is_read=False).count()
+    last_id = int(request.GET.get('last_id', 0) or 0)
+    has_new = qs.filter(pk__gt=last_id, is_read=False).exists() if last_id else False
+    items = list(qs[:20].values('pk', 'type', 'title', 'body', 'url', 'is_read', 'created_at'))
+    for item in items:
+        item['created_at'] = item['created_at'].isoformat()
+        item['icon'] = Notification.ICONS.get(item['type'], 'fas fa-bell')
+        item['color'] = Notification.COLORS.get(item['type'], '#ec4899')
+    return JsonResponse({'unread_count': unread_count, 'has_new': has_new, 'notifications': items})
+
+
+@login_required
+def notification_read(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    from apps.core.models import Notification
+    Notification.objects.filter(pk=pk, center=request.center).update(is_read=True)
+    return JsonResponse({'success': True})
+
+
+@login_required
+def notifications_read_all(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    from apps.core.models import Notification
+    Notification.objects.filter(center=request.center, is_read=False).update(is_read=True)
+    return JsonResponse({'success': True})

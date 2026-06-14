@@ -8,7 +8,7 @@
           <i class="fas fa-chart-area" style="color:var(--green);"></i> الإيرادات
         </div>
         {% if chart_rev_data != '[]' %}
-        <canvas id="revChart" height="160"></canvas>
+        <canvas id="revChart" height="80"></canvas>
         {% else %}
         <div class="cx-empty" style="padding:32px;"><i class="fas fa-chart-area"></i><p>لا بيانات</p></div>
         {% endif %}
@@ -20,7 +20,7 @@
           <i class="fas fa-calendar-check" style="color:var(--rose);"></i> المواعيد
         </div>
         {% if chart_appt_data != '[]' %}
-        <canvas id="apptChart" height="160"></canvas>
+        <canvas id="apptChart" height="80"></canvas>
         {% else %}
         <div class="cx-empty" style="padding:32px;"><i class="fas fa-calendar"></i><p>لا بيانات</p></div>
         {% endif %}
@@ -37,7 +37,7 @@
           <i class="fas fa-credit-card" style="color:var(--green);"></i> طرق الدفع
         </div>
         {% if chart_method_data != '[]' %}
-        <canvas id="methodChart" height="200"></canvas>
+        <canvas id="methodChart" height="90"></canvas>
         {% else %}
         <div class="cx-empty" style="padding:32px;"><i class="fas fa-credit-card"></i><p>لا بيانات</p></div>
         {% endif %}
@@ -50,7 +50,7 @@
           <i class="fas fa-chart-pie" style="color:var(--blue);"></i> حالات المواعيد
         </div>
         {% if chart_status_data != '[]' %}
-        <canvas id="statusChart" height="200"></canvas>
+        <canvas id="statusChart" height="90"></canvas>
         {% else %}
         <div class="cx-empty" style="padding:32px;"><i class="fas fa-chart-pie"></i><p>لا بيانات</p></div>
         {% endif %}

@@ -141,6 +141,22 @@ def expense_create(request):
             tid      = request.POST.get('treasury') or None
             treasury = Treasury.objects.filter(pk=tid, center=center).first() if tid else None
             notes    = request.POST.get('notes', '')
+            if not treasury:
+                err = 'يجب اختيار الخزينة'
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': err}, status=400)
+                messages.error(request, err)
+                treasuries = Treasury.objects.filter(center=center)
+                categories = Expense.objects.filter(center=center).values_list('category', flat=True).distinct().order_by('category')
+                return render(request, 'finance/expense_form.html', {'treasuries': treasuries, 'categories': categories})
+            if method == 'cash' and treasury.balance < amt:
+                err = f'رصيد الخزينة غير كافٍ — المتاح: {treasury.balance}'
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': err}, status=400)
+                messages.error(request, err)
+                treasuries = Treasury.objects.filter(center=center)
+                categories = Expense.objects.filter(center=center).values_list('category', flat=True).distinct().order_by('category')
+                return render(request, 'finance/expense_form.html', {'treasuries': treasuries, 'categories': categories})
             exp = Expense.objects.create(
                 center=center, category=cat, amount=amt,
                 method=method, treasury=treasury, notes=notes,
@@ -165,14 +181,40 @@ def expense_edit(request, pk):
         center = request.center
         exp    = get_object_or_404(Expense, pk=pk, center=center)
         if request.method == 'POST':
-            # remove old treasury movement before updating
+            new_amt  = Decimal(request.POST.get('amount') or '0')
+            method   = request.POST.get('method', 'cash')
+            tid      = request.POST.get('treasury') or None
+            treasury = Treasury.objects.filter(pk=tid, center=center).first() if tid else None
+
+            if not treasury:
+                err = 'يجب اختيار الخزينة'
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': err}, status=400)
+                messages.error(request, err)
+                treasuries = Treasury.objects.filter(center=center)
+                categories = Expense.objects.filter(center=center).values_list('category', flat=True).distinct().order_by('category')
+                return render(request, 'finance/expense_form.html', {'expense': exp, 'treasuries': treasuries, 'categories': categories})
+
+            # Remove old movement first so the balance reflects the refund
             _delete_expense_movement(exp)
 
+            if method == 'cash':
+                treasury.refresh_from_db()
+                if treasury.balance < new_amt:
+                    # Restore the old movement since we're aborting
+                    _create_expense_movement(exp)
+                    err = f'رصيد الخزينة غير كافٍ — المتاح: {treasury.balance}'
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({'success': False, 'error': err}, status=400)
+                    messages.error(request, err)
+                    treasuries = Treasury.objects.filter(center=center)
+                    categories = Expense.objects.filter(center=center).values_list('category', flat=True).distinct().order_by('category')
+                    return render(request, 'finance/expense_form.html', {'expense': exp, 'treasuries': treasuries, 'categories': categories})
+
             exp.category = request.POST.get('category')
-            exp.amount   = Decimal(request.POST.get('amount') or '0')
-            exp.method   = request.POST.get('method', 'cash')
-            tid          = request.POST.get('treasury') or None
-            exp.treasury = Treasury.objects.filter(pk=tid, center=center).first() if tid else None
+            exp.amount   = new_amt
+            exp.method   = method
+            exp.treasury = treasury
             exp.notes    = request.POST.get('notes', '')
             exp.save()
 

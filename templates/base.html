@@ -353,12 +353,30 @@
         </button>
         <div class="topbar__title">{% block page_title %}{% endblock %}</div>
       </div>
-      <div class="live-clock" style="position:absolute;left:50%;transform:translateX(-50%);">
+      {% if show_clock %}<div class="live-clock" style="position:absolute;left:50%;transform:translateX(-50%);">
         <i class="fas fa-clock live-clock__icon"></i>
         <span id="live-clock-full"></span>
-      </div>
+      </div>{% endif %}
       <div class="topbar__actions">
         {% block topbar_actions %}{% endblock %}
+
+        <!-- notification bell -->
+        <div id="notif-wrapper" style="position:relative;">
+          <button id="notif-btn" onclick="toggleNotifPanel()" class="notif-bell-btn" aria-label="الإشعارات">
+            <i class="fas fa-bell"></i>
+            <span id="notif-badge" class="notif-badge" style="display:none;">0</span>
+          </button>
+          <div id="notif-panel" class="notif-panel" style="display:none;">
+            <div class="notif-panel__header">
+              <span class="notif-panel__title">الإشعارات</span>
+              <button id="notif-read-all" onclick="markAllRead()" class="notif-read-all-btn">تحديد الكل كمقروء</button>
+            </div>
+            <div id="notif-list" class="notif-list">
+              <div class="notif-empty">لا توجد إشعارات</div>
+            </div>
+          </div>
+        </div>
+
         <div class="topbar__user">
           <div style="position:relative;">
             <button id="topbar-user-btn" onclick="toggleTopbarMenu()" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;">
@@ -456,6 +474,117 @@ function toggleTopbarMenu() {
   var menu = document.getElementById('topbar-user-menu');
   menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 }
+
+// ── Notification polling ──────────────────────────────────────────────────────
+(function(){
+  var FEED_URL     = '/notifications/feed/';
+  var READ_ALL_URL = '/notifications/read-all/';
+  var lastId = 0;
+  var panelOpen = false;
+
+  function csrfToken() {
+    var el = document.cookie.match(/csrftoken=([^;]+)/);
+    return el ? el[1] : '';
+  }
+
+  function timeAgo(iso) {
+    var diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (diff < 60)  return 'الآن';
+    if (diff < 3600) return Math.floor(diff/60) + ' د';
+    if (diff < 86400) return Math.floor(diff/3600) + ' س';
+    return Math.floor(diff/86400) + ' ي';
+  }
+
+  function renderList(notifications) {
+    var list = document.getElementById('notif-list');
+    if (!notifications.length) {
+      list.innerHTML = '<div class="notif-empty">لا توجد إشعارات</div>';
+      return;
+    }
+    list.innerHTML = notifications.map(function(n) {
+      var readCls = n.is_read ? '' : ' notif-item--unread';
+      var safeUrl = n.url ? n.url.replace(/'/g, '') : '';
+      return '<div class="notif-item' + readCls + '" data-pk="' + n.pk + '" onclick="markRead(' + n.pk + ', this' + (safeUrl ? ', \'' + safeUrl + '\'' : '') + ')">' +
+        '<div class="notif-item__icon" style="background:' + n.color + '20;color:' + n.color + '"><i class="' + n.icon + '"></i></div>' +
+        '<div class="notif-item__body">' +
+          '<div class="notif-item__title">' + n.title + '</div>' +
+          (n.body ? '<div class="notif-item__sub">' + n.body + '</div>' : '') +
+        '</div>' +
+        '<div class="notif-item__time">' + timeAgo(n.created_at) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function updateBadge(count) {
+    var badge = document.getElementById('notif-badge');
+    var btn   = document.getElementById('notif-btn');
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : count;
+      badge.style.display = 'flex';
+      btn.classList.add('notif-bell-btn--active');
+    } else {
+      badge.style.display = 'none';
+      btn.classList.remove('notif-bell-btn--active');
+    }
+  }
+
+  function poll() {
+    var url = FEED_URL + '?last_id=' + lastId;
+    fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        updateBadge(data.unread_count);
+        if (data.has_new) {
+          var btn = document.getElementById('notif-btn');
+          btn.classList.add('notif-bell-btn--shake');
+          setTimeout(function(){ btn.classList.remove('notif-bell-btn--shake'); }, 800);
+        }
+        if (data.notifications.length) {
+          lastId = Math.max.apply(null, data.notifications.map(function(n){ return n.pk; }));
+        }
+        if (panelOpen) renderList(data.notifications);
+      })
+      .catch(function(){});
+  }
+
+  window.toggleNotifPanel = function() {
+    var panel = document.getElementById('notif-panel');
+    panelOpen = panel.style.display === 'none';
+    panel.style.display = panelOpen ? 'block' : 'none';
+    if (panelOpen) poll();
+  };
+
+  window.markRead = function(pk, el, url) {
+    fetch('/notifications/' + pk + '/read/', {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest'},
+    }).then(function(){ poll(); });
+    if (el) el.classList.remove('notif-item--unread');
+    if (url) setTimeout(function(){ window.location = url; }, 150);
+  };
+
+  window.markAllRead = function() {
+    fetch(READ_ALL_URL, {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest'},
+    }).then(function(){ poll(); });
+    document.querySelectorAll('.notif-item--unread').forEach(function(el){
+      el.classList.remove('notif-item--unread');
+    });
+  };
+
+  // Close panel on outside click
+  document.addEventListener('click', function(e){
+    var wrapper = document.getElementById('notif-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      document.getElementById('notif-panel').style.display = 'none';
+      panelOpen = false;
+    }
+  });
+
+  poll();
+  setInterval(poll, 10000);
+})();
 </script>
 </body>
 </html>

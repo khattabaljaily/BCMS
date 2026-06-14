@@ -281,3 +281,46 @@ class CenterMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+class Notification(models.Model):
+    TYPES = [
+        ('booking_new', 'حجز أونلاين'),
+        ('order_new',   'طلب أونلاين'),
+        ('stock_low',   'مخزون منخفض'),
+    ]
+    ICONS = {
+        'booking_new': 'fas fa-calendar-check',
+        'order_new':   'fas fa-shopping-bag',
+        'stock_low':   'fas fa-exclamation-triangle',
+    }
+    COLORS = {
+        'booking_new': '#8b5cf6',
+        'order_new':   '#0ea5e9',
+        'stock_low':   '#f59e0b',
+    }
+
+    center     = models.ForeignKey(Center, on_delete=models.CASCADE, db_index=True)
+    type       = models.CharField('النوع', max_length=50, choices=TYPES)
+    title      = models.CharField('العنوان', max_length=200)
+    body       = models.TextField('التفاصيل', blank=True)
+    url        = models.CharField('رابط', max_length=500, blank=True)
+    is_read    = models.BooleanField('مقروءة', default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'notifications'
+        ordering = ['-created_at']
+        verbose_name = 'إشعار'
+        verbose_name_plural = 'الإشعارات'
+
+    def __str__(self):
+        return f'[{self.type}] {self.title}'
+
+    @property
+    def icon(self):
+        return self.ICONS.get(self.type, 'fas fa-bell')
+
+    @property
+    def color(self):
+        return self.COLORS.get(self.type, '#ec4899')

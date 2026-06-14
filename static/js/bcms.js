@@ -525,9 +525,9 @@ const BCMS = {
                         var id = overlay.id; BCMS.closeModal(id);
                         if (doReload) setTimeout(function () { window.location.reload(); }, 220);
                     } else {
-                        BCMS.toast('حدث خطأ أثناء الحفظ', 'error');
+                        BCMS.toast(json && (json.error || json.message) || 'حدث خطأ أثناء الحفظ', 'error');
                     }
-                }).catch(function () { BCMS.hideLoading(btn); BCMS.toast('حدث خطأ أثناء الحفظ','error'); });
+                }).catch(function () { BCMS.hideLoading(btn); BCMS.toast('حدث خطأ في الاتصال بالخادم','error'); });
         });
     },
 

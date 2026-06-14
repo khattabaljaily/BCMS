@@ -120,7 +120,8 @@ def appointment_save(request):
 def appointment_status(request, pk):
     obj = get_object_or_404(Appointment, pk=pk, center=request.center)
     if request.method == 'POST':
-        obj.status = request.POST.get('status', obj.status)
+        new_status = request.POST.get('status', obj.status)
+        obj.status = new_status
         obj.save(update_fields=['status'])
         if _is_ajax(request):
             return JsonResponse({'success': True, 'message': 'تم تحديث الحالة.'})

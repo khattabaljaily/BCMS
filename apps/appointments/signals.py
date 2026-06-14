@@ -14,7 +14,6 @@ def create_invoice_on_confirm(sender, instance, created, **kwargs):
         has_invoice = None
 
     if instance.status == 'confirmed' and not has_invoice:
-        # Delay import of Settings to avoid circular imports at module import time
         from apps.core.models import Settings
         settings_obj, _ = Settings.objects.get_or_create(center=instance.center)
         number = settings_obj.next_invoice_number()
