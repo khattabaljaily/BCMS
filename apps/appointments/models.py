@@ -63,7 +63,7 @@ class Appointment(CenterMixin):
 
     class Meta:
         db_table = 'appointments'
-        ordering = ['date', 'start_time']
+        ordering = ['-id']
         indexes = [
             models.Index(fields=['center', 'date']),
             models.Index(fields=['center', 'status']),

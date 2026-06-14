@@ -207,17 +207,45 @@ def _purchase_pay_ref(pk):
     return f'purchase_pay_{pk}'
 
 def _reverse_purchase_effects(invoice):
-    """Remove StockMovements and all treasury movements for a purchase invoice."""
+    """
+    Reverse stock and treasury effects of a purchase by creating reversal records.
+    Originals are kept for audit trail; reversal records correct the balances.
+    """
     from apps.finance.models import TreasuryMovement
     ref = _purchase_ref(invoice.pk)
+
+    # Reverse stock: create reversal movements (save() auto-updates product.stock)
     for mv in StockMovement.objects.filter(product__center=invoice.center, reference=ref):
-        mv.delete()
-    # Cash purchase: treasury out-movement created at purchase time
+        StockMovement.objects.create(
+            center=mv.center,
+            product=mv.product,
+            change=-mv.change,
+            type='reversal',
+            reference=f'rev_{mv.reference}',
+            notes=f'إلغاء مشتريات {invoice.number}',
+        )
+
+    # Reverse treasury: create opposite-direction movements
     for tm in TreasuryMovement.objects.filter(treasury__center=invoice.center, reference=ref):
-        tm.delete()
-    # Credit purchase: treasury out-movement created when payment was recorded
-    for tm in TreasuryMovement.objects.filter(treasury__center=invoice.center, reference=_purchase_pay_ref(invoice.pk)):
-        tm.delete()
+        opposite = 'in' if tm.type == 'out' else 'out'
+        TreasuryMovement.objects.create(
+            treasury=tm.treasury,
+            type=opposite,
+            amount=tm.amount,
+            reference=f'rev_{tm.reference}',
+            notes=f'إلغاء مشتريات {invoice.number}',
+        )
+
+    pay_ref = _purchase_pay_ref(invoice.pk)
+    for tm in TreasuryMovement.objects.filter(treasury__center=invoice.center, reference=pay_ref):
+        opposite = 'in' if tm.type == 'out' else 'out'
+        TreasuryMovement.objects.create(
+            treasury=tm.treasury,
+            type=opposite,
+            amount=tm.amount,
+            reference=f'rev_{tm.reference}',
+            notes=f'إلغاء سداد مشتريات {invoice.number}',
+        )
 
 
 # ── purchase views ────────────────────────────────────────────────────────────

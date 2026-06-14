@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, F, ExpressionWrapper, DecimalField
 from .models import Client
 from django.template.loader import render_to_string
 
@@ -16,7 +16,13 @@ def client_list(request):
     center = request.center
     q = request.GET.get('q', '')
     clients = Client.objects.filter(center=center).annotate(
-        claims_amount=Sum('invoices__total', filter=Q(invoices__status__in=['draft', 'partial']))
+        claims_amount=Sum(
+            ExpressionWrapper(
+                F('invoices__total') - F('invoices__paid_amount'),
+                output_field=DecimalField(),
+            ),
+            filter=Q(invoices__status__in=['draft', 'partial']),
+        )
     )
     if q:
         clients = clients.filter(Q(name__icontains=q) | Q(phone__icontains=q))

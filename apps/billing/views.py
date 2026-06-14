@@ -56,10 +56,27 @@ def _delete_invoice_treasury_movement(invoice):
         tm.delete()
 
 
+def _reverse_invoice_treasury_movement(invoice):
+    """Create reversal treasury movement for a voided invoice (audit trail)."""
+    from apps.finance.models import TreasuryMovement
+    for tm in TreasuryMovement.objects.filter(
+        treasury__center=invoice.center,
+        reference=_billing_ref(invoice.pk),
+    ):
+        opposite = 'out' if tm.type == 'in' else 'in'
+        TreasuryMovement.objects.create(
+            treasury=tm.treasury,
+            type=opposite,
+            amount=tm.amount,
+            reference=f'rev_{tm.reference}',
+            notes=f'إلغاء فاتورة {invoice.number}',
+        )
+
+
 def _cancel_invoice_client_payments(invoice):
     """
-    Cancel all confirmed client payments for this invoice and remove their
-    treasury movements. Called before voiding or deleting an invoice.
+    Cancel all confirmed client payments and REMOVE treasury movements.
+    Used when permanently deleting an invoice.
     """
     from apps.finance.models import TreasuryMovement
     for payment in invoice.payments.filter(status='confirmed'):
@@ -68,6 +85,29 @@ def _cancel_invoice_client_payments(invoice):
             reference=_payment_ref(payment.pk),
         ):
             tm.delete()
+        payment.status = 'cancelled'
+        payment.save(update_fields=['status'])
+
+
+def _void_invoice_client_payments(invoice):
+    """
+    Cancel all confirmed client payments and CREATE reversal treasury movements.
+    Used when voiding an invoice so the audit trail is preserved.
+    """
+    from apps.finance.models import TreasuryMovement
+    for payment in invoice.payments.filter(status='confirmed'):
+        for tm in TreasuryMovement.objects.filter(
+            treasury__center=invoice.center,
+            reference=_payment_ref(payment.pk),
+        ):
+            opposite = 'out' if tm.type == 'in' else 'in'
+            TreasuryMovement.objects.create(
+                treasury=tm.treasury,
+                type=opposite,
+                amount=tm.amount,
+                reference=f'rev_{tm.reference}',
+                notes=f'إلغاء دفعة فاتورة {invoice.number}',
+            )
         payment.status = 'cancelled'
         payment.save(update_fields=['status'])
 
@@ -286,14 +326,22 @@ def invoice_print(request, pk):
 def invoice_void(request, pk):
     inv = get_object_or_404(Invoice, pk=pk, center=request.center)
     if request.method == 'POST':
-        # 1. Cancel all confirmed client payments (later-pay flow) + remove their treasury movements
-        _cancel_invoice_client_payments(inv)
+        # 1. Cancel client payments + create reversal treasury movements (audit trail)
+        _void_invoice_client_payments(inv)
 
-        # 2. Remove the invoice's own direct treasury movement (cash/card pay-now flow)
-        _delete_invoice_treasury_movement(inv)
+        # 2. Create reversal for invoice's own direct treasury movement
+        _reverse_invoice_treasury_movement(inv)
 
-        # 3. Restore stock
-        StockMovement.objects.filter(reference=f'invoice_{inv.pk}').delete()
+        # 3. Reverse stock: create reversal movements instead of deleting
+        for sm in StockMovement.objects.filter(reference=f'invoice_{inv.pk}'):
+            StockMovement.objects.create(
+                center=sm.center,
+                product=sm.product,
+                change=-sm.change,
+                type='reversal',
+                reference=f'rev_{sm.reference}',
+                notes=f'إلغاء فاتورة {inv.number}',
+            )
 
         # 4. Mark cancelled and zero out paid amount
         inv.status = 'cancelled'

@@ -55,7 +55,11 @@ class Client(CenterMixin):
 
     @property
     def due_amount(self):
-        return self.invoices.exclude(status='paid').exclude(status='cancelled').aggregate(t=Sum('total'))['t'] or 0
+        from django.db.models import F, Sum as _Sum, ExpressionWrapper, DecimalField
+        result = self.invoices.exclude(status='paid').exclude(status='cancelled').aggregate(
+            remaining=_Sum(ExpressionWrapper(F('total') - F('paid_amount'), output_field=DecimalField()))
+        )
+        return result['remaining'] or 0
 
     @property
     def last_visit(self):

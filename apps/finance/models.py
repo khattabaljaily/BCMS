@@ -106,7 +106,7 @@ class Expense(CenterMixin):
 
     class Meta:
         db_table = 'expenses'
-        ordering = ['-date']
+        ordering = ['-id']
         verbose_name = 'مصروف'
         verbose_name_plural = 'مصروفات'
 
@@ -135,7 +135,7 @@ class ClientPayment(CenterMixin):
 
     class Meta:
         db_table = 'client_payments'
-        ordering = ['-date', '-created_at']
+        ordering = ['-id']
         verbose_name = 'دفعة عميل'
         verbose_name_plural = 'مدفوعات العملاء'
 

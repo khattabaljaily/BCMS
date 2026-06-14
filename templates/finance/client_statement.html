@@ -123,7 +123,7 @@
         </thead>
         <tbody>
           {% for e in entries %}
-          <tr style="{% if e.type == 'payment' %}background:rgba(5,150,105,.03);{% endif %}">
+          <tr style="{% if e.type == 'payment' and not e.cancelled %}background:rgba(5,150,105,.03);{% elif e.type == 'reversal' %}background:rgba(239,68,68,.03);{% elif e.type == 'payment' and e.cancelled %}background:rgba(148,163,184,.05);{% endif %}">
             <td style="color:var(--slate-500);white-space:nowrap;font-size:12px;">
               {{ e.datetime|date:"j/n/Y" }}
               <div style="font-size:10px;color:var(--slate-400);">{{ e.datetime|time:"H:i" }}</div>
@@ -132,6 +132,14 @@
               {% if e.type == 'invoice' %}
                 <span style="display:inline-flex;align-items:center;gap:5px;background:#ede9fe;color:#6d28d9;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
                   <i class="fas fa-file-invoice" style="font-size:9px;"></i> فاتورة
+                </span>
+              {% elif e.type == 'reversal' %}
+                <span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  <i class="fas fa-rotate-left" style="font-size:9px;"></i> عكس دفعة
+                </span>
+              {% elif e.cancelled %}
+                <span style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;color:#64748b;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;text-decoration:line-through;">
+                  <i class="fas fa-hand-holding-dollar" style="font-size:9px;"></i> دفعة
                 </span>
               {% else %}
                 <span style="display:inline-flex;align-items:center;gap:5px;background:#d1fae5;color:#065f46;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
@@ -144,14 +152,16 @@
                 <a href="{% url 'billing:detail' e.obj.pk %}" style="color:#6366f1;font-weight:700;text-decoration:none;font-size:13px;">
                   {{ e.obj.number }}
                 </a>
+              {% elif e.type == 'reversal' %}
+                <span style="font-size:12px;color:#dc2626;">إلغاء — {{ e.obj.get_method_display }}</span>
               {% else %}
                 <span style="font-size:12px;color:var(--slate-500);">{{ e.obj.get_method_display }}</span>
               {% endif %}
             </td>
-            <td style="text-align:end;font-weight:700;color:{% if e.debit %}var(--slate-700){% else %}var(--slate-200){% endif %};">
+            <td style="text-align:end;font-weight:700;color:{% if e.debit %}{% if e.type == 'reversal' %}#dc2626{% else %}var(--slate-700){% endif %}{% else %}var(--slate-200){% endif %};">
               {% if e.debit %}{{ e.debit|format_number:2 }}{% else %}—{% endif %}
             </td>
-            <td style="text-align:end;font-weight:700;color:{% if e.credit %}#059669{% else %}var(--slate-200){% endif %};">
+            <td style="text-align:end;font-weight:700;color:{% if e.credit %}{% if e.cancelled %}var(--slate-400){% else %}#059669{% endif %}{% else %}var(--slate-200){% endif %};">
               {% if e.credit %}{{ e.credit|format_number:2 }}{% else %}—{% endif %}
             </td>
             <td style="text-align:end;">
@@ -164,6 +174,10 @@
                 <span class="badge badge--{% if e.obj.status == 'paid' %}green{% elif e.obj.status == 'partial' %}yellow{% elif e.obj.status == 'cancelled' %}red{% else %}gray{% endif %}" style="font-size:11px;">
                   {{ e.obj.get_status_display }}
                 </span>
+              {% elif e.type == 'reversal' %}
+                <span class="badge badge--red" style="font-size:11px;">ملغاة</span>
+              {% elif e.cancelled %}
+                <span class="badge badge--red" style="font-size:11px;">ملغاة</span>
               {% else %}
                 {% if e.obj.notes %}{{ e.obj.notes }}{% else %}—{% endif %}
               {% endif %}
@@ -188,9 +202,10 @@
     </div>
 
     <!-- Balance legend -->
-    <div style="padding:14px 24px;border-top:1px solid var(--slate-100);display:flex;gap:20px;font-size:12px;color:var(--slate-500);">
+    <div style="padding:14px 24px;border-top:1px solid var(--slate-100);display:flex;gap:20px;font-size:12px;color:var(--slate-500);flex-wrap:wrap;">
       <span><i class="fas fa-circle" style="color:#d97706;font-size:8px;margin-left:5px;"></i>مبلغ مطلوب (مدين)</span>
       <span><i class="fas fa-circle" style="color:#059669;font-size:8px;margin-left:5px;"></i>رصيد صفر أو دائن</span>
+      <span><i class="fas fa-circle" style="color:#dc2626;font-size:8px;margin-left:5px;"></i>عكس دفعة ملغاة</span>
       <span style="margin-right:auto;color:var(--slate-400);">مدين = فواتير · دائن = مدفوعات</span>
     </div>
 

@@ -58,10 +58,11 @@ class StockMovement(CenterMixin):
     and negative for outgoing (sales).
     """
     TYPE_CHOICES = [
-        ('purchase', 'شراء'),
-        ('sale', 'بيع'),
-        ('adjustment', 'تعديل'),
-        ('transfer', 'نقل'),
+        ('purchase',  'شراء'),
+        ('sale',      'بيع'),
+        ('adjustment','تعديل'),
+        ('transfer',  'نقل'),
+        ('reversal',  'عكس'),
     ]
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_movements')
@@ -123,7 +124,7 @@ class PurchaseInvoice(CenterMixin):
 
     class Meta:
         db_table = 'purchase_invoices'
-        ordering = ['-created_at']
+        ordering = ['-id']
         verbose_name = 'فاتورة مشتريات'
         verbose_name_plural = 'فواتير المشتريات'
 

@@ -446,6 +446,95 @@
 <script src="{% static 'js/pwa.js' %}"></script>
 {% block extra_js %}{% endblock %}
 <script>
+/* ── Sortable Tables ────────────────────────────────────────── */
+(function() {
+  var SORT_ASC = 'asc', SORT_DESC = 'desc';
+
+  function getCellValue(row, idx) {
+    var cell = row.cells[idx];
+    if (!cell) return '';
+    // Try a numeric data attribute first
+    var num = cell.dataset.sort;
+    if (num !== undefined) return num;
+    return cell.textContent.trim();
+  }
+
+  function compareValues(a, b, asc) {
+    var aNum = parseFloat(a.replace(/,/g, ''));
+    var bNum = parseFloat(b.replace(/,/g, ''));
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return asc ? aNum - bNum : bNum - aNum;
+    }
+    return asc
+      ? a.localeCompare(b, 'ar', {numeric: true, sensitivity: 'base'})
+      : b.localeCompare(a, 'ar', {numeric: true, sensitivity: 'base'});
+  }
+
+  function sortTable(table, colIdx, th) {
+    var tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    var asc = th.dataset.sortDir !== SORT_ASC;
+
+    rows.sort(function(a, b) {
+      return compareValues(getCellValue(a, colIdx), getCellValue(b, colIdx), asc);
+    });
+
+    // Update sort direction indicators
+    table.querySelectorAll('thead th[data-sortable]').forEach(function(h) {
+      h.dataset.sortDir = '';
+      h.classList.remove('sort-asc', 'sort-desc');
+    });
+    th.dataset.sortDir = asc ? SORT_ASC : SORT_DESC;
+    th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+
+    rows.forEach(function(r) { tbody.appendChild(r); });
+  }
+
+  function initSortable(table) {
+    var headers = table.querySelectorAll('thead th');
+    headers.forEach(function(th, idx) {
+      if (th.classList.contains('no-sort') || th.hasAttribute('data-no-sort')) return;
+      th.setAttribute('data-sortable', '1');
+      th.style.cursor = 'pointer';
+      th.style.userSelect = 'none';
+      th.style.position = 'relative';
+      th.title = 'اضغط للترتيب';
+      // Add sort arrow span
+      if (!th.querySelector('.sort-arrow')) {
+        var arrow = document.createElement('span');
+        arrow.className = 'sort-arrow';
+        arrow.innerHTML = ' <i class="fas fa-sort" style="font-size:9px;opacity:.4;"></i>';
+        th.appendChild(arrow);
+      }
+      th.addEventListener('click', function() { sortTable(table, idx, th); });
+    });
+  }
+
+  function initAll() {
+    document.querySelectorAll('table.cx-table').forEach(function(t) {
+      if (!t.dataset.sortInit) {
+        t.dataset.sortInit = '1';
+        initSortable(t);
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initAll);
+  // Re-run after AJAX updates (dispatched by bcms.js)
+  document.addEventListener('bcms:recordChanged', function() { initAll(); });
+})();
+</script>
+<style>
+/* ── Sort arrow feedback ──────────────────────────────────── */
+thead th[data-sortable] .sort-arrow .fa-sort         { opacity: .35; }
+thead th[data-sortable].sort-asc .sort-arrow i       { opacity: 1; }
+thead th[data-sortable].sort-asc .sort-arrow i::before  { content: '\f0de'; } /* fa-sort-up */
+thead th[data-sortable].sort-desc .sort-arrow i      { opacity: 1; }
+thead th[data-sortable].sort-desc .sort-arrow i::before { content: '\f0dd'; } /* fa-sort-down */
+thead th[data-sortable]:hover { background: var(--rose-50, #fff1f5); }
+</style>
+<script>
 (function(){
   // Open any nav-group that contains an active subitem
   document.querySelectorAll('.nav-group').forEach(function(group){

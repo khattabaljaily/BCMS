@@ -61,6 +61,36 @@ def _delete_payment_movement(payment):
     ):
         tm.delete()
 
+def _reverse_payment_movement(payment):
+    """Create a reversal treasury movement for a cancelled payment (audit trail)."""
+    for tm in TreasuryMovement.objects.filter(
+        treasury__center=payment.center,
+        reference=_payment_ref(payment.pk),
+    ):
+        opposite = 'out' if tm.type == 'in' else 'in'
+        TreasuryMovement.objects.create(
+            treasury=tm.treasury,
+            type=opposite,
+            amount=tm.amount,
+            reference=f'rev_{tm.reference}',
+            notes=f'إلغاء دفعة {payment.pk}',
+        )
+
+def _reverse_expense_movement(expense):
+    """Create a reversal treasury movement for a deleted expense (audit trail)."""
+    for tm in TreasuryMovement.objects.filter(
+        treasury__center=expense.center,
+        reference=_expense_ref(expense.pk),
+    ):
+        opposite = 'out' if tm.type == 'in' else 'in'
+        TreasuryMovement.objects.create(
+            treasury=tm.treasury,
+            type=opposite,
+            amount=tm.amount,
+            reference=f'rev_{tm.reference}',
+            notes=f'حذف مصروف: {expense.category}',
+        )
+
 
 # ── treasury ──────────────────────────────────────────────────────────────────
 
@@ -241,7 +271,7 @@ def expense_delete(request, pk):
             return HttpResponseForbidden()
         center = request.center
         exp    = get_object_or_404(Expense, pk=pk, center=center)
-        _delete_expense_movement(exp)
+        _reverse_expense_movement(exp)
         exp.delete()
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True, 'message': 'تم حذف المصروف بنجاح.'})
@@ -359,7 +389,7 @@ def client_payment_delete(request, pk):
             return HttpResponseForbidden()
         center = request.center
         pay    = get_object_or_404(ClientPayment, pk=pk, center=center)
-        _delete_payment_movement(pay)
+        _reverse_payment_movement(pay)
         pay.cancel()
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True, 'message': 'تم إلغاء الدفعة بنجاح.'})
@@ -382,7 +412,7 @@ def client_statement(request):
         if cid:
             client   = get_object_or_404(Client, pk=cid, center=center)
             invoices = Invoice.objects.filter(center=center, client=client).order_by('date', 'created_at')
-            payments = ClientPayment.objects.filter(center=center, client=client, status='confirmed').order_by('date', 'created_at')
+            payments = ClientPayment.objects.filter(center=center, client=client).order_by('date', 'created_at')
 
             raw = []
             for inv in invoices:
@@ -390,23 +420,35 @@ def client_statement(request):
                 raw.append({'type': 'invoice', 'datetime': dt, 'obj': inv})
             for p in payments:
                 dt = getattr(p, 'created_at', None) or datetime.combine(p.date, dt_time.min)
-                raw.append({'type': 'payment', 'datetime': dt, 'obj': p})
+                if p.status == 'confirmed':
+                    raw.append({'type': 'payment', 'datetime': dt, 'obj': p})
+                else:
+                    # Show original payment AND a reversal entry for cancelled payments
+                    raw.append({'type': 'payment',   'datetime': dt, 'obj': p, 'cancelled': True})
+                    raw.append({'type': 'reversal',  'datetime': dt, 'obj': p, 'cancelled': False})
             raw.sort(key=lambda x: x['datetime'])
 
             running = Decimal('0')
             for e in raw:
+                e.setdefault('cancelled', False)
                 if e['type'] == 'invoice':
                     amt = e['obj'].total
                     running += amt
                     total_invoiced += amt
                     e['debit']  = amt
                     e['credit'] = None
-                else:
+                elif e['type'] == 'payment':
                     amt = e['obj'].amount
                     running -= amt
-                    total_paid += amt
+                    if not e['cancelled']:
+                        total_paid += amt
                     e['debit']  = None
                     e['credit'] = amt
+                else:  # reversal
+                    amt = e['obj'].amount
+                    running += amt
+                    e['debit']  = amt
+                    e['credit'] = None
                 e['balance'] = running
             entries = raw
 

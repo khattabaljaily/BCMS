@@ -46,7 +46,7 @@ class Invoice(CenterMixin):
 
     class Meta:
         db_table = 'invoices'
-        ordering = ['-created_at']
+        ordering = ['-id']
         verbose_name = 'فاتورة'
         verbose_name_plural = 'الفواتير'
 

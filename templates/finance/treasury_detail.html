@@ -106,13 +106,18 @@
         <tbody>
           {% for entry in movements %}
           {% with m=entry.obj %}
-          <tr style="{% if m.type == 'in' %}background:rgba(5,150,105,.03);{% elif m.type == 'out' %}background:rgba(220,38,38,.02);{% elif m.type == 'initial' %}background:rgba(37,99,235,.03);{% endif %}">
+          {% with is_rev=m.reference|slice:":4" %}
+          <tr style="{% if m.reference|slice:':4' == 'rev_' %}background:rgba(239,68,68,.03);{% elif m.type == 'in' %}background:rgba(5,150,105,.03);{% elif m.type == 'out' %}background:rgba(220,38,38,.02);{% elif m.type == 'initial' %}background:rgba(37,99,235,.03);{% endif %}">
             <td style="white-space:nowrap;font-size:12px;color:var(--slate-500);">
               {{ m.created_at|date:"j/n/Y" }}
               <div style="font-size:10px;color:var(--slate-400);">{{ m.created_at|time:"H:i" }}</div>
             </td>
             <td>
-              {% if m.type == 'in' %}
+              {% if m.reference|slice:':4' == 'rev_' %}
+                <span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
+                  <i class="fas fa-rotate-left" style="font-size:9px;"></i> عكس
+                </span>
+              {% elif m.type == 'in' %}
                 <span style="display:inline-flex;align-items:center;gap:5px;background:#d1fae5;color:#065f46;border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;">
                   <i class="fas fa-arrow-down" style="font-size:9px;"></i> وارد
                 </span>
@@ -144,6 +149,7 @@
               </span>
             </td>
           </tr>
+          {% endwith %}
           {% endwith %}
           {% endfor %}
         </tbody>

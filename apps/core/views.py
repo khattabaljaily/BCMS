@@ -370,6 +370,7 @@ def settings(request):
         
         # Update settings data
         settings_obj.invoice_prefix      = request.POST.get('invoice_prefix', 'INV')
+        settings_obj.invoice_color       = request.POST.get('invoice_color', '#ec4899') or '#ec4899'
         settings_obj.invoice_footer      = request.POST.get('invoice_footer', '')
         settings_obj.show_tax_on_invoice = bool(request.POST.get('show_tax_on_invoice'))
         settings_obj.tax_percent         = request.POST.get('tax_percent', 0) or 0
