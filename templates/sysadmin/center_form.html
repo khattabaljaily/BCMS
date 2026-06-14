@@ -97,6 +97,34 @@
         </div>
       </div>
     </div>
+
+    <!-- User creation (add mode only) -->
+    {% if not obj %}
+    <div class="sa-card" style="margin-bottom:16px;">
+      <div class="sa-card-header"><h3><i class="fas fa-user"></i> بيانات مالك المركز</h3></div>
+      <div class="sa-card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>الاسم الكامل *</label>
+            <input type="text" name="owner_full_name" class="form-control" required placeholder="مثال: أحمد محمد">
+          </div>
+          <div class="form-group">
+            <label>اسم المستخدم *</label>
+            <input type="text" name="owner_username" class="form-control" required placeholder="اسم المستخدم للدخول">
+            <small style="font-size:11px;color:var(--sa-muted);">يجب أن يكون فريداً</small>
+          </div>
+          <div class="form-group">
+            <label>كلمة المرور *</label>
+            <input type="password" name="owner_password" class="form-control" required minlength="6" placeholder="على الأقل 6 أحرف">
+          </div>
+          <div class="form-group">
+            <label>تأكيد كلمة المرور *</label>
+            <input type="password" name="owner_password2" class="form-control" required minlength="6" placeholder="أعد إدخال كلمة المرور">
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Right: subscription + limits -->

@@ -248,16 +248,38 @@ def center_add(request):
         is_active       = bool(request.POST.get('is_active'))
         is_demo         = bool(request.POST.get('is_demo'))
 
+        # Owner fields (for new centers)
+        owner_full_name = request.POST.get('owner_full_name', '').strip()
+        owner_username  = request.POST.get('owner_username', '').strip()
+        owner_password  = request.POST.get('owner_password', '').strip()
+        owner_password2 = request.POST.get('owner_password2', '').strip()
+
         country_info = ARAB_COUNTRIES.get(country_code, ARAB_COUNTRIES['SD'])
 
+        # Validation
+        errors = []
         if not name or not slug:
-            err = 'اسم المركز والرابط المختصر مطلوبان.'
-            if ajax: return JsonResponse({'success': False, 'error': err})
-            messages.error(request, err)
-        elif Center.objects.filter(slug=slug).exists():
-            err = 'هذا الرابط المختصر مستخدم بالفعل.'
-            if ajax: return JsonResponse({'success': False, 'error': err})
-            messages.error(request, err)
+            errors.append('اسم المركز والرابط المختصر مطلوبان.')
+        if Center.objects.filter(slug=slug).exists():
+            errors.append('هذا الرابط المختصر مستخدم بالفعل.')
+        if not owner_full_name:
+            errors.append('اسم المالك مطلوب.')
+        if not owner_username:
+            errors.append('اسم المستخدم مطلوب.')
+        elif User.objects.filter(username=owner_username).exists():
+            errors.append('اسم المستخدم مستخدم بالفعل.')
+        if not owner_password:
+            errors.append('كلمة المرور مطلوبة.')
+        elif len(owner_password) < 6:
+            errors.append('كلمة المرور يجب أن تكون 6 أحرف على الأقل.')
+        if owner_password != owner_password2:
+            errors.append('كلمة المرور وتأكيدها غير متطابقتين.')
+
+        if errors:
+            if ajax:
+                return JsonResponse({'success': False, 'error': ' | '.join(errors)})
+            for err in errors:
+                messages.error(request, err)
         else:
             try:
                 st = get_object_or_404(ServiceType, pk=service_type_id) if service_type_id else None
@@ -272,9 +294,19 @@ def center_add(request):
                     is_active=is_active, is_demo=is_demo,
                 )
                 Settings.objects.get_or_create(center=c)
+
+                # Create owner user
+                owner = User.objects.create_user(
+                    username=owner_username,
+                    password=owner_password,
+                    full_name=owner_full_name,
+                    center=c,
+                    is_owner=True,
+                )
+
                 if ajax:
                     return JsonResponse({'success': True, 'center': _center_payload(c)})
-                messages.success(request, f'تم إنشاء المركز "{name}" بنجاح.')
+                messages.success(request, f'تم إنشاء المركز "{name}" بنجاح ومالكه هو "{owner_full_name}".')
                 return redirect('sysadmin:center_detail', pk=c.pk)
             except Exception as e:
                 import logging
