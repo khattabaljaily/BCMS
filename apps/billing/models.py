@@ -32,11 +32,11 @@ class Invoice(CenterMixin):
 
     date = models.DateField('التاريخ', default=timezone.localdate)
 
-    subtotal        = models.DecimalField('قبل الخصم', max_digits=10, decimal_places=2)
-    discount_amount = models.DecimalField('قيمة الخصم', max_digits=10, decimal_places=2)
-    tax_amount      = models.DecimalField('الضريبة',    max_digits=10, decimal_places=2)
-    total           = models.DecimalField('الإجمالي',   max_digits=10, decimal_places=2)
-    paid_amount     = models.DecimalField('المدفوع',    max_digits=10, decimal_places=2)
+    subtotal        = models.DecimalField('قبل الخصم', max_digits=10, decimal_places=2, default=Decimal('0'))
+    discount_amount = models.DecimalField('قيمة الخصم', max_digits=10, decimal_places=2, default=Decimal('0'))
+    tax_amount      = models.DecimalField('الضريبة',    max_digits=10, decimal_places=2, default=Decimal('0'))
+    total           = models.DecimalField('الإجمالي',   max_digits=10, decimal_places=2, default=Decimal('0'))
+    paid_amount     = models.DecimalField('المدفوع',    max_digits=10, decimal_places=2, default=Decimal('0'))
 
     payment_method = models.CharField('طريقة الدفع', max_length=20, choices=PAYMENT, default='cash')
     status         = models.CharField('الحالة',      max_length=20, choices=STATUS,  default='draft')

@@ -220,6 +220,7 @@ def invoice_create(request):
                 inv.save(update_fields=['status', 'paid_amount'])
 
             return redirect('billing:detail', pk=inv.pk)
+        
 
     clients_json = json.dumps([{
         'id':     c.pk,
