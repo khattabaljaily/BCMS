@@ -101,17 +101,39 @@ def dashboard(request):
     prev_month_start = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
     prev_month_end   = today.replace(day=1) - timedelta(days=1)
 
-    month_revenue = Invoice.objects.filter(
-        center=center, date__year=today.year,
-        date__month=today.month, status='paid'
-    ).aggregate(t=Sum('total'))['t'] or 0
+    from apps.finance.models import ClientPayment as _CP
 
-    prev_revenue = Invoice.objects.filter(
-        center=center,
-        date__gte=prev_month_start,
-        date__lte=prev_month_end,
-        status='paid'
-    ).aggregate(t=Sum('total'))['t'] or 0
+    def _month_revenue(year, month=None, date_gte=None, date_lte=None):
+        """Sum billing-immediate paid invoices + finance client payments for a period."""
+        if month is not None:
+            inv_qs = Invoice.objects.filter(
+                center=center, date__year=year, date__month=month,
+                status='paid', payment_method__in=['cash', 'card_or_bank']
+            )
+            pay_qs = _CP.objects.filter(
+                center=center, date__year=year, date__month=month,
+                status='confirmed'
+            )
+        else:
+            inv_qs = Invoice.objects.filter(
+                center=center, date__gte=date_gte, date__lte=date_lte,
+                status='paid', payment_method__in=['cash', 'card_or_bank']
+            )
+            pay_qs = _CP.objects.filter(
+                center=center, date__gte=date_gte, date__lte=date_lte,
+                status='confirmed'
+            )
+        return (
+            (inv_qs.aggregate(t=Sum('paid_amount'))['t'] or 0) +
+            (pay_qs.aggregate(t=Sum('amount'))['t'] or 0)
+        )
+
+    month_revenue = _month_revenue(today.year, month=today.month)
+    prev_revenue  = _month_revenue(
+        prev_month_start.year,
+        date_gte=prev_month_start,
+        date_lte=prev_month_end,
+    )
 
     total_clients = Client.objects.filter(center=center).count()
     new_clients   = Client.objects.filter(
@@ -157,10 +179,14 @@ def dashboard(request):
     )
 
     # ── Extra widgets: today's revenue, unpaid invoices, low-stock products, recent clients
-    from apps.finance.models import ClientPayment
-    today_revenue = ClientPayment.objects.filter(
+    today_rev_billing = Invoice.objects.filter(
+        center=center, date=today, status='paid',
+        payment_method__in=['cash', 'card_or_bank']
+    ).aggregate(t=Sum('paid_amount'))['t'] or 0
+    today_rev_finance = _CP.objects.filter(
         center=center, date=today, status='confirmed'
     ).aggregate(t=Sum('amount'))['t'] or 0
+    today_revenue = today_rev_billing + today_rev_finance
 
     unpaid_qs = Invoice.objects.filter(center=center).exclude(status='paid').exclude(status='cancelled')
     unpaid_count = unpaid_qs.count()
@@ -189,13 +215,24 @@ def dashboard(request):
     thirty_ago = today - timedelta(days=29)
     rev_rows = (
         Invoice.objects
-        .filter(center=center, date__gte=thirty_ago, status='paid')
+        .filter(center=center, date__gte=thirty_ago, status='paid',
+                payment_method__in=['cash', 'card_or_bank'])
         .annotate(day=TruncDate('date'))
         .values('day')
-        .annotate(total=Sum('total'))
+        .annotate(total=Sum('paid_amount'))
         .order_by('day')
     )
     rev_map = {r['day']: float(r['total']) for r in rev_rows}
+    pay_rows = (
+        _CP.objects
+        .filter(center=center, date__gte=thirty_ago, status='confirmed')
+        .annotate(day=TruncDate('date'))
+        .values('day')
+        .annotate(total=Sum('amount'))
+        .order_by('day')
+    )
+    for r in pay_rows:
+        rev_map[r['day']] = rev_map.get(r['day'], 0) + float(r['total'])
 
     exp_rows = (
         Expense.objects

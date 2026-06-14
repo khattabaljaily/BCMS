@@ -34,10 +34,7 @@
           <label class="form-label">اسم التصنيف</label>
           <input class="form-control" name="name" type="text" value="{{ instance.name|default_if_none:'' }}" required>
         </div>
-        <div class="form-group">
-          <label class="form-label">الترتيب</label>
-          <input class="form-control" name="order" type="number" value="{{ instance.order|default:0 }}" min="0">
-        </div>
+
         <div class="form-group">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
             <input type="checkbox" name="is_active" {% if instance and instance.is_active %}checked{% elif not instance %}checked{% endif %}>

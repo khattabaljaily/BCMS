@@ -27,7 +27,7 @@
           <th>الاسم</th>
           <th>الوصف</th>
           <th>عدد المراكز</th>
-          <th>الترتيب</th>
+
           <th>الحالة</th>
           <th>الإجراءات</th>
         </tr>
@@ -43,7 +43,7 @@
           <td style="font-weight:700;">{{ t.name }}</td>
           <td style="font-size:12px;color:var(--sa-muted);max-width:220px;">{{ t.description|truncatechars:60|default:"—" }}</td>
           <td><span class="badge badge-blue">{{ t.centers.count }}</span></td>
-          <td style="font-size:12px;color:var(--sa-muted);">{{ t.order }}</td>
+
           <td>
             {% if t.is_active %}<span class="badge badge-green">نشط</span>
             {% else %}<span class="badge badge-gray">غير نشط</span>{% endif %}
@@ -102,10 +102,7 @@
         <div class="m-card__field-label">عدد المراكز</div>
         <div class="m-card__field-value">{{ t.centers.count }}</div>
       </div>
-      <div>
-        <div class="m-card__field-label">الترتيب</div>
-        <div class="m-card__field-value">{{ t.order }}</div>
-      </div>
+
     </div>
     <div class="m-card__foot">
       <button class="ia-btn ia-btn--edit" title="تعديل" onclick="openStEdit(this)"
@@ -169,10 +166,6 @@
           <label>الوصف</label>
           <input type="text" name="description" class="form-control" placeholder="وصف مختصر">
         </div>
-        <div class="form-group">
-          <label>الترتيب</label>
-          <input type="number" name="order" class="form-control" value="0" min="0">
-        </div>
         <div class="form-group" style="justify-content:flex-end;">
           <div class="form-check" style="margin-top:auto;padding-bottom:4px;">
             <input type="checkbox" name="is_active" id="add-st-active" checked>
@@ -226,10 +219,6 @@
         <div class="form-group full">
           <label>الوصف</label>
           <input type="text" name="description" id="edit-st-description" class="form-control">
-        </div>
-        <div class="form-group">
-          <label>الترتيب</label>
-          <input type="number" name="order" id="edit-st-order" class="form-control" min="0">
         </div>
         <div class="form-group" style="justify-content:flex-end;">
           <div class="form-check" style="margin-top:auto;padding-bottom:4px;">
@@ -308,7 +297,7 @@ function openStEdit(btn) {
   document.getElementById('edit-st-icon').value        = d.icon        || 'fas fa-spa';
   document.getElementById('edit-st-color').value       = d.color       || '#ec4899';
   document.getElementById('edit-st-description').value = d.description || '';
-  document.getElementById('edit-st-order').value       = d.order       || '0';
+
   document.getElementById('edit-st-active').checked    = d.isActive === 'true';
   previewIcon('edit');
   openModal('modal-st-edit');

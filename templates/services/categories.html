@@ -22,7 +22,7 @@
       </div>
       <div class="cx-hero-right">
         <div class="cx-hero-actions">
-          <a href="{% url 'services:list' %}" class="btn btn--ghost btn--sm">
+          <a href="{% url 'services:list' %}" class="btn btn--ghost">
             <i class="fas fa-spa"></i> الخدمات
           </a>
           <button class="btn btn--primary" onclick="openAddCategory()">
@@ -41,7 +41,7 @@
         <thead>
           <tr>
             <th>التصنيف</th>
-            <th>الترتيب</th>
+
             <th>الحالة</th>
             <th></th>
           </tr>
@@ -57,7 +57,7 @@
                 <strong>{{ cat.name }}</strong>
               </div>
             </td>
-            <td class="text-muted">{{ cat.order }}</td>
+
             <td>
               {% if cat.is_active %}
               <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
@@ -68,7 +68,7 @@
             <td>
               <div class="cx-row-actions">
                 <button type="button" class="cx-act" title="تعديل"
-                        onclick="openEditCategory({{ cat.pk }}, '{{ cat.name|escapejs }}', {{ cat.order }}, {{ cat.is_active|yesno:'true,false' }})">
+                        onclick="openEditCategory({{ cat.pk }}, '{{ cat.name|escapejs }}', {{ cat.is_active|yesno:'true,false' }})">
                   <i class="fas fa-edit"></i>
                 </button>
                 <button type="button" class="cx-act cx-act--del" title="حذف"
@@ -106,12 +106,12 @@
             </div>
             <div>
               <div class="cx-card-title">{{ cat.name }}</div>
-              <div class="cx-card-sub">ترتيب: {{ cat.order }}</div>
+
             </div>
           </div>
           <div class="cx-card-actions">
             <button type="button" class="cx-act"
-                    onclick="openEditCategory({{ cat.pk }}, '{{ cat.name|escapejs }}', {{ cat.order }}, {{ cat.is_active|yesno:'true,false' }})">
+                    onclick="openEditCategory({{ cat.pk }}, '{{ cat.name|escapejs }}', {{ cat.is_active|yesno:'true,false' }})">
               <i class="fas fa-edit"></i>
             </button>
             <button type="button" class="cx-act cx-act--del"
@@ -147,17 +147,11 @@
           <label class="form-label">الاسم <span style="color:var(--red)">*</span></label>
           <input class="form-control" type="text" name="name" id="cat-name" required autofocus>
         </div>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label class="form-label">الترتيب</label>
-            <input class="form-control" type="number" name="order" id="cat-order" value="0" min="0">
-          </div>
-          <div class="form-group" style="display:flex;align-items:center;padding-top:24px;">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
-              <input type="checkbox" name="is_active" id="cat-active">
-              التصنيف نشط
-            </label>
-          </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+            <input type="checkbox" name="is_active" id="cat-active">
+            التصنيف نشط
+          </label>
         </div>
       </div>
       <div class="modal-footer">
@@ -179,15 +173,13 @@ function openAddCategory() {
   document.getElementById('cat-modal-title').textContent = 'تصنيف جديد';
   document.getElementById('cat-pk').value = '';
   document.getElementById('cat-name').value = '';
-  document.getElementById('cat-order').value = 0;
   document.getElementById('cat-active').checked = true;
   openModal('modal-cat');
 }
-function openEditCategory(pk, name, order, isActive) {
+function openEditCategory(pk, name, isActive) {
   document.getElementById('cat-modal-title').textContent = 'تعديل التصنيف';
   document.getElementById('cat-pk').value = pk;
   document.getElementById('cat-name').value = name;
-  document.getElementById('cat-order').value = order;
   document.getElementById('cat-active').checked = isActive === true || isActive === 'true';
   openModal('modal-cat');
 }
