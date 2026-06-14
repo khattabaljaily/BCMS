@@ -169,9 +169,16 @@
       {% if low_stock_products %}
         <ul class="list-compact">
           {% for p in low_stock_products %}
-            <li>{{ p.name }} <span class="muted">({{ p.stock }})</span></li>
+            <li style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <span>{{ p.name }}</span>
+              <span style="font-size:12px;white-space:nowrap;">
+                <strong style="color:var(--red);">{{ p.stock }}</strong>
+                <span class="muted"> / {{ p.min_stock }}</span>
+              </span>
+            </li>
           {% endfor %}
         </ul>
+        <a href="{% url 'products:stock' %}" style="display:block;margin-top:10px;font-size:12px;color:var(--rose);text-align:center;">عرض المخزون</a>
       {% else %}
         <div class="cx-empty" style="padding:18px 12px;"><i class="fas fa-box"></i><p>جميع المنتجات بمخزون جيد</p></div>
       {% endif %}

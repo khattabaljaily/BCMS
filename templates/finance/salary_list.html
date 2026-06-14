@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% block nav_finance_open %}open{% endblock %}
+{% block nav_finance_salaries %}active{% endblock %}
+{% block page_title %}كشوف الرواتب{% endblock %}
+{% block title %}كشوف الرواتب{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 4px 14px rgba(139,92,246,.32);">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">كشوف الرواتب</h1>
+          <p class="cx-hero-desc">{{ salaries.count }} كشف مسجل</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <a href="{% url 'finance:salary_create' %}" class="btn btn--primary">
+            <i class="fas fa-plus"></i> كشف جديد
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- فلاتر -->
+  <div class="cx-panel" style="padding:16px 20px;margin-bottom:12px;">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="margin:0;min-width:180px;">
+        <label>الفنية</label>
+        <select name="specialist" class="form-control" onchange="this.form.submit()">
+          <option value="">الكل</option>
+          {% for s in specialists %}
+            <option value="{{ s.pk }}" {% if specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0;min-width:160px;">
+        <label>الحالة</label>
+        <select name="status" class="form-control" onchange="this.form.submit()">
+          <option value="">الكل</option>
+          <option value="draft"     {% if status_filter == 'draft'     %}selected{% endif %}>مسودة</option>
+          <option value="paid"      {% if status_filter == 'paid'      %}selected{% endif %}>مدفوع</option>
+          <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>ملغى</option>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <div class="cx-panel">
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>الفنية</th>
+            <th>الفترة</th>
+            <th>الأساسي</th>
+            <th>العمولة</th>
+            <th>الحوافز</th>
+            <th>السلف</th>
+            <th>الخصومات</th>
+            <th>الصافي</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sp in salaries %}
+          <tr>
+            <td><strong>{{ sp.specialist.name }}</strong></td>
+            <td class="text-muted" style="white-space:nowrap;">{{ sp.period_start }} — {{ sp.period_end }}</td>
+            <td>{{ sp.base_salary|format_number:2 }}</td>
+            <td>{{ sp.commission_amount|format_number:2 }}</td>
+            <td style="color:var(--green,#10b981);">{{ sp.bonus|format_number:2 }}</td>
+            <td style="color:var(--red);">{{ sp.advances_deducted|format_number:2 }}</td>
+            <td style="color:var(--red);">{{ sp.deductions|format_number:2 }}</td>
+            <td><strong style="color:var(--primary);">{{ sp.total_due|format_number:2 }}</strong></td>
+            <td>
+              {% if sp.status == 'draft' %}
+                <span class="badge badge--warning">مسودة</span>
+              {% elif sp.status == 'paid' %}
+                <span class="badge badge--success">مدفوع</span>
+              {% else %}
+                <span class="badge badge--danger">ملغى</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="cx-row-actions">
+                <a href="{% url 'finance:salary_detail' sp.pk %}" class="cx-act" title="التفاصيل">
+                  <i class="fas fa-eye"></i>
+                </a>
+                {% if sp.status == 'draft' %}
+                <button class="cx-act" title="صرف الراتب" style="color:var(--green,#10b981);"
+                  onclick="BCMS.confirmDelete('تأكيد صرف الراتب وخصمه من الخزينة؟').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}});} });">
+                  <i class="fas fa-check-circle"></i>
+                </button>
+                <button class="cx-act cx-act--del" title="إلغاء"
+                  onclick="BCMS.confirmDelete('إلغاء كشف الراتب؟').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','success');setTimeout(()=>location.reload(),400);}});} });">
+                  <i class="fas fa-times-circle"></i>
+                </button>
+                {% elif sp.status == 'paid' %}
+                <button class="cx-act cx-act--del" title="عكس الصرف"
+                  onclick="BCMS.confirmDelete('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','success');setTimeout(()=>location.reload(),400);}});} });">
+                  <i class="fas fa-undo"></i>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <p>لا كشوف رواتب مسجلة</p>
+                <a href="{% url 'finance:salary_create' %}" class="btn btn--primary" style="margin-top:12px;">
+                  <i class="fas fa-plus"></i> كشف جديد
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile -->
+    <div class="cx-mobile-cards">
+      {% for sp in salaries %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">{{ sp.specialist.name }}</div>
+            <div class="cx-card-sub">{{ sp.period_start }} — {{ sp.period_end }}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            {% if sp.status == 'draft' %}
+              <span class="badge badge--warning">مسودة</span>
+            {% elif sp.status == 'paid' %}
+              <span class="badge badge--success">مدفوع</span>
+            {% else %}
+              <span class="badge badge--danger">ملغى</span>
+            {% endif %}
+            <a href="{% url 'finance:salary_detail' sp.pk %}" class="cx-act"><i class="fas fa-eye"></i></a>
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">الصافي</span>
+            <span class="cx-card-meta-value" style="color:var(--primary);font-weight:800;">{{ sp.total_due|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">العمولة</span>
+            <span class="cx-card-meta-value">{{ sp.commission_amount|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الحوافز</span>
+            <span class="cx-card-meta-value" style="color:var(--green,#10b981);">{{ sp.bonus|format_number:2 }}</span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty"><i class="fas fa-file-invoice-dollar"></i><p>لا كشوف رواتب</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% csrf_token %}
+{% endblock %}

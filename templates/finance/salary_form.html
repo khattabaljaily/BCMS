@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% block nav_finance_open %}open{% endblock %}
+{% block page_title %}كشف راتب جديد{% endblock %}
+{% block title %}كشف راتب جديد{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 4px 14px rgba(139,92,246,.32);">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">كشف راتب جديد</h1>
+          <p class="cx-hero-desc">أدخل بيانات الراتب للفنية</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <a href="{% url 'finance:salary_list' %}" class="btn btn--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="cx-panel" style="max-width:700px;margin:0 auto;">
+    <form method="get" id="calc-form" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">اختر الفنية والفترة لحساب العمولة تلقائياً</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="margin:0;flex:1;min-width:160px;">
+          <label>الفنية</label>
+          <select name="specialist" class="form-control" onchange="this.form.submit()">
+            <option value="">اختر فنية</option>
+            {% for s in specialists %}
+              <option value="{{ s.pk }}" {% if selected_specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:140px;">
+          <label>من</label>
+          <input type="date" name="period_start" class="form-control" value="{{ request.GET.period_start }}" onchange="this.form.submit()">
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:140px;">
+          <label>إلى</label>
+          <input type="date" name="period_end" class="form-control" value="{{ request.GET.period_end }}" onchange="this.form.submit()">
+        </div>
+      </div>
+    </form>
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="specialist" value="{{ selected_specialist_id }}">
+      <input type="hidden" name="period_start" value="{{ request.GET.period_start }}">
+      <input type="hidden" name="period_end" value="{{ request.GET.period_end }}">
+
+      {% if not selected_specialist_id %}
+      <div style="text-align:center;padding:40px;color:var(--muted);">
+        <i class="fas fa-arrow-up" style="font-size:2rem;"></i>
+        <p style="margin-top:12px;">اختر الفنية أولاً</p>
+      </div>
+      {% else %}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>الراتب الأساسي</label>
+          <input name="base_salary" type="number" step="0.01" min="0" class="form-control"
+                 value="{{ pre_base|format_number:2 }}">
+        </div>
+        <div class="form-group">
+          <label>العمولة المحسوبة</label>
+          <input name="commission_amount" type="number" step="0.01" min="0" class="form-control"
+                 value="{{ commission_calc|format_number:2 }}"
+                 placeholder="أو أدخل يدوياً">
+        </div>
+        <div class="form-group">
+          <label>الحوافز</label>
+          <input name="bonus" type="number" step="0.01" min="0" class="form-control" value="0">
+        </div>
+        <div class="form-group">
+          <label>خصومات أخرى</label>
+          <input name="deductions" type="number" step="0.01" min="0" class="form-control" value="0">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>تفاصيل الخصومات</label>
+        <textarea name="deductions_notes" class="form-control" rows="2" placeholder="وصف الخصومات إن وجدت"></textarea>
+      </div>
+
+      {% if pending_advances %}
+      <div class="form-group">
+        <label>السلف القائمة (اختر للخصم)</label>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+          {% for adv in pending_advances %}
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" name="advance_ids" value="{{ adv.pk }}" checked
+                   onchange="updateAdvancesTotal()">
+            <span>{{ adv.date }} — <strong>{{ adv.amount|format_number:2 }}</strong>
+              {% if adv.notes %}<small class="text-muted"> ({{ adv.notes }})</small>{% endif %}
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label>الخزينة</label>
+        <select name="treasury" class="form-control">
+          <option value="">بدون خزينة</option>
+          {% for t in treasuries %}
+            <option value="{{ t.pk }}" {% if forloop.first %}selected{% endif %}>{{ t.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>ملاحظات</label>
+        <textarea name="notes" class="form-control" rows="2"></textarea>
+      </div>
+
+      <div style="background:var(--surface-2,#f9fafb);border-radius:8px;padding:16px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:8px;">
+          <span>الراتب الأساسي + العمولة + الحوافز</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:1.1rem;font-weight:700;color:var(--primary);">الصافي المتوقع</span>
+          <span style="font-size:1.1rem;font-weight:700;color:var(--primary);" id="total-preview">—</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <button class="btn btn--primary" type="submit">إنشاء كشف راتب (مسودة)</button>
+      </div>
+
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<script>
+function updateAdvancesTotal() {
+  // Just live-preview, actual calc on server
+}
+(function () {
+  const fields = ['base_salary', 'commission_amount', 'bonus', 'deductions'];
+  function recalc() {
+    let base = parseFloat(document.querySelector('[name=base_salary]')?.value || 0);
+    let comm = parseFloat(document.querySelector('[name=commission_amount]')?.value || 0);
+    let bonus = parseFloat(document.querySelector('[name=bonus]')?.value || 0);
+    let ded = parseFloat(document.querySelector('[name=deductions]')?.value || 0);
+    let adv = 0;
+    document.querySelectorAll('[name=advance_ids]:checked').forEach(cb => {
+      // get sibling text for amount
+      const txt = cb.parentElement.querySelector('strong')?.textContent || '0';
+      adv += parseFloat(txt.replace(/,/g, '')) || 0;
+    });
+    const total = base + comm + bonus - ded - adv;
+    const el = document.getElementById('total-preview');
+    if (el) el.textContent = total.toLocaleString('ar-SA', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  fields.forEach(n => document.querySelector(`[name=${n}]`)?.addEventListener('input', recalc));
+  document.querySelectorAll('[name=advance_ids]').forEach(cb => cb.addEventListener('change', recalc));
+  recalc();
+})();
+</script>
+{% endblock %}

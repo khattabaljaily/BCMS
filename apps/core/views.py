@@ -211,9 +211,10 @@ def dashboard(request):
     stock_ok_count  = 0
     try:
         from apps.products.models import Product
-        low_stock_products = list(Product.objects.filter(center=center, stock__lte=5).order_by('stock')[:6])
-        stock_low_count = Product.objects.filter(center=center, stock__lte=5).count()
-        stock_ok_count  = Product.objects.filter(center=center, stock__gt=5).count()
+        from django.db.models import F
+        low_stock_products = list(Product.objects.filter(center=center, stock__lte=F('min_stock')).order_by('stock')[:6])
+        stock_low_count = Product.objects.filter(center=center, stock__lte=F('min_stock')).count()
+        stock_ok_count  = Product.objects.filter(center=center, stock__gt=F('min_stock')).count()
     except Exception:
         low_stock_products = []
 

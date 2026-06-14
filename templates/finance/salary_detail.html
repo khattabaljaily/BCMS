@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% block nav_finance_open %}open{% endblock %}
+{% block page_title %}كشف راتب — {{ sp.specialist.name }}{% endblock %}
+{% block title %}كشف راتب{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 4px 14px rgba(139,92,246,.32);">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">{{ sp.specialist.name }}</h1>
+          <p class="cx-hero-desc">{{ sp.period_start }} — {{ sp.period_end }}</p>
+        </div>
+      </div>
+      <div class="cx-hero-right" style="display:flex;gap:10px;align-items:center;">
+        {% if sp.status == 'draft' %}
+          <button class="btn btn--primary"
+            onclick="BCMS.confirmDelete('تأكيد صرف الراتب وخصمه من الخزينة؟').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}});} });">
+            <i class="fas fa-check-circle"></i> صرف الراتب
+          </button>
+          <button class="btn btn--ghost"
+            onclick="BCMS.confirmDelete('إلغاء كشف الراتب؟').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','warning');setTimeout(()=>location.reload(),400);}});} });">
+            <i class="fas fa-times"></i> إلغاء
+          </button>
+        {% elif sp.status == 'paid' %}
+          <button class="btn btn--ghost"
+            onclick="BCMS.confirmDelete('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','warning');setTimeout(()=>location.reload(),400);}});} });">
+            <i class="fas fa-undo"></i> عكس الصرف
+          </button>
+        {% endif %}
+        <a href="{% url 'finance:salary_list' %}" class="btn btn--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="cx-panel" style="max-width:600px;margin:0 auto;">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <span style="font-size:1rem;font-weight:600;">الحالة</span>
+      {% if sp.status == 'draft' %}
+        <span class="badge badge--warning" style="font-size:.9rem;padding:6px 14px;">مسودة</span>
+      {% elif sp.status == 'paid' %}
+        <span class="badge badge--success" style="font-size:.9rem;padding:6px 14px;">مدفوع</span>
+      {% else %}
+        <span class="badge badge--danger" style="font-size:.9rem;padding:6px 14px;">ملغى</span>
+      {% endif %}
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;">
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 0;color:var(--muted);">الراتب الأساسي</td>
+        <td style="padding:10px 0;text-align:left;font-weight:600;">{{ sp.base_salary|format_number:2 }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 0;color:var(--muted);">العمولة</td>
+        <td style="padding:10px 0;text-align:left;font-weight:600;">{{ sp.commission_amount|format_number:2 }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 0;color:var(--muted);">الحوافز</td>
+        <td style="padding:10px 0;text-align:left;font-weight:600;color:var(--green,#10b981);">{{ sp.bonus|format_number:2 }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 0;color:var(--muted);">السلف المخصومة</td>
+        <td style="padding:10px 0;text-align:left;font-weight:600;color:var(--red);">— {{ sp.advances_deducted|format_number:2 }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 0;color:var(--muted);">خصومات أخرى</td>
+        <td style="padding:10px 0;text-align:left;font-weight:600;color:var(--red);">— {{ sp.deductions|format_number:2 }}</td>
+      </tr>
+      {% if sp.deductions_notes %}
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 0;color:var(--muted);">تفاصيل الخصومات</td>
+        <td style="padding:10px 0;text-align:left;">{{ sp.deductions_notes }}</td>
+      </tr>
+      {% endif %}
+      <tr style="background:var(--surface-2,#f9fafb);">
+        <td style="padding:14px 8px;font-size:1.1rem;font-weight:700;">الصافي</td>
+        <td style="padding:14px 8px;text-align:left;font-size:1.2rem;font-weight:800;color:var(--primary);">{{ sp.total_due|format_number:2 }}</td>
+      </tr>
+    </table>
+
+    {% if sp.notes %}
+    <div style="margin-top:16px;padding:12px;background:var(--surface-2,#f9fafb);border-radius:8px;">
+      <strong>ملاحظات:</strong> {{ sp.notes }}
+    </div>
+    {% endif %}
+
+    {% if advances %}
+    <div style="margin-top:24px;">
+      <h4 style="margin-bottom:12px;">السلف المرتبطة</h4>
+      <table class="cx-table">
+        <thead>
+          <tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th></tr>
+        </thead>
+        <tbody>
+          {% for adv in advances %}
+          <tr>
+            <td>{{ adv.date }}</td>
+            <td>{{ adv.amount|format_number:2 }}</td>
+            <td class="text-muted">{{ adv.notes|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% csrf_token %}
+{% endblock %}

@@ -18,4 +18,16 @@ urlpatterns = [
     path('client-payments/<int:pk>/edit/', views.client_payment_edit, name='client_payment_edit'),
     path('client-payments/<int:pk>/delete/', views.client_payment_delete, name='client_payment_delete'),
     path('client-statement/', views.client_statement, name='client_statement'),
+
+    # السلف
+    path('advances/', views.advance_list, name='advances'),
+    path('advances/new/', views.advance_create, name='advance_create'),
+    path('advances/<int:pk>/cancel/', views.advance_cancel, name='advance_cancel'),
+
+    # الرواتب
+    path('salaries/', views.salary_list, name='salary_list'),
+    path('salaries/new/', views.salary_create, name='salary_create'),
+    path('salaries/<int:pk>/', views.salary_detail, name='salary_detail'),
+    path('salaries/<int:pk>/pay/', views.salary_pay, name='salary_pay'),
+    path('salaries/<int:pk>/cancel/', views.salary_cancel, name='salary_cancel'),
 ]

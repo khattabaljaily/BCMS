@@ -1,13 +1,16 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Treasury, TreasuryMovement, Expense, ClientPayment
-from apps.billing.models import Invoice
+from .models import Treasury, TreasuryMovement, Expense, ClientPayment, Advance, SalaryPayment
+from apps.billing.models import Invoice, InvoiceLine
 from apps.clients.models import Client
+from apps.staff.models import Specialist
 from django.urls import reverse
 from django.db.utils import OperationalError
+from django.db.models import Sum, Q
 from decimal import Decimal
 from django.http import JsonResponse, HttpResponseForbidden
+import datetime
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -462,3 +465,223 @@ def client_statement(request):
         })
     except OperationalError as exc:
         return render(request, 'finance/error.html', {'error': str(exc)})
+
+
+# ── السلف ────────────────────────────────────────────────────────────────────
+
+@login_required
+def advance_list(request):
+    center = request.user.center
+    specialist_id = request.GET.get('specialist')
+    status_filter = request.GET.get('status', '')
+    advances = Advance.objects.filter(center=center).select_related('specialist', 'treasury')
+    if specialist_id:
+        advances = advances.filter(specialist_id=specialist_id)
+    if status_filter:
+        advances = advances.filter(status=status_filter)
+    specialists = Specialist.objects.filter(center=center, is_active=True)
+    total = advances.aggregate(t=Sum('amount'))['t'] or Decimal('0')
+    return render(request, 'finance/advance_list.html', {
+        'advances': advances,
+        'specialists': specialists,
+        'specialist_id': specialist_id,
+        'status_filter': status_filter,
+        'total': total,
+    })
+
+
+@login_required
+def advance_create(request):
+    center = request.user.center
+    if request.method == 'POST':
+        specialist_id = request.POST.get('specialist')
+        amount = request.POST.get('amount', '0')
+        date_val = request.POST.get('date') or datetime.date.today()
+        treasury_id = request.POST.get('treasury')
+        notes = request.POST.get('notes', '')
+        try:
+            specialist = Specialist.objects.get(pk=specialist_id, center=center)
+            treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
+            adv = Advance.objects.create(
+                center=center,
+                specialist=specialist,
+                amount=Decimal(amount),
+                date=date_val,
+                treasury=treasury,
+                notes=notes,
+            )
+            adv._record_outflow()
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            messages.success(request, 'تم تسجيل السلفة.')
+            return redirect('finance:advances')
+        except Exception as e:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': str(e)}, status=400)
+            messages.error(request, str(e))
+    specialists = Specialist.objects.filter(center=center, is_active=True)
+    treasuries = Treasury.objects.filter(center=center)
+    return render(request, 'finance/advance_form.html', {
+        'specialists': specialists,
+        'treasuries': treasuries,
+    })
+
+
+@login_required
+def advance_cancel(request, pk):
+    center = request.user.center
+    adv = get_object_or_404(Advance, pk=pk, center=center)
+    if request.method == 'POST':
+        adv.cancel()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        messages.success(request, 'تم إلغاء السلفة وعكس حركة الخزينة.')
+        return redirect('finance:advances')
+    return render(request, 'finance/advance_cancel_confirm.html', {'adv': adv})
+
+
+# ── الرواتب ───────────────────────────────────────────────────────────────────
+
+@login_required
+def salary_list(request):
+    center = request.user.center
+    specialist_id = request.GET.get('specialist')
+    status_filter = request.GET.get('status', '')
+    salaries = SalaryPayment.objects.filter(center=center).select_related('specialist', 'treasury')
+    if specialist_id:
+        salaries = salaries.filter(specialist_id=specialist_id)
+    if status_filter:
+        salaries = salaries.filter(status=status_filter)
+    specialists = Specialist.objects.filter(center=center, is_active=True)
+    return render(request, 'finance/salary_list.html', {
+        'salaries': salaries,
+        'specialists': specialists,
+        'specialist_id': specialist_id,
+        'status_filter': status_filter,
+    })
+
+
+@login_required
+def salary_create(request):
+    center = request.user.center
+    if request.method == 'POST':
+        specialist_id = request.POST.get('specialist')
+        period_start = request.POST.get('period_start')
+        period_end = request.POST.get('period_end')
+        base_salary = Decimal(request.POST.get('base_salary') or '0')
+        commission_amount = Decimal(request.POST.get('commission_amount') or '0')
+        bonus = Decimal(request.POST.get('bonus') or '0')
+        deductions = Decimal(request.POST.get('deductions') or '0')
+        deductions_notes = request.POST.get('deductions_notes', '')
+        treasury_id = request.POST.get('treasury')
+        notes = request.POST.get('notes', '')
+        advance_ids = request.POST.getlist('advance_ids')
+        try:
+            specialist = Specialist.objects.get(pk=specialist_id, center=center)
+            treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
+            advances_total = Decimal('0')
+            if advance_ids:
+                advances_total = Advance.objects.filter(
+                    pk__in=advance_ids, specialist=specialist, status='pending'
+                ).aggregate(t=Sum('amount'))['t'] or Decimal('0')
+            sp = SalaryPayment.objects.create(
+                center=center,
+                specialist=specialist,
+                period_start=period_start,
+                period_end=period_end,
+                base_salary=base_salary,
+                commission_amount=commission_amount,
+                bonus=bonus,
+                advances_deducted=advances_total,
+                deductions=deductions,
+                deductions_notes=deductions_notes,
+                treasury=treasury,
+                notes=notes,
+            )
+            if advance_ids:
+                Advance.objects.filter(
+                    pk__in=advance_ids, specialist=specialist, status='pending'
+                ).update(salary_payment=sp)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            messages.success(request, 'تم إنشاء كشف الراتب (مسودة). اضغط "صرف" لتأكيده.')
+            return redirect('finance:salary_list')
+        except Exception as e:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': str(e)}, status=400)
+            messages.error(request, str(e))
+
+    center = request.user.center
+    specialists = Specialist.objects.filter(center=center, is_active=True)
+    treasuries = Treasury.objects.filter(center=center)
+    selected_specialist_id = request.GET.get('specialist')
+    pending_advances = []
+    commission_calc = Decimal('0')
+    pre_base = Decimal('0')
+    if selected_specialist_id:
+        try:
+            sp_obj = Specialist.objects.get(pk=selected_specialist_id, center=center)
+            pending_advances = list(Advance.objects.filter(
+                specialist=sp_obj, status='pending', center=center
+            ))
+            pre_base = sp_obj.base_salary
+            period_start_get = request.GET.get('period_start')
+            period_end_get = request.GET.get('period_end')
+            if period_start_get and period_end_get and sp_obj.commission_rate > 0:
+                from apps.appointments.models import Appointment
+                appts = Appointment.objects.filter(
+                    center=center,
+                    specialist=sp_obj,
+                    status='completed',
+                    date__gte=period_start_get,
+                    date__lte=period_end_get,
+                )
+                revenue = InvoiceLine.objects.filter(
+                    invoice__center=center,
+                    invoice__appointment__in=appts,
+                ).aggregate(t=Sum('line_total'))['t'] or Decimal('0')
+                commission_calc = (revenue * sp_obj.commission_rate / 100).quantize(Decimal('0.01'))
+        except Specialist.DoesNotExist:
+            pass
+    return render(request, 'finance/salary_form.html', {
+        'specialists': specialists,
+        'treasuries': treasuries,
+        'selected_specialist_id': selected_specialist_id,
+        'pending_advances': pending_advances,
+        'commission_calc': commission_calc,
+        'pre_base': pre_base,
+    })
+
+
+@login_required
+def salary_pay(request, pk):
+    center = request.user.center
+    sp = get_object_or_404(SalaryPayment, pk=pk, center=center)
+    if request.method == 'POST':
+        sp.pay()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        messages.success(request, 'تم صرف الراتب وخصمه من الخزينة.')
+        return redirect('finance:salary_list')
+    return JsonResponse({'error': 'method not allowed'}, status=405)
+
+
+@login_required
+def salary_cancel(request, pk):
+    center = request.user.center
+    sp = get_object_or_404(SalaryPayment, pk=pk, center=center)
+    if request.method == 'POST':
+        sp.cancel()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        messages.success(request, 'تم إلغاء الراتب وعكس حركة الخزينة.')
+        return redirect('finance:salary_list')
+    return JsonResponse({'error': 'method not allowed'}, status=405)
+
+
+@login_required
+def salary_detail(request, pk):
+    center = request.user.center
+    sp = get_object_or_404(SalaryPayment, pk=pk, center=center)
+    advances = sp.advance_items.all()
+    return render(request, 'finance/salary_detail.html', {'sp': sp, 'advances': advances})

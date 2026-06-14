@@ -250,6 +250,12 @@
           <a href="{% url 'finance:client_statement' %}" class="nav-subitem {% block nav_finance_statements %}{% endblock %}">
             <i class="fas fa-list"></i> كشف حساب عميل
           </a>
+          <a href="{% url 'finance:advances' %}" class="nav-subitem {% block nav_finance_advances %}{% endblock %}">
+            <i class="fas fa-hand-holding-usd"></i> السلف
+          </a>
+          <a href="{% url 'finance:salary_list' %}" class="nav-subitem {% block nav_finance_salaries %}{% endblock %}">
+            <i class="fas fa-file-invoice-dollar"></i> كشوف الرواتب
+          </a>
         </div>
       </div>
 

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% block nav_finance_open %}open{% endblock %}
+{% block nav_finance_advances %}active{% endblock %}
+{% block page_title %}السلف{% endblock %}
+{% block title %}السلف{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);box-shadow:0 4px 14px rgba(245,158,11,.32);">
+          <i class="fas fa-hand-holding-usd"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">السلف</h1>
+          <p class="cx-hero-desc">إجمالي: {{ total|format_number:2 }}</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <button type="button" class="btn btn--primary" onclick="BCMS.loadRemoteModal('{% url 'finance:advance_create' %}')">
+            <i class="fas fa-plus"></i> سلفة جديدة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- فلاتر -->
+  <div class="cx-panel" style="padding:16px 20px;margin-bottom:12px;">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="margin:0;min-width:180px;">
+        <label>الفنية</label>
+        <select name="specialist" class="form-control" onchange="this.form.submit()">
+          <option value="">الكل</option>
+          {% for s in specialists %}
+            <option value="{{ s.pk }}" {% if specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0;min-width:160px;">
+        <label>الحالة</label>
+        <select name="status" class="form-control" onchange="this.form.submit()">
+          <option value="">الكل</option>
+          <option value="pending"   {% if status_filter == 'pending'   %}selected{% endif %}>قائمة</option>
+          <option value="deducted"  {% if status_filter == 'deducted'  %}selected{% endif %}>مخصومة</option>
+          <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>ملغاة</option>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <div class="cx-panel">
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>الفنية</th>
+            <th>المبلغ</th>
+            <th>الخزينة</th>
+            <th>الحالة</th>
+            <th>ملاحظات</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for adv in advances %}
+          <tr>
+            <td class="text-muted">{{ adv.date }}</td>
+            <td><strong>{{ adv.specialist.name }}</strong></td>
+            <td><strong style="color:var(--amber,#f59e0b);">{{ adv.amount|format_number:2 }}</strong></td>
+            <td>{{ adv.treasury.name|default:"—" }}</td>
+            <td>
+              {% if adv.status == 'pending' %}
+                <span class="badge badge--warning">قائمة</span>
+              {% elif adv.status == 'deducted' %}
+                <span class="badge badge--success">مخصومة</span>
+              {% else %}
+                <span class="badge badge--danger">ملغاة</span>
+              {% endif %}
+            </td>
+            <td class="text-muted">{{ adv.notes|default:"—" }}</td>
+            <td>
+              {% if adv.status == 'pending' %}
+              <div class="cx-row-actions">
+                <button class="cx-act cx-act--del" title="إلغاء السلفة"
+                  onclick="BCMS.confirmDelete('إلغاء السلفة وعكس حركة الخزينة؟').then(function(ok){ if(ok){ fetch('{% url 'finance:advance_cancel' adv.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','success');setTimeout(()=>location.reload(),400);}});} });">
+                  <i class="fas fa-times-circle"></i>
+                </button>
+              </div>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-hand-holding-usd"></i>
+                <p>لا سلف مسجلة</p>
+                <button class="btn btn--primary" onclick="BCMS.loadRemoteModal('{% url 'finance:advance_create' %}')" style="margin-top:12px;">
+                  <i class="fas fa-plus"></i> سلفة جديدة
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile -->
+    <div class="cx-mobile-cards">
+      {% for adv in advances %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">{{ adv.specialist.name }}</div>
+            <div class="cx-card-sub">{{ adv.date }}</div>
+          </div>
+          <div>
+            {% if adv.status == 'pending' %}
+              <span class="badge badge--warning">قائمة</span>
+            {% elif adv.status == 'deducted' %}
+              <span class="badge badge--success">مخصومة</span>
+            {% else %}
+              <span class="badge badge--danger">ملغاة</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">المبلغ</span>
+            <span class="cx-card-meta-value" style="color:var(--amber,#f59e0b);font-weight:800;">{{ adv.amount|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الخزينة</span>
+            <span class="cx-card-meta-value">{{ adv.treasury.name|default:"—" }}</span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty"><i class="fas fa-hand-holding-usd"></i><p>لا سلف مسجلة</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% csrf_token %}
+{% endblock %}

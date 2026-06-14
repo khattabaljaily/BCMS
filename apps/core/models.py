@@ -18,7 +18,7 @@ class ServiceType(models.Model):
     color   = models.CharField('اللون', max_length=7, default='#ec4899')
     description = models.TextField('الوصف', blank=True)
     is_active   = models.BooleanField('نشط', default=True)
-    order       = models.PositiveIntegerField('الترتيب')
+    order       = models.PositiveIntegerField('الترتيب', default=0)
 
     class Meta:
         db_table = 'service_types'
@@ -306,7 +306,7 @@ class CenterBackup(models.Model):
     )
     filename    = models.CharField('اسم الملف', max_length=255)
     file_path   = models.CharField('مسار الملف', max_length=500)
-    file_size   = models.BigIntegerField('الحجم بالبايت')
+    file_size   = models.BigIntegerField('الحجم بالبايت', default=0)
     backup_type = models.CharField('نوع النسخة', max_length=20, choices=BACKUP_TYPES, default='manual')
     status      = models.CharField('الحالة', max_length=20, choices=STATUS_CHOICES, default='in_progress')
     notes       = models.TextField('ملاحظات', blank=True)

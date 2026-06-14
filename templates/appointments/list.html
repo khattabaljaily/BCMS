@@ -217,13 +217,16 @@
         </div>
         <div class="form-group">
           <label class="form-label">الخدمات</label>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;border:1.5px solid var(--slate-200);border-radius:8px;max-height:180px;overflow-y:auto;">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;border:1.5px solid var(--slate-200);border-radius:8px;max-height:180px;overflow-y:auto;" id="services-grid">
             {% for svc in services %}
             <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:4px 10px;border-radius:6px;background:var(--slate-50);border:1px solid var(--slate-200);">
-              <input type="checkbox" name="service_ids" value="{{ svc.pk }}" style="margin:0;">
+              <input type="checkbox" name="service_ids" value="{{ svc.pk }}" data-price="{{ svc.price }}" style="margin:0;" onchange="updateApptTotal()">
               {{ svc.name }} <span style="color:var(--rose);font-weight:700;margin-right:4px;">({{ svc.price|format_number:2 }})</span>
             </label>
             {% endfor %}
+          </div>
+          <div id="appt-total-preview" style="display:none;margin-top:8px;padding:8px 12px;background:var(--rose-50,#fff1f2);border-radius:8px;font-weight:700;color:var(--rose);font-size:14px;text-align:left;">
+            الإجمالي: <span id="appt-total-value">0</span>
           </div>
         </div>
         <div class="form-group">
@@ -280,6 +283,7 @@ function openAddAppt() {
   document.querySelector('[name="start_time"]').value = '';
   document.querySelector('[name="notes"]').value = '';
   document.querySelectorAll('[name="service_ids"]').forEach(function(cb) { cb.checked = false; });
+  updateApptTotal();
   openModal('modal-add');
 }
 
@@ -303,6 +307,7 @@ function openEditAppt(pk) {
     document.querySelectorAll('[name="service_ids"]').forEach(function(cb) {
       cb.checked = svcIds.includes(String(cb.value));
     });
+    updateApptTotal();
     openModal('modal-add');
   })
   .catch(function() { GSpinner.hide(); BCMS.toast('تعذر تحميل بيانات الموعد', 'error'); });
@@ -312,6 +317,21 @@ function openEditAppt(pk) {
 document.addEventListener('bcms:recordDeleted', function() {
   setTimeout(reloadApptPanel, 300);
 });
+
+function updateApptTotal() {
+  var total = 0;
+  document.querySelectorAll('[name="service_ids"]:checked').forEach(function(cb) {
+    total += parseFloat(cb.dataset.price || 0);
+  });
+  var preview = document.getElementById('appt-total-preview');
+  var valEl = document.getElementById('appt-total-value');
+  if (total > 0) {
+    preview.style.display = 'block';
+    valEl.textContent = total.toLocaleString('ar-SA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  } else {
+    preview.style.display = 'none';
+  }
+}
 
 var STATUS_BORDER = {
   pending: 'var(--yellow)', confirmed: 'var(--blue)', in_progress: 'var(--purple)',

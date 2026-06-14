@@ -40,10 +40,14 @@ def specialist_save(request, pk=None):
             instance.color = data.get('color', '#6366f1')
         elif instance.pk is None:
             instance.color = '#6366f1'
-        instance.work_start = data.get('work_start') or None
-        instance.work_end   = data.get('work_end') or None
-        instance.is_active  = 'is_active' in data
-        instance.order      = int(data.get('order') or 0)
+        instance.work_start      = data.get('work_start') or None
+        instance.work_end        = data.get('work_end') or None
+        instance.is_active       = 'is_active' in data
+        instance.order           = int(data.get('order') or 0)
+        instance.salary_type     = data.get('salary_type', 'fixed')
+        from decimal import Decimal
+        instance.base_salary     = Decimal(data.get('base_salary') or '0')
+        instance.commission_rate = Decimal(data.get('commission_rate') or '0')
         if 'photo' in request.FILES:
             instance.photo = request.FILES['photo']
         instance.save()

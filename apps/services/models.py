@@ -11,7 +11,7 @@ class ServiceCategory(CenterMixin):
     name      = models.CharField('الاسم', max_length=100)
     icon      = models.CharField('الأيقونة', max_length=60, default='fas fa-spa')
     color     = models.CharField('اللون', max_length=7, default='#ec4899')
-    order     = models.PositiveIntegerField('الترتيب')
+    order     = models.PositiveIntegerField('الترتيب', default=0)
     is_active = models.BooleanField('نشط', default=True)
 
     class Meta:
@@ -37,11 +37,11 @@ class Service(CenterMixin):
     name        = models.CharField('اسم الخدمة', max_length=200)
     description = models.TextField('الوصف', blank=True)
     duration    = models.PositiveIntegerField('المدة (دقيقة)', default=60)
-    price       = models.DecimalField('السعر', max_digits=10, decimal_places=2)
-    cost        = models.DecimalField('التكلفة', max_digits=10, decimal_places=2)
+    price       = models.DecimalField('السعر', max_digits=10, decimal_places=2, default=Decimal('0'))
+    cost        = models.DecimalField('التكلفة', max_digits=10, decimal_places=2, default=Decimal('0'))
     is_active   = models.BooleanField('نشط', default=True)
     show_in_store = models.BooleanField('يظهر في المتجر', default=True)
-    order       = models.PositiveIntegerField('الترتيب')
+    order       = models.PositiveIntegerField('الترتيب', default=0)
     image       = models.ImageField('الصورة', upload_to='services/', blank=True, null=True)
 
     class Meta:
@@ -67,7 +67,7 @@ class Package(CenterMixin):
     """باقة خدمات — مجموعة خدمات بسعر خاص"""
     name        = models.CharField('اسم الباقة', max_length=200)
     description = models.TextField('الوصف', blank=True)
-    price       = models.DecimalField('سعر الباقة', max_digits=10, decimal_places=2)
+    price       = models.DecimalField('سعر الباقة', max_digits=10, decimal_places=2, default=Decimal('0'))
     services    = models.ManyToManyField(
         Service, through='PackageService',
         verbose_name='الخدمات المضمّنة'
@@ -100,7 +100,7 @@ class Package(CenterMixin):
 class PackageService(models.Model):
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='package_services')
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    order   = models.PositiveIntegerField()
+    order   = models.PositiveIntegerField(default=0)
 
     class Meta:
         db_table = 'package_services'
