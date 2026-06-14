@@ -1,25 +1,45 @@
 <div class="cx-card" id="card-{{ s.pk }}">
   <div class="cx-card-head">
     <div style="display:flex;align-items:center;gap:10px;">
-      <div class="client-avatar" style="width:40px;height:40px;flex-shrink:0;">{{ s.name|first }}</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#1d4ed8;flex-shrink:0;">
+        {{ s.name|first }}
+      </div>
       <div>
         <div class="cx-card-title">{{ s.name }}</div>
-        <div class="cx-card-sub">{{ s.specialty }}</div>
+        <div class="cx-card-sub">{{ s.specialty|default:s.phone|default:"—" }}</div>
       </div>
     </div>
     <div class="cx-card-actions">
-      <button type="button" class="cx-act" onclick="openEditSpecialist({{ s.pk }})"><i class="fas fa-edit"></i></button>
-      <button type="button" class="cx-act cx-act--del" onclick="BCMS.ajaxDelete('{% url 'staff:delete' s.pk %}', 'حذف عضو الفريق {{ s.name|escapejs }}؟', 'row-{{ s.pk }}')"><i class="fas fa-trash"></i></button>
+      <button type="button" class="cx-act"
+              onclick="openEditSpecialist({{ s.pk }}, '{{ s.name|escapejs }}', '{{ s.phone|default:''|escapejs }}', '{{ s.specialty|default:''|escapejs }}', '{{ s.work_start|time:"H:i"|default:'' }}', '{{ s.work_end|time:"H:i"|default:'' }}', '{{ s.bio|default:''|escapejs }}', {{ s.is_active|yesno:'true,false' }}, '{% for svc in s.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}')">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button type="button" class="cx-act cx-act--del"
+              onclick="BCMS.ajaxDelete('{% url 'staff:delete' s.pk %}', 'حذف {{ s.name|escapejs }} من الفريق؟', 'row-{{ s.pk }}')">
+        <i class="fas fa-trash"></i>
+      </button>
     </div>
   </div>
   <div class="cx-card-meta">
     <div>
-      <span class="cx-card-meta-label">التخصص</span>
-      <span class="cx-card-meta-value">{{ s.specialty }}</span>
+      <span class="cx-card-meta-label">الهاتف</span>
+      <span class="cx-card-meta-value">{{ s.phone|default:"—" }}</span>
+    </div>
+    <div>
+      <span class="cx-card-meta-label">الدوام</span>
+      <span class="cx-card-meta-value">
+        {% if s.work_start %}{{ s.work_start|time:"H:i" }} — {{ s.work_end|time:"H:i" }}{% else %}—{% endif %}
+      </span>
     </div>
     <div>
       <span class="cx-card-meta-label">الحالة</span>
-      <span class="cx-card-meta-value">{% if s.is_active %}نشط{% else %}موقوف{% endif %}</span>
+      <span class="cx-card-meta-value">
+        {% if s.is_active %}
+        <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نشط</span>
+        {% else %}
+        <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>موقوف</span>
+        {% endif %}
+      </span>
     </div>
   </div>
 </div>
