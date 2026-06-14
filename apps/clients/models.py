@@ -27,7 +27,7 @@ class Client(CenterMixin):
     referral = models.CharField('مصدر التعريف', max_length=20, choices=REFERRAL_CHOICES, blank=True)
 
     # الولاء
-    points = models.IntegerField('نقاط الولاء')
+    points = models.IntegerField('نقاط الولاء', default=0)
 
     # الحالة
     is_active = models.BooleanField('نشطة', default=True)

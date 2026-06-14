@@ -64,6 +64,7 @@ def client_save(request):
         return redirect('clients:list')
 
     obj.save()
+    
     if ajax:
         try:
             row_html = render_to_string('clients/_row.html', {'cl': obj}, request=request)
