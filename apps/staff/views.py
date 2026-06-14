@@ -77,9 +77,9 @@ def specialist_save(request, pk=None):
 def specialist_delete(request, pk):
     obj = get_object_or_404(Specialist, pk=pk, center=request.center)
     if request.method == 'POST':
-        obj.is_active = False
-        obj.save(update_fields=['is_active'])
+        row_id = 'row-%s' % obj.pk
+        obj.delete()
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم إزالة الفرد من الفريق.', 'row_id': 'row-%s' % obj.pk})
+            return JsonResponse({'success': True, 'message': 'تم إزالة الفرد من الفريق.', 'row_id': row_id})
         messages.success(request, 'تم حذف عضو الفريق بنجاح.')
     return redirect('staff:list')
