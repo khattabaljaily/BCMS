@@ -342,33 +342,68 @@ def center_extend(request, pk):
     return redirect('sysadmin:center_detail', pk=pk)
 
 
+def _force_delete_center(center):
+    """
+    Delete a center and ALL its data, bypassing on_delete=PROTECT constraints.
+
+    Django raises ProtectedError even when the referencing object is itself in the
+    deletion set, so we pre-delete every PROTECT-protected object explicitly in the
+    correct dependency order before calling center.delete().
+
+    PROTECT relationships in this codebase:
+      Appointment.client       → Client       (PROTECT)
+      Invoice.client           → Client       (PROTECT)
+      AppointmentService.service → Service    (PROTECT)
+      Product.category         → ProductCategory (PROTECT)
+      PurchaseInvoiceLine.product → Product   (PROTECT)
+      StoreOrderItem.product   → Product      (PROTECT)
+    """
+    from django.db import transaction
+
+    with transaction.atomic():
+        # ── Step 1: break PROTECT on Service ──────────────────────────────
+        from apps.appointments.models import AppointmentService
+        AppointmentService.objects.filter(appointment__center=center).delete()
+
+        # ── Step 2: break PROTECT on Client ───────────────────────────────
+        from apps.billing.models import InvoiceLine, Invoice
+        from apps.finance.models import ClientPayment, TreasuryMovement
+        from apps.appointments.models import Appointment
+
+        InvoiceLine.objects.filter(invoice__center=center).delete()
+        ClientPayment.objects.filter(center=center).delete()
+        Invoice.objects.filter(center=center).delete()
+        Appointment.objects.filter(center=center).delete()
+
+        # ── Step 3: break PROTECT on Product ──────────────────────────────
+        from apps.store.models import StoreOrderItem
+        from apps.products.models import PurchaseInvoiceLine, StockMovement, Product
+
+        StoreOrderItem.objects.filter(order__center=center).delete()
+        PurchaseInvoiceLine.objects.filter(invoice__center=center).delete()
+        StockMovement.objects.filter(center=center).delete()
+
+        # Product.category → ProductCategory (PROTECT): delete products so
+        # ProductCategory can be cascade-deleted together with Center.
+        Product.objects.filter(center=center).delete()
+
+        # ── Step 4: cleanup treasury movements (CASCADE anyway) ────────────
+        TreasuryMovement.objects.filter(treasury__center=center).delete()
+
+        # ── Step 5: all PROTECT blocks cleared — cascade the rest ──────────
+        center.delete()
+
+
 @superuser_required
 def center_delete(request, pk):
     if request.method == 'POST':
         center = get_object_or_404(Center, pk=pk)
         name = center.name
         try:
-            center.delete()
+            _force_delete_center(center)
         except Exception as e:
             import logging
-            from django.db.models.deletion import ProtectedError
-            logging.exception("Error deleting center %s", pk)
-            # Handle ProtectedError specially to give admin a clear message
-            if isinstance(e, ProtectedError):
-                protected_objs = getattr(e, 'args', [None, None])[1] or []
-                blocked = [str(o) for o in list(protected_objs)[:10]]
-                msg = 'لا يمكن حذف المركز: توجد سجلات مرتبطة محمية.'
-                if _is_ajax(request):
-                    return JsonResponse({
-                        'success': False,
-                        'error': msg,
-                        'blocked_count': len(protected_objs),
-                        'blocked': blocked,
-                    }, status=400)
-                messages.error(request, f'{msg} ({len(protected_objs)} عناصر)')
-                return redirect('sysadmin:center_detail', pk=pk)
-
-            # Generic error
+            logging.exception("Error force-deleting center %s", pk)
             if _is_ajax(request):
                 return JsonResponse({'success': False, 'error': str(e)}, status=500)
             messages.error(request, f'حدث خطأ أثناء حذف المركز: {e}')
@@ -376,7 +411,7 @@ def center_delete(request, pk):
 
         if _is_ajax(request):
             return JsonResponse({'success': True})
-        messages.success(request, f'تم حذف المركز "{name}".')
+        messages.success(request, f'تم حذف المركز "{name}" وجميع بياناته.')
     return redirect('sysadmin:center_list')
 
 
