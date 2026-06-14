@@ -346,19 +346,19 @@
 
   <!-- ── Main ─────────────────────────────────────────────── -->
   <div class="main">
-    <header class="topbar">
+    <header class="topbar" style="position:relative;">
       <div style="display:flex;align-items:center;gap:12px;">
         <button id="sidebar-toggle" aria-label="القائمة">
           <i class="fas fa-bars"></i>
         </button>
         <div class="topbar__title">{% block page_title %}{% endblock %}</div>
       </div>
+      <div class="live-clock" style="position:absolute;left:50%;transform:translateX(-50%);">
+        <i class="fas fa-clock live-clock__icon"></i>
+        <span id="live-clock-full"></span>
+      </div>
       <div class="topbar__actions">
         {% block topbar_actions %}{% endblock %}
-        <div class="live-clock">
-          <i class="fas fa-clock live-clock__icon"></i>
-          <span id="live-clock-full"></span>
-        </div>
         <div class="topbar__user">
           <div style="position:relative;">
             <button id="topbar-user-btn" onclick="toggleTopbarMenu()" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;">
