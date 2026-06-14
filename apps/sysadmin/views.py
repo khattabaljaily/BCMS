@@ -305,8 +305,13 @@ def center_add(request):
                 )
 
                 if ajax:
-                    return JsonResponse({'success': True, 'center': _center_payload(c)})
-                messages.success(request, f'تم إنشاء المركز "{name}" بنجاح ومالكه هو "{owner_full_name}".')
+                    return JsonResponse({
+                        'success': True,
+                        'center': _center_payload(c),
+                        'owner_username': owner_username,
+                        'owner_full_name': owner_full_name,
+                    })
+                messages.success(request, f'تم إنشاء المركز "{name}" بنجاح. بيانات الدخول: المستخدم "{owner_username}".')
                 return redirect('sysadmin:center_detail', pk=c.pk)
             except Exception as e:
                 import logging

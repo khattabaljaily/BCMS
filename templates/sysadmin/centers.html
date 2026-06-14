@@ -334,6 +334,37 @@
         </div>
       </div>
 
+      <div class="modal-section">
+        <div class="modal-section__head"><i class="fas fa-user-shield"></i> بيانات مالك المركز (حساب الدخول)</div>
+        <div class="modal-section__body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>الاسم الكامل *</label>
+              <input type="text" name="owner_full_name" id="add-owner-full-name" class="form-control" placeholder="مثال: أحمد محمد" required>
+            </div>
+            <div class="form-group">
+              <label>اسم المستخدم *</label>
+              <input type="text" name="owner_username" id="add-owner-username" class="form-control" placeholder="اسم_المستخدم" autocomplete="off" required>
+              <span class="form-hint">يُستخدم لتسجيل الدخول — لا يمكن تغييره لاحقاً</span>
+            </div>
+            <div class="form-group" style="position:relative;">
+              <label>كلمة المرور *</label>
+              <div style="position:relative;">
+                <input type="password" name="owner_password" id="add-owner-password" class="form-control" placeholder="6 أحرف على الأقل" autocomplete="new-password" required minlength="6">
+                <button type="button" tabindex="-1" onclick="toggleAddPass('add-owner-password',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--sa-muted);"><i class="fas fa-eye"></i></button>
+              </div>
+            </div>
+            <div class="form-group" style="position:relative;">
+              <label>تأكيد كلمة المرور *</label>
+              <div style="position:relative;">
+                <input type="password" name="owner_password2" id="add-owner-password2" class="form-control" placeholder="أعد إدخال كلمة المرور" autocomplete="new-password" required minlength="6">
+                <button type="button" tabindex="-1" onclick="toggleAddPass('add-owner-password2',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--sa-muted);"><i class="fas fa-eye"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="modal-footer">
         <button type="submit" class="btn btn-primary" id="btn-add-submit">
           <i class="fas fa-check"></i> إنشاء المركز
@@ -536,12 +567,54 @@ function openDeleteModal(pk, name) {
   openModal('modal-delete');
 }
 
+/* ── Toggle password visibility (add modal) ── */
+function toggleAddPass(id, btn) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  const icon = btn && btn.querySelector ? btn.querySelector('i') : null;
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    if (icon) { icon.className = 'fas fa-eye-slash'; }
+  } else {
+    inp.type = 'password';
+    if (icon) { icon.className = 'fas fa-eye'; }
+  }
+}
+
+/* ── Auto-generate username from center name ── */
+(function () {
+  const nameEl  = document.getElementById('add-name');
+  const userEl  = document.getElementById('add-owner-username');
+  if (!nameEl || !userEl) return;
+  userEl._touched = false;
+  userEl.addEventListener('input', () => { userEl._touched = !!userEl.value; });
+  nameEl.addEventListener('input', () => {
+    if (userEl._touched) return;
+    userEl.value = nameEl.value
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+  });
+})();
+
 /* ── Add form submit ── */
 document.getElementById('form-add').addEventListener('submit', async function (e) {
   e.preventDefault();
   const btn    = document.getElementById('btn-add-submit');
   const errEl  = document.getElementById('add-error');
-  btn.disabled = true;
+
+  // Client-side password match check
+  const pw1 = (document.getElementById('add-owner-password')  || {}).value || '';
+  const pw2 = (document.getElementById('add-owner-password2') || {}).value || '';
+  if (pw1 !== pw2) {
+    errEl.textContent   = 'كلمة المرور وتأكيدها غير متطابقتين';
+    errEl.style.display = 'inline';
+    return;
+  }
+
+  btn.disabled  = true;
   btn.innerHTML = '<span class="sa-spinner"></span> جاري الإنشاء...';
   errEl.style.display = 'none';
   try {
@@ -554,8 +627,9 @@ document.getElementById('form-add').addEventListener('submit', async function (e
     if (data.success) {
       closeModal('modal-add');
       this.reset();
-      showToast('تم إنشاء المركز "' + data.center.name + '" بنجاح');
-      setTimeout(() => location.reload(), 700);
+      const msg = 'تم إنشاء المركز "' + data.center.name + '" — اسم المستخدم: ' + (data.owner_username || '');
+      showToast(msg);
+      setTimeout(() => location.reload(), 1200);
     } else {
       errEl.textContent   = data.error || 'حدث خطأ غير متوقع';
       errEl.style.display = 'inline';
