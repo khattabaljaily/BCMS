@@ -247,22 +247,29 @@ def center_add(request):
             if ajax: return JsonResponse({'success': False, 'error': err})
             messages.error(request, err)
         else:
-            st = get_object_or_404(ServiceType, pk=service_type_id) if service_type_id else None
-            c = Center.objects.create(
-                name=name, slug=slug, phone=phone, email=email,
-                address=address, city=city, plan=plan,
-                country=country_code,
-                timezone=country_info['timezone'],
-                currency=country_info['currency'],
-                plan_expires=plan_expires, service_type=st,
-                max_staff=max_staff, max_users=max_users,
-                is_active=is_active, is_demo=is_demo,
-            )
-            Settings.objects.get_or_create(center=c)
-            if ajax:
-                return JsonResponse({'success': True, 'center': _center_payload(c)})
-            messages.success(request, f'تم إنشاء المركز "{name}" بنجاح.')
-            return redirect('sysadmin:center_detail', pk=c.pk)
+            try:
+                st = get_object_or_404(ServiceType, pk=service_type_id) if service_type_id else None
+                c = Center.objects.create(
+                    name=name, slug=slug, phone=phone, email=email,
+                    address=address, city=city, plan=plan,
+                    country=country_code,
+                    timezone=country_info['timezone'],
+                    currency=country_info['currency'],
+                    plan_expires=plan_expires, service_type=st,
+                    max_staff=max_staff, max_users=max_users,
+                    is_active=is_active, is_demo=is_demo,
+                )
+                Settings.objects.get_or_create(center=c)
+                if ajax:
+                    return JsonResponse({'success': True, 'center': _center_payload(c)})
+                messages.success(request, f'تم إنشاء المركز "{name}" بنجاح.')
+                return redirect('sysadmin:center_detail', pk=c.pk)
+            except Exception as e:
+                import logging
+                logging.exception("Error creating center")
+                if ajax:
+                    return JsonResponse({'success': False, 'error': str(e)}, status=500)
+                messages.error(request, f'حدث خطأ أثناء إنشاء المركز: {e}')
 
     return render(request, 'sysadmin/center_form.html', {
         'service_types':   service_types,
@@ -279,33 +286,41 @@ def center_edit(request, pk):
     ajax = _is_ajax(request)
 
     if request.method == 'POST':
-        center.name    = request.POST.get('name', '').strip() or center.name
-        center.phone   = request.POST.get('phone', '').strip()
-        center.email   = request.POST.get('email', '').strip()
-        center.address = request.POST.get('address', '').strip()
-        center.city    = request.POST.get('city', '').strip()
-        center.plan    = request.POST.get('plan', center.plan)
-        center.plan_expires = request.POST.get('plan_expires') or None
-        center.max_staff = int(request.POST.get('max_staff', center.max_staff) or center.max_staff)
-        center.max_users = int(request.POST.get('max_users', center.max_users) or center.max_users)
-        center.is_active = bool(request.POST.get('is_active'))
-        center.is_demo   = bool(request.POST.get('is_demo'))
-        country_code = request.POST.get('country', center.country).strip()
-        if country_code in ARAB_COUNTRIES:
-            country_info = ARAB_COUNTRIES[country_code]
-            center.country   = country_code
-            center.timezone  = country_info['timezone']
-            center.currency  = country_info['currency']
-        st_id = request.POST.get('service_type')
-        if st_id:
-            center.service_type_id = int(st_id)
-        if 'logo' in request.FILES:
-            center.logo = request.FILES['logo']
-        center.save()
-        if ajax:
-            return JsonResponse({'success': True, 'center': _center_payload(center)})
-        messages.success(request, 'تم حفظ بيانات المركز.')
-        return redirect('sysadmin:center_detail', pk=center.pk)
+        try:
+            center.name    = request.POST.get('name', '').strip() or center.name
+            center.phone   = request.POST.get('phone', '').strip()
+            center.email   = request.POST.get('email', '').strip()
+            center.address = request.POST.get('address', '').strip()
+            center.city    = request.POST.get('city', '').strip()
+            center.plan    = request.POST.get('plan', center.plan)
+            center.plan_expires = request.POST.get('plan_expires') or None
+            center.max_staff = int(request.POST.get('max_staff', center.max_staff) or center.max_staff)
+            center.max_users = int(request.POST.get('max_users', center.max_users) or center.max_users)
+            center.is_active = bool(request.POST.get('is_active'))
+            center.is_demo   = bool(request.POST.get('is_demo'))
+            country_code = request.POST.get('country', center.country).strip()
+            if country_code in ARAB_COUNTRIES:
+                country_info = ARAB_COUNTRIES[country_code]
+                center.country   = country_code
+                center.timezone  = country_info['timezone']
+                center.currency  = country_info['currency']
+            st_id = request.POST.get('service_type')
+            if st_id:
+                center.service_type_id = int(st_id)
+            if 'logo' in request.FILES:
+                center.logo = request.FILES['logo']
+            center.save()
+            if ajax:
+                return JsonResponse({'success': True, 'center': _center_payload(center)})
+            messages.success(request, 'تم حفظ بيانات المركز.')
+            return redirect('sysadmin:center_detail', pk=center.pk)
+        except Exception as e:
+            import logging
+            logging.exception("Error editing center %s", pk)
+            if ajax:
+                return JsonResponse({'success': False, 'error': str(e)}, status=500)
+            messages.error(request, f'حدث خطأ أثناء حفظ البيانات: {e}')
+            return redirect('sysadmin:center_detail', pk=center.pk)
 
     return render(request, 'sysadmin/center_form.html', {
         'service_types':   service_types,
