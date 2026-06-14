@@ -125,7 +125,7 @@ class Settings(models.Model):
     invoice_next_number = models.PositiveIntegerField('الرقم التالي', default=1)
     invoice_footer      = models.TextField('تذييل الفاتورة', blank=True)
     show_tax_on_invoice = models.BooleanField('إظهار الضريبة', default=False)
-    tax_percent         = models.DecimalField('نسبة الضريبة %', max_digits=5, decimal_places=2)
+    tax_percent         = models.DecimalField('نسبة الضريبة %', max_digits=5, decimal_places=2, default=0)
 
     # المواعيد
     booking_enabled      = models.BooleanField('الحجز الذاتي عبر المتجر', default=True)
