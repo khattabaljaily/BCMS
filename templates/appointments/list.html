@@ -236,14 +236,47 @@
 
 {% block extra_js %}
 <script>
+// Reload just the appointments panel + hero count from the server (same URL/date)
+function reloadApptPanel() {
+  fetch(window.location.href, { credentials: 'same-origin' })
+    .then(function(r) { return r.text(); })
+    .then(function(html) {
+      var d = document.createElement('div');
+      d.innerHTML = html;
+      var np = d.querySelector('.cx-panel'), cp = document.querySelector('.cx-panel');
+      if (np && cp) cp.replaceWith(np);
+      var nh = d.querySelector('.cx-hero-desc'), ch = document.querySelector('.cx-hero-desc');
+      if (nh && ch) ch.textContent = nh.textContent;
+      document.dispatchEvent(new Event('bcms:tableRefresh'));
+      if (typeof transformAppointmentSelectsForMobile === 'function') transformAppointmentSelectsForMobile();
+    })
+    .catch(function() {});
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  BCMS.ajaxForm(document.querySelector('#modal-add form'));
+  BCMS.ajaxForm(document.querySelector('#modal-add form'), {
+    onSuccess: function() {
+      closeModal('modal-add');
+      reloadApptPanel();
+    }
+  });
 });
+
+// After delete animation finishes, reload panel (handles empty state + count)
+document.addEventListener('bcms:recordDeleted', function() {
+  setTimeout(reloadApptPanel, 300);
+});
+
+var STATUS_BORDER = {
+  pending: 'var(--yellow)', confirmed: 'var(--blue)', in_progress: 'var(--purple)',
+  completed: 'var(--green)', no_show: 'var(--red)', cancelled: 'var(--slate-300)'
+};
 
 function updateApptStatus(pk, status, url) {
   var fd = new FormData();
   fd.append('status', status);
   fd.append('csrfmiddlewaretoken', BCMS.getCsrf());
+  GSpinner.show();
   fetch(url, {
     method: 'POST',
     headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -251,10 +284,20 @@ function updateApptStatus(pk, status, url) {
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    if (data.success) BCMS.toast(data.message || 'تم تحديث الحالة', 'success');
-    else BCMS.toast(data.error || 'تعذر التحديث', 'error');
+    GSpinner.hide();
+    if (data.success) {
+      BCMS.toast(data.message || 'تم تحديث الحالة', 'success');
+      // Update row stripe color
+      var row = document.getElementById('row-' + pk);
+      if (row) row.className = row.className.replace(/appt-row--\S+/g, 'appt-row--' + status);
+      // Update mobile card border
+      var card = document.getElementById('card-' + pk);
+      if (card) card.style.borderRightColor = STATUS_BORDER[status] || 'var(--slate-300)';
+    } else {
+      BCMS.toast(data.error || 'تعذر التحديث', 'error');
+    }
   })
-  .catch(function() { BCMS.toast('خطأ في الاتصال بالخادم', 'error'); });
+  .catch(function() { GSpinner.hide(); BCMS.toast('خطأ في الاتصال بالخادم', 'error'); });
 }
 </script>
 {% endblock %}
