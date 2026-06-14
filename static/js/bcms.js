@@ -240,6 +240,28 @@ const BCMS = {
         wrapper.style.display = 'none';
     },
 
+    confirmExpenseCategory: function () {
+        var select = document.getElementById('expense-category-select');
+        var input = document.getElementById('expense-category-input');
+        var wrapper = document.getElementById('expense-category-input-wrapper');
+        if (!select || !input || !wrapper) return;
+        var val = input.value.trim();
+        if (!val) { input.focus(); return; }
+        // Add the new category as a selected option in the dropdown and switch back
+        var existing = select.querySelector('option[value="' + val.replace(/"/g, '\\"') + '"]');
+        if (!existing) {
+            var opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = val;
+            select.appendChild(opt);
+        }
+        select.value = val;
+        input.value = '';
+        input.removeAttribute('name');
+        select.setAttribute('name', 'category');
+        wrapper.style.display = 'none';
+    },
+
     ensureExpenseCategorySelection: function () {
         var select = document.getElementById('expense-category-select');
         var input = document.getElementById('expense-category-input');

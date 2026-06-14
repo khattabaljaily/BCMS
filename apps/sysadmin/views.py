@@ -347,7 +347,33 @@ def center_delete(request, pk):
     if request.method == 'POST':
         center = get_object_or_404(Center, pk=pk)
         name = center.name
-        center.delete()
+        try:
+            center.delete()
+        except Exception as e:
+            import logging
+            from django.db.models.deletion import ProtectedError
+            logging.exception("Error deleting center %s", pk)
+            # Handle ProtectedError specially to give admin a clear message
+            if isinstance(e, ProtectedError):
+                protected_objs = getattr(e, 'args', [None, None])[1] or []
+                blocked = [str(o) for o in list(protected_objs)[:10]]
+                msg = 'لا يمكن حذف المركز: توجد سجلات مرتبطة محمية.'
+                if _is_ajax(request):
+                    return JsonResponse({
+                        'success': False,
+                        'error': msg,
+                        'blocked_count': len(protected_objs),
+                        'blocked': blocked,
+                    }, status=400)
+                messages.error(request, f'{msg} ({len(protected_objs)} عناصر)')
+                return redirect('sysadmin:center_detail', pk=pk)
+
+            # Generic error
+            if _is_ajax(request):
+                return JsonResponse({'success': False, 'error': str(e)}, status=500)
+            messages.error(request, f'حدث خطأ أثناء حذف المركز: {e}')
+            return redirect('sysadmin:center_detail', pk=pk)
+
         if _is_ajax(request):
             return JsonResponse({'success': True})
         messages.success(request, f'تم حذف المركز "{name}".')

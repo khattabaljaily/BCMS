@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django.db import models
 from django.db.models import Sum
+from django.utils import timezone
 from apps.core.models import CenterMixin
 from apps.clients.models import Client
 
@@ -99,7 +100,7 @@ class Expense(CenterMixin):
     category = models.CharField('الفئة', max_length=120)
     amount = models.DecimalField('المبلغ', max_digits=12, decimal_places=2)
     method = models.CharField('طريقة الدفع', max_length=50, choices=PAYMENT_METHODS, default='cash')
-    date = models.DateField('التاريخ', auto_now_add=True)
+    date = models.DateField('التاريخ', default=timezone.localdate)
     treasury = models.ForeignKey(Treasury, on_delete=models.SET_NULL, null=True, blank=True)
     notes = models.TextField('ملاحظات', blank=True)
 
@@ -126,7 +127,7 @@ class ClientPayment(CenterMixin):
     invoice = models.ForeignKey('billing.Invoice', on_delete=models.CASCADE, related_name='payments')
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
     amount = models.DecimalField('المبلغ', max_digits=12, decimal_places=2)
-    date = models.DateField('التاريخ', auto_now_add=True)
+    date = models.DateField('التاريخ', default=timezone.localdate)
     created_at = models.DateTimeField('تاريخ الإنشاء', auto_now_add=True, null=True)
     method = models.CharField('طريقة الدفع', max_length=50, choices=PAYMENT_METHODS, default='cash')
     status = models.CharField('الحالة', max_length=20, choices=STATUS, default='confirmed')

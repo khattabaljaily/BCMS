@@ -17,7 +17,7 @@
         </div>
         <div>
           <h1 class="cx-hero-title">المنتجات</h1>
-          <p class="cx-hero-desc">{{ products.count }} منتج مسجل</p>
+          <p class="cx-hero-desc">{{ total_count }} منتج مسجل</p>
         </div>
       </div>
       <div class="cx-hero-right">
@@ -153,6 +153,19 @@
       {% endfor %}
     </div>
 
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+    <div class="cx-pagination">
+      {% if products.has_previous %}
+        <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_cat %}cat={{ selected_cat }}&{% endif %}page={{ products.previous_page_number }}" class="btn btn--ghost btn--sm">&laquo; السابق</a>
+      {% endif %}
+      <span class="cx-pagination-info">صفحة {{ products.number }} من {{ products.paginator.num_pages }}</span>
+      {% if products.has_next %}
+        <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_cat %}cat={{ selected_cat }}&{% endif %}page={{ products.next_page_number }}" class="btn btn--ghost btn--sm">التالي &raquo;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
   </div>
 
 </div>
@@ -190,23 +203,23 @@
           </div>
           <div class="form-group">
             <label class="form-label">سعر البيع <span style="color:var(--red)">*</span></label>
-            <input class="form-control" type="number" name="price" id="product-price" min="0" step="0.01" required>
+            <input class="form-control" type="number" name="price" id="product-price" min="0" step="any" required>
           </div>
         </div>
         <div class="form-grid-2">
           <div class="form-group">
             <label class="form-label">التكلفة</label>
-            <input class="form-control" type="number" name="cost" id="product-cost" min="0" step="0.01" value="0">
+            <input class="form-control" type="number" name="cost" id="product-cost" min="0" step="any" value="0">
           </div>
           <div class="form-group">
             <label class="form-label">المخزون الحالي</label>
-            <input class="form-control" type="number" name="stock" id="product-stock" min="0" step="0.01" value="0">
+            <input class="form-control" type="number" name="stock" id="product-stock" min="0" step="any" value="0">
           </div>
         </div>
         <div class="form-grid-2">
           <div class="form-group">
             <label class="form-label">حد التنبيه</label>
-            <input class="form-control" type="number" name="min_stock" id="product-min-stock" min="0" step="0.01" value="5">
+            <input class="form-control" type="number" name="min_stock" id="product-min-stock" min="0" step="any" value="5">
           </div>
           <div class="form-group">
             <label class="form-label">صورة المنتج <span class="form-optional">اختياري</span></label>

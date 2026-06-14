@@ -18,7 +18,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">المبلغ</label>
-          <input name="amount" class="form-control" type="number" step="0.01" min="0" required value="{% if payment %}{{ payment.amount }}{% endif %}">
+          <input name="amount" class="form-control" type="number" step="any" min="0" required value="{% if payment %}{{ payment.amount }}{% endif %}">
         </div>
         <div class="form-group">
           <label class="form-label">طريقة الدفع</label>

@@ -616,7 +616,13 @@ async function confirmDelete() {
       document.getElementById(`card-${deletePk}`)?.remove();
       showToast('تم حذف المركز بنجاح');
     } else {
-      showToast('حدث خطأ في الحذف', false);
+      const err = data.error || 'حدث خطأ في الحذف';
+      if (data.blocked && data.blocked.length) {
+        const list = data.blocked.join(', ');
+        showToast(`${err} — مثال: ${list}` , false);
+      } else {
+        showToast(err, false);
+      }
     }
   } catch {
     showToast('حدث خطأ في الاتصال بالخادم', false);

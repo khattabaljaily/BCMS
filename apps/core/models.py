@@ -170,6 +170,55 @@ class Settings(models.Model):
         self.save(update_fields=['invoice_next_number'])
         return num
 
+    def delete(self, *args, **kwargs):
+        """
+        Ensure all related objects for this center are removed even if some FKs use PROTECT.
+        Strategy: iterate over all models, delete objects that have a `center` FK to this Center.
+        On ProtectedError, attempt to delete the blocking objects as well and retry.
+        """
+        from django.apps import apps
+        from django.db import transaction
+        from django.db.models.deletion import ProtectedError
+
+        with transaction.atomic():
+            # First pass: try deleting all models that have a direct `center` FK
+            models = apps.get_models()
+            for model in models:
+                try:
+                    # find a field named 'center' pointing to this Center model
+                    fld = None
+                    for f in model._meta.fields:
+                        if f.name == 'center' and getattr(f, 'remote_field', None) is not None:
+                            rel = f.remote_field.model
+                            # rel may be a string or model class
+                            if rel == Center or (isinstance(rel, str) and rel.split('.')[-1] == 'Center'):
+                                fld = f
+                                break
+                    if not fld:
+                        continue
+                    qs = model.objects.filter(center=self)
+                    if not qs.exists():
+                        continue
+                    try:
+                        qs.delete()
+                    except ProtectedError as e:
+                        # attempt to delete blocking objects then retry
+                        blocked = getattr(e, 'args', [None, None])[1] or []
+                        for o in list(blocked):
+                            try:
+                                o.delete()
+                            except Exception:
+                                # if deleting blocker fails, re-raise to abort overall delete
+                                raise
+                        # retry
+                        qs.delete()
+                except Exception:
+                    # Any unexpected exception should abort the transaction
+                    raise
+
+            # finally delete the center itself
+            super().delete(*args, **kwargs)
+
 
 class CenterBackup(models.Model):
     """نسخة احتياطية لبيانات مركز معين"""

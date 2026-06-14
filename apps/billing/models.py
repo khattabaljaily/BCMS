@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.db import models
+from django.utils import timezone
 from apps.core.models import CenterMixin
 from apps.clients.models import Client
 from apps.services.models import Service
@@ -29,7 +30,7 @@ class Invoice(CenterMixin):
         null=True, blank=True, related_name='invoice', verbose_name='الموعد'
     )
 
-    date = models.DateField('التاريخ', auto_now_add=True)
+    date = models.DateField('التاريخ', default=timezone.localdate)
 
     subtotal        = models.DecimalField('قبل الخصم', max_digits=10, decimal_places=2, default=Decimal('0'))
     discount_amount = models.DecimalField('قيمة الخصم', max_digits=10, decimal_places=2, default=Decimal('0'))

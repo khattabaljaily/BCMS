@@ -15,20 +15,34 @@ def _is_ajax(request):
 
 @login_required
 def product_list(request):
+    from django.core.paginator import Paginator
     center = request.center
     q = request.GET.get('q', '')
     cat_id = request.GET.get('cat', '')
-    products = Product.objects.filter(center=center, is_active=True).select_related('category')
+    products_qs = (
+        Product.objects
+        .filter(center=center, is_active=True)
+        .select_related('category')
+        .only('id', 'name', 'sku', 'price', 'stock', 'min_stock', 'is_active',
+              'show_in_store', 'category_id', 'description', 'cost', 'image')
+    )
     categories = ProductCategory.objects.filter(center=center, is_active=True)
     if q:
-        products = products.filter(Q(name__icontains=q) | Q(sku__icontains=q))
+        products_qs = products_qs.filter(Q(name__icontains=q) | Q(sku__icontains=q))
     if cat_id:
-        products = products.filter(category_id=cat_id)
+        products_qs = products_qs.filter(category_id=cat_id)
+
+    paginator = Paginator(products_qs, 50)
+    page = request.GET.get('page', 1)
+    products = paginator.get_page(page)
+
     return render(request, 'products/list.html', {
         'products': products,
         'categories': categories,
         'q': q,
         'selected_cat': cat_id,
+        'paginator': paginator,
+        'total_count': products_qs.count(),
     })
 
 
@@ -154,6 +168,17 @@ def _products_json(products):
         'sku': p.sku or '',
     } for p in products])
 
+def _check_treasury_balance(center, amount):
+    """Return (ok, treasury) — ok=False when cash balance is insufficient."""
+    from apps.finance.models import Treasury
+    treasury = Treasury.objects.filter(center=center).first()
+    if treasury is None:
+        return False, None
+    if treasury.balance < amount:
+        return False, treasury
+    return True, treasury
+
+
 def _apply_purchase_effects(invoice):
     """Create StockMovements and treasury movement for a purchase invoice."""
     from apps.finance.models import Treasury, TreasuryMovement
@@ -236,11 +261,28 @@ def purchase_create(request):
                 'products_json': _products_json(all_products),
             })
 
+        payment_method = request.POST.get('payment_method', 'cash')
+
+        # Calculate total to verify cash balance before committing
+        if payment_method == 'cash':
+            estimated_total = sum(qty * cost for _, qty, cost in lines_data)
+            ok, treasury = _check_treasury_balance(center, estimated_total)
+            if not ok:
+                balance = treasury.balance if treasury else 0
+                messages.error(
+                    request,
+                    f'رصيد الخزينة غير كافٍ. الرصيد الحالي: {balance}، المبلغ المطلوب: {estimated_total}.'
+                )
+                return render(request, 'products/purchase_form.html', {
+                    'all_products': all_products,
+                    'products_json': _products_json(all_products),
+                })
+
         inv = PurchaseInvoice.objects.create(
             center=center,
             number=_next_purchase_number(center),
             supplier=request.POST.get('supplier', '').strip(),
-            payment_method=request.POST.get('payment_method', 'cash'),
+            payment_method=payment_method,
             notes=request.POST.get('notes', '').strip(),
         )
         for product, qty, cost in lines_data:
@@ -289,17 +331,23 @@ def purchase_pay(request, pk):
         treasury = Treasury.objects.filter(pk=treasury_id, center=center).first()
         if not treasury:
             treasury = Treasury.objects.filter(center=center).first()
-        if treasury:
-            TreasuryMovement.objects.create(
-                treasury=treasury,
-                type='out',
-                amount=inv.total,
-                reference=_purchase_pay_ref(inv.pk),
-                notes=f'سداد مشتريات {inv.number}',
+        if treasury and treasury.balance < inv.total:
+            messages.error(
+                request,
+                f'رصيد الخزينة غير كافٍ. الرصيد الحالي: {treasury.balance}، المبلغ المطلوب: {inv.total}.'
             )
-        inv.paid = True
-        inv.save(update_fields=['paid'])
-        messages.success(request, f'تم تسجيل سداد الفاتورة {inv.number}.')
+        else:
+            if treasury:
+                TreasuryMovement.objects.create(
+                    treasury=treasury,
+                    type='out',
+                    amount=inv.total,
+                    reference=_purchase_pay_ref(inv.pk),
+                    notes=f'سداد مشتريات {inv.number}',
+                )
+            inv.paid = True
+            inv.save(update_fields=['paid'])
+            messages.success(request, f'تم تسجيل سداد الفاتورة {inv.number}.')
     return redirect('products:purchase_detail', pk=pk)
 
 
@@ -336,23 +384,48 @@ def purchase_edit(request, pk):
         if not lines_data:
             messages.error(request, 'أضف بنداً واحداً على الأقل.')
         else:
-            _reverse_purchase_effects(inv)
-            inv.lines.all().delete()
+            new_payment_method = request.POST.get('payment_method', 'cash')
 
-            inv.supplier       = request.POST.get('supplier', '').strip()
-            inv.payment_method = request.POST.get('payment_method', 'cash')
-            inv.notes          = request.POST.get('notes', '').strip()
-            inv.save(update_fields=['supplier', 'payment_method', 'notes'])
-
-            for product, qty, cost in lines_data:
-                PurchaseInvoiceLine.objects.create(
-                    invoice=inv, product=product,
-                    quantity=qty, unit_cost=cost,
-                )
-            inv.recalculate()
-            _apply_purchase_effects(inv)
-            messages.success(request, 'تم تحديث الفاتورة.')
-            return redirect('products:purchase_detail', pk=pk)
+            # Check cash balance before committing (net: new cost - old cost being reversed)
+            if new_payment_method == 'cash':
+                estimated_total = sum(qty * cost for _, qty, cost in lines_data)
+                # If old invoice was also cash, reversal frees up that balance first;
+                # check against current balance plus what will be freed.
+                from apps.finance.models import Treasury
+                treasury = Treasury.objects.filter(center=center).first()
+                freed = inv.total if inv.payment_method == 'cash' else Decimal('0')
+                available = (treasury.balance if treasury else Decimal('0')) + freed
+                if available < estimated_total:
+                    messages.error(
+                        request,
+                        f'رصيد الخزينة غير كافٍ. المتاح بعد الإلغاء: {available}، المبلغ المطلوب: {estimated_total}.'
+                    )
+                else:
+                    _reverse_purchase_effects(inv)
+                    inv.lines.all().delete()
+                    inv.supplier       = request.POST.get('supplier', '').strip()
+                    inv.payment_method = new_payment_method
+                    inv.notes          = request.POST.get('notes', '').strip()
+                    inv.save(update_fields=['supplier', 'payment_method', 'notes'])
+                    for product, qty, cost in lines_data:
+                        PurchaseInvoiceLine.objects.create(invoice=inv, product=product, quantity=qty, unit_cost=cost)
+                    inv.recalculate()
+                    _apply_purchase_effects(inv)
+                    messages.success(request, 'تم تحديث الفاتورة.')
+                    return redirect('products:purchase_detail', pk=pk)
+            else:
+                _reverse_purchase_effects(inv)
+                inv.lines.all().delete()
+                inv.supplier       = request.POST.get('supplier', '').strip()
+                inv.payment_method = new_payment_method
+                inv.notes          = request.POST.get('notes', '').strip()
+                inv.save(update_fields=['supplier', 'payment_method', 'notes'])
+                for product, qty, cost in lines_data:
+                    PurchaseInvoiceLine.objects.create(invoice=inv, product=product, quantity=qty, unit_cost=cost)
+                inv.recalculate()
+                _apply_purchase_effects(inv)
+                messages.success(request, 'تم تحديث الفاتورة.')
+                return redirect('products:purchase_detail', pk=pk)
 
     existing_lines = list(inv.lines.select_related('product'))
     return render(request, 'products/purchase_form.html', {

@@ -1,9 +1,9 @@
 """
 CenterMiddleware — attaches the current center to every request
-based on the logged-in user.
+based on the logged-in user, and activates the tenant's timezone.
 """
-from django.shortcuts import redirect
-from django.urls import reverse
+import zoneinfo
+from django.utils import timezone
 
 
 class NoCacheMiddleware:
@@ -35,5 +35,17 @@ class CenterMiddleware:
         if request.user.is_authenticated and hasattr(request.user, 'center'):
             request.center = request.user.center
 
+        # Activate tenant timezone so all timezone.localdate()/localtime() calls
+        # return dates/times in the tenant's local timezone.
+        tz_name = getattr(request.center, 'timezone', None) if request.center else None
+        if tz_name:
+            try:
+                timezone.activate(zoneinfo.ZoneInfo(tz_name))
+            except (KeyError, Exception):
+                timezone.deactivate()
+        else:
+            timezone.deactivate()
+
         response = self.get_response(request)
+        timezone.deactivate()
         return response

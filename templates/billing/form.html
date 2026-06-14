@@ -66,11 +66,11 @@
                 </td>
                 <td>
                   <input class="form-control form-control--sm tc" type="number"
-                    name="quantity[]" value="{{ line.quantity }}" min="0.01" step="0.01" oninput="calcLine(this)">
+                    name="quantity[]" value="{{ line.quantity }}" min="0.01" step="any" oninput="calcLine(this)">
                 </td>
                 <td>
                   <input class="form-control form-control--sm tc" type="number"
-                    name="unit_price[]" value="{{ line.unit_price }}" min="0" step="0.01" oninput="calcLine(this)">
+                    name="unit_price[]" value="{{ line.unit_price }}" min="0" step="any" oninput="calcLine(this)">
                 </td>
                 <td>
                   <input class="form-control form-control--sm tc" type="number"
@@ -154,7 +154,7 @@
             <label class="inv-summary__label" for="discount-amount">خصم</label>
             <input class="form-control inv-summary__disc" type="number"
               name="discount_amount" id="discount-amount"
-              value="0" min="0" step="0.01" oninput="calcTotals()">
+              value="0" min="0" step="any" oninput="calcTotals()">
           </div>
           <div class="inv-summary__total">
             <span>الإجمالي</span>
@@ -385,11 +385,11 @@ function addLine(desc, qty, price, productId = '', serviceId = '') {
     </td>
     <td>
       <input class="form-control form-control--sm tc" type="number"
-        name="quantity[]" value="${qty}" min="0.01" step="0.01" oninput="calcLine(this)">
+        name="quantity[]" value="${qty}" min="0.01" step="any" oninput="calcLine(this)">
     </td>
     <td>
       <input class="form-control form-control--sm tc" type="number"
-        name="unit_price[]" value="${price}" min="0" step="0.01" oninput="calcLine(this)">
+        name="unit_price[]" value="${price}" min="0" step="any" oninput="calcLine(this)">
     </td>
     <td>
       <input class="form-control form-control--sm tc" type="number"

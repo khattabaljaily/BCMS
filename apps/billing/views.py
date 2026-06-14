@@ -17,6 +17,40 @@ def _is_ajax(request):
     return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
+def _billing_ref(pk):
+    return f'billing_{pk}'
+
+
+def _create_invoice_treasury_movement(invoice):
+    """Record cash invoice payment as treasury inflow. No-op for non-cash or if already recorded."""
+    if invoice.payment_method != 'cash':
+        return
+    from apps.finance.models import Treasury, TreasuryMovement
+    treasury = Treasury.objects.filter(center=invoice.center).first()
+    if not treasury:
+        return
+    ref = _billing_ref(invoice.pk)
+    if TreasuryMovement.objects.filter(treasury__center=invoice.center, reference=ref).exists():
+        return
+    TreasuryMovement.objects.create(
+        treasury=treasury,
+        type='in',
+        amount=invoice.total,
+        reference=ref,
+        notes=f'فاتورة {invoice.number}',
+    )
+
+
+def _delete_invoice_treasury_movement(invoice):
+    """Remove treasury movement when invoice is voided/cancelled."""
+    from apps.finance.models import TreasuryMovement
+    for tm in TreasuryMovement.objects.filter(
+        treasury__center=invoice.center,
+        reference=_billing_ref(invoice.pk),
+    ):
+        tm.delete()
+
+
 def get_invoice_lines_from_post(request, center):
     descs = request.POST.getlist('description[]') or request.POST.getlist('description')
     qtys = request.POST.getlist('quantity[]') or request.POST.getlist('quantity')
@@ -135,6 +169,7 @@ def invoice_create(request):
                     inv.save(update_fields=['status', 'paid_amount'])
                 else:
                     inv.mark_paid(amount=inv.total, method=payment_method)
+                    _create_invoice_treasury_movement(inv)
             elif request.POST.get('action') == 'later':
                 inv.status = 'draft'
                 inv.paid_amount = Decimal('0')
@@ -202,15 +237,12 @@ def invoice_print(request, pk):
 def invoice_void(request, pk):
     inv = get_object_or_404(Invoice, pk=pk, center=request.center)
     if request.method == 'POST':
-        # Do not allow voiding a paid invoice
-        if inv.status == 'paid':
-            messages.error(request, 'لا يمكن إلغاء فاتورة مدفوعة.')
-            return redirect('billing:detail', pk=inv.pk)
-
-        # delete stock movements (restores stock) and mark cancelled
+        # delete stock movements (restores stock), reverse treasury, and mark cancelled
+        _delete_invoice_treasury_movement(inv)
         StockMovement.objects.filter(reference=f'invoice_{inv.pk}').delete()
         inv.status = 'cancelled'
-        inv.save(update_fields=['status'])
+        inv.paid_amount = Decimal('0')
+        inv.save(update_fields=['status', 'paid_amount'])
         if _is_ajax(request):
             return JsonResponse({'success': True, 'message': 'تم إلغاء الفاتورة واستعادة المخزون.'})
         messages.success(request, 'تم إلغاء الفاتورة واستعادة المخزون.')
@@ -286,13 +318,14 @@ def invoice_edit(request, pk):
                     inv.paid_amount = Decimal('0')
                     inv.save(update_fields=['status', 'paid_amount'])
                 else:
+                    _delete_invoice_treasury_movement(inv)
                     inv.mark_paid(amount=inv.total, method=payment_method)
+                    _create_invoice_treasury_movement(inv)
             elif request.POST.get('action') == 'later':
+                _delete_invoice_treasury_movement(inv)
                 inv.status = 'draft'
                 inv.paid_amount = Decimal('0')
                 inv.save(update_fields=['status', 'paid_amount'])
-
-            # (No client-claim handling here — implement via ledger/claims system if needed)
 
             messages.success(request, 'تم التحديث.')
             return redirect('billing:detail', pk=inv.pk)

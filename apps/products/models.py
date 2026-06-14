@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.db import models
+from django.utils import timezone
 from apps.core.models import CenterMixin
 
 
@@ -112,7 +113,7 @@ class PurchaseInvoice(CenterMixin):
 
     number         = models.CharField('الرقم', max_length=50, unique=True)
     supplier       = models.CharField('المورد', max_length=200, blank=True)
-    date           = models.DateField('التاريخ', auto_now_add=True)
+    date           = models.DateField('التاريخ', default=timezone.localdate)
     payment_method = models.CharField('طريقة الدفع', max_length=20, choices=PAYMENT, default='cash')
     total          = models.DecimalField('الإجمالي', max_digits=12, decimal_places=2, default=Decimal('0'))
     status         = models.CharField('الحالة', max_length=20, choices=STATUS, default='active')
