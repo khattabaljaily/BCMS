@@ -7,10 +7,12 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.db.models import Count, Sum
 from django.views.decorators.cache import cache_control
+from django.views.decorators.http import require_GET
 
 
 def _is_ajax(request):
     return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+import re
 
 
 @cache_control(max_age=86400)
@@ -70,13 +72,26 @@ def manifest(request):
         'dir': 'rtl',
         'icons': [
             {'src': '/static/img/logo/logo-ffffff.png', 'sizes': '192x192', 'type': 'image/png'},
-            {'src': '/static/img/logo/logo-ffffff.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any maskable'},
         ],
         'categories': ['business', 'productivity'],
     }
     return HttpResponse(json.dumps(data, ensure_ascii=False), content_type='application/manifest+json')
 
 
+
+
+@login_required
+@require_GET
+def store_slug_check(request):
+    """AJAX endpoint to verify store slug availability for current center."""
+    slug = (request.GET.get('slug') or '').strip().lower()
+    if not slug:
+        return JsonResponse({'available': False, 'reason': 'empty'})
+    if not re.match(r'^[a-z0-9-]+$', slug):
+        return JsonResponse({'available': False, 'reason': 'invalid_format'})
+    from .models import Center
+    taken = Center.objects.filter(slug=slug).exclude(pk=request.center.pk).exists()
+    return JsonResponse({'available': not taken, 'reason': 'taken' if taken else 'ok'})
 @login_required
 def dashboard(request):
     if request.user.is_superuser:
@@ -361,12 +376,51 @@ def settings(request):
         settings_obj.booking_enabled     = bool(request.POST.get('booking_enabled'))
         settings_obj.booking_advance_days = int(request.POST.get('booking_advance_days', 30) or 30)
         settings_obj.slot_minutes        = int(request.POST.get('slot_minutes', 30) or 30)
-        settings_obj.work_start          = request.POST.get('work_start') or None
-        settings_obj.work_end            = request.POST.get('work_end') or None
-        work_days_raw = request.POST.getlist('work_days')
-        settings_obj.work_days           = ','.join(work_days_raw) if work_days_raw else ''
+
+        schedule = {}
+        for weekday in range(7):
+            is_open = bool(request.POST.get(f'work_open_{weekday}'))
+            start_time = request.POST.get(f'work_start_{weekday}') or ''
+            end_time = request.POST.get(f'work_end_{weekday}') or ''
+            # Normalize: if marked open but one of the times is missing, treat as closed
+            if is_open and (not start_time or not end_time):
+                is_open = False
+                start_time = ''
+                end_time = ''
+            schedule[str(weekday)] = {
+                'open': is_open,
+                'start': start_time,
+                'end': end_time,
+            }
+        settings_obj.work_schedule = json.dumps(schedule, ensure_ascii=False)
+        settings_obj.work_days = ','.join(
+            str(day) for day, cfg in schedule.items() if cfg.get('open')
+        )
+        settings_obj.work_start = None
+        settings_obj.work_end = None
+        settings_obj.closed_dates = ','.join(
+            d.strip() for d in re.split(r'[\n,;]+', request.POST.get('closed_dates', '')) if d.strip()
+        )
         settings_obj.store_enabled       = bool(request.POST.get('store_enabled'))
         settings_obj.store_name          = request.POST.get('store_name', '')
+        # Store slug change - validate and apply
+        store_slug = request.POST.get('store_slug', '').strip().lower()
+        if store_slug:
+            if not re.match(r'^[a-z0-9-]+$', store_slug):
+                messages.error(request, 'الرابط يحتوي أحرف غير مسموح بها. استخدم أحرف صغيرة، أرقام، وواصلات (-) فقط.')
+                return render(request, 'core/settings.html', {
+                    'center': center,
+                    'settings_obj': settings_obj,
+                })
+            from .models import Center
+            if Center.objects.filter(slug=store_slug).exclude(pk=center.pk).exists():
+                messages.error(request, 'هذا الرابط محجوز بالفعل. اختر رابطاً آخر.')
+                return render(request, 'core/settings.html', {
+                    'center': center,
+                    'settings_obj': settings_obj,
+                })
+            center.slug = store_slug
+            center.save()
         # Handle store cover removal or update
         if request.POST.get('remove_store_cover'):
             try:

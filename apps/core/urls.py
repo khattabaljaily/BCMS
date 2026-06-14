@@ -12,4 +12,5 @@ urlpatterns = [
     path('notifications/feed/', views.notifications_feed, name='notifications_feed'),
     path('notifications/<int:pk>/read/', views.notification_read, name='notification_read'),
     path('notifications/read-all/', views.notifications_read_all, name='notifications_read_all'),
+    path('store/slug-check/', views.store_slug_check, name='store_slug_check'),
 ]

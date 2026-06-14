@@ -4,6 +4,7 @@ Center (= Tenant), Settings, ServiceType, CenterMixin
 """
 from django.db import models
 from django.utils import timezone
+from datetime import datetime, date as date_cls
 
 DEFAULT_CURRENCY = 'SDG'
 DEFAULT_TIMEZONE = 'Africa/Khartoum'
@@ -134,6 +135,8 @@ class Settings(models.Model):
     work_end             = models.TimeField('نهاية الدوام', null=True, blank=True)
     # 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat — matches JS getDay()
     work_days            = models.CharField('أيام العمل', max_length=20, default='0,1,2,3,4')
+    work_schedule        = models.TextField('جدول الدوام التفصيلي', blank=True, default='')
+    closed_dates         = models.TextField('تواريخ الإغلاق', blank=True, default='')
 
     # المتجر
     store_enabled = models.BooleanField('تفعيل المتجر الإلكتروني', default=False)
@@ -157,12 +160,75 @@ class Settings(models.Model):
         return f'إعدادات {self.center.name}'
 
     @property
+    def work_schedule_dict(self):
+        """Return detailed work schedule as JSON dict keyed by weekday index."""
+        if not self.work_schedule:
+            return {}
+        try:
+            # Import locally to avoid any accidental module-level shadowing
+            import json as _json
+            return _json.loads(self.work_schedule)
+        except Exception:
+            return {}
+
+    @property
     def work_days_list(self):
         """Return work_days as a list of ints, e.g. [0,1,2,3,4]."""
+        schedule = self.work_schedule_dict
+        if schedule:
+            try:
+                return [int(day) for day, cfg in schedule.items() if cfg.get('open')]
+            except Exception:
+                pass
         try:
             return [int(d) for d in self.work_days.split(',') if d.strip().isdigit()]
         except Exception:
             return [0, 1, 2, 3, 4]
+
+    def open_hours_for_weekday(self, weekday):
+        """Return (start_time, end_time) for a weekday index, or (None, None) if closed."""
+        schedule = self.work_schedule_dict
+        if schedule:
+            data = schedule.get(str(weekday), {})
+            if data.get('open') and data.get('start') and data.get('end'):
+                try:
+                    start = datetime.strptime(data['start'], '%H:%M').time()
+                    end = datetime.strptime(data['end'], '%H:%M').time()
+                    return start, end
+                except ValueError:
+                    return None, None
+            return None, None
+        if weekday in self.work_days_list and self.work_start and self.work_end:
+            return self.work_start, self.work_end
+        return None, None
+
+    @property
+    def daily_work_schedule(self):
+        labels = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+        rows = []
+        for idx, label in enumerate(labels):
+            start, end = self.open_hours_for_weekday(idx)
+            rows.append({
+                'index': idx,
+                'label': label,
+                'open': bool(start and end),
+                'start': start.strftime('%H:%M') if start else '',
+                'end': end.strftime('%H:%M') if end else '',
+            })
+        return rows
+
+    @property
+    def closed_dates_list(self):
+        if not self.closed_dates:
+            return []
+        values = [d.strip() for d in self.closed_dates.replace('\\r', '\n').replace(';', ',').split(',') if d.strip()]
+        valid_dates = []
+        for value in values:
+            try:
+                valid_dates.append(date_cls.fromisoformat(value))
+            except ValueError:
+                pass
+        return valid_dates
 
     def next_invoice_number(self):
         num = f'{self.invoice_prefix}-{self.invoice_next_number:05d}'

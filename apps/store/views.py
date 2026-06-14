@@ -52,11 +52,23 @@ def store_home(request, slug):
 
     today     = timezone.localdate()
     max_date  = today + timedelta(days=settings_obj.booking_advance_days or 30)
+    today_weekday = today.isoweekday() % 7
+    today_start, today_end = settings_obj.open_hours_for_weekday(today_weekday)
     time_slots = _generate_slots(
-        settings_obj.work_start,
-        settings_obj.work_end,
+        today_start,
+        today_end,
         settings_obj.slot_minutes,
     )
+
+    # Determine if the center is open right now (consider closed dates and today's hours)
+    now_local = timezone.localtime()
+    is_open_now = False
+    try:
+        if today not in settings_obj.closed_dates_list and today_start and today_end:
+            now_time = now_local.time()
+            is_open_now = (today_start <= now_time < today_end)
+    except Exception:
+        is_open_now = False
 
     work_days_list = settings_obj.work_days_list
 
@@ -69,6 +81,7 @@ def store_home(request, slug):
         'max_date':     max_date.isoformat(),
         'time_slots':   json.dumps(time_slots),
         'work_days':    json.dumps(work_days_list),
+        'is_open_now':  is_open_now,
         'currency':     center.currency,
     }
 
@@ -81,15 +94,18 @@ def store_home(request, slug):
         btime   = request.POST.get('time', '').strip() or None
         notes   = request.POST.get('notes', '').strip()
 
-        # validate that chosen date is a work day
+        # validate that chosen date is a work day and not a closed day
         date_ok = True
-        if bdate and work_days_list:
+        if bdate:
             try:
                 from datetime import date as date_cls
                 chosen = date_cls.fromisoformat(bdate)
-                # JS getDay() / our convention: 0=Sun...6=Sat
                 chosen_day = chosen.isoweekday() % 7
-                date_ok = chosen_day in work_days_list
+                if chosen in settings_obj.closed_dates_list:
+                    date_ok = False
+                else:
+                    start_time, end_time = settings_obj.open_hours_for_weekday(chosen_day)
+                    date_ok = bool(start_time and end_time)
             except ValueError:
                 date_ok = False
 

@@ -208,6 +208,13 @@
 textarea.sp-input { min-height: 110px; resize: vertical; }
 .sp-hint { font-size: 11.5px; color: var(--s-muted); line-height: 1.65; margin-top: 2px; }
 
+/* Compact time input for schedule rows */
+.sp-time-input {
+  padding: 6px 10px;
+  font-size: 13px;
+  height: 36px;
+}
+
 /* ═══ Toggle Switch ═══════════════════════════════════════════ */
 .sp-switch-row {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -251,6 +258,23 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
   background: var(--s-primary-light);
   border-color: var(--s-primary-glow);
   color: var(--s-primary);
+}
+
+/* Day row layout helper */
+.sp-day-row { display:grid; grid-template-columns:70px 170px 170px 90px; gap:10px; align-items:center; }
+.sp-day-row .sp-time-input { width:100%; }
+
+@media (max-width: 600px) {
+  /* Keep day row on one line: day | start | end | switcher */
+  .sp-day-row { grid-template-columns: 65px 120px 120px 75px; grid-auto-rows: auto; align-items: center; }
+  .sp-day-row .sp-toggle { grid-column: auto; justify-self: end; }
+  .sp-day-row .sp-time-input { height: 34px; padding: 6px 8px; font-size: 13px; }
+}
+
+@media (max-width: 480px) {
+  /* Extra narrow: further compress timing fields */
+  .sp-day-row { grid-template-columns: 60px 95px 95px 65px; }
+  .sp-day-row .sp-time-input { height: 32px; padding: 5px 6px; font-size: 12px; }
 }
 
 /* ═══ Time Range ══════════════════════════════════════════════ */
@@ -538,40 +562,39 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
         <div class="sp-card-body" style="display:flex;flex-direction:column;gap:22px;">
 
           <div class="sp-field">
-            <label class="sp-label">أيام الدوام</label>
-            <div class="sp-day-chips">
-              {% with wd=settings_obj.work_days %}
-              <label class="sp-day-chip"><input type="checkbox" name="work_days" value="0" {% if "0" in wd %}checked{% endif %}><div class="sp-day-chip-box">الأحد</div></label>
-              <label class="sp-day-chip"><input type="checkbox" name="work_days" value="1" {% if "1" in wd %}checked{% endif %}><div class="sp-day-chip-box">الاثنين</div></label>
-              <label class="sp-day-chip"><input type="checkbox" name="work_days" value="2" {% if "2" in wd %}checked{% endif %}><div class="sp-day-chip-box">الثلاثاء</div></label>
-              <label class="sp-day-chip"><input type="checkbox" name="work_days" value="3" {% if "3" in wd %}checked{% endif %}><div class="sp-day-chip-box">الأربعاء</div></label>
-              <label class="sp-day-chip"><input type="checkbox" name="work_days" value="4" {% if "4" in wd %}checked{% endif %}><div class="sp-day-chip-box">الخميس</div></label>
-              <label class="sp-day-chip"><input type="checkbox" name="work_days" value="5" {% if "5" in wd %}checked{% endif %}><div class="sp-day-chip-box">الجمعة</div></label>
-              <label class="sp-day-chip"><input type="checkbox" name="work_days" value="6" {% if "6" in wd %}checked{% endif %}><div class="sp-day-chip-box">السبت</div></label>
-              {% endwith %}
+            <label class="sp-label">جدول العمل الأسبوعي</label>
+            <div style="display:grid;gap:10px;">
+              {% for day in settings_obj.daily_work_schedule %}
+              <div class="sp-day-row">
+                <div>
+                  <div class="sp-label" style="margin-bottom:4px;">{{ day.label }}</div>
+                </div>
+                <div class="sp-field" style="margin:0;">
+                  <input class="sp-input sp-time-input" type="time" name="work_start_{{ day.index }}" value="{{ day.start }}">
+                </div>
+                <div class="sp-field" style="margin:0;">
+                  <input class="sp-input sp-time-input" type="time" name="work_end_{{ day.index }}" value="{{ day.end }}">
+                </div>
+                <label class="sp-toggle" style="margin:0;justify-self:end;">
+                  <input type="checkbox" name="work_open_{{ day.index }}" {% if day.open %}checked{% endif %}>
+                  <span class="sp-toggle-track"></span>
+                </label>
+              </div>
+              {% endfor %}
             </div>
+            <span class="sp-hint">حدد ساعات العمل لكل يوم. ألغِ التحديد إذا كان اليوم مغلقاً.</span>
           </div>
 
-          <div class="sp-grid-2">
-            <div class="sp-field">
-              <label class="sp-label">ساعات العمل</label>
-              <div class="sp-time-range">
-                <div class="sp-field" style="gap:5px;">
-                  <label class="sp-label" style="font-size:11.5px;color:var(--s-muted);">من</label>
-                  <input class="sp-input" type="time" name="work_start" value="{{ settings_obj.work_start|default:'' }}">
-                </div>
-                <div class="sp-time-sep">—</div>
-                <div class="sp-field" style="gap:5px;">
-                  <label class="sp-label" style="font-size:11.5px;color:var(--s-muted);">إلى</label>
-                  <input class="sp-input" type="time" name="work_end" value="{{ settings_obj.work_end|default:'' }}">
-                </div>
-              </div>
-            </div>
-            <div class="sp-field">
-              <label class="sp-label">مدة الفترة الواحدة (دقيقة)</label>
-              <input class="sp-input" type="number" name="slot_minutes" min="5" max="120" step="5"
-                     value="{{ settings_obj.slot_minutes }}" placeholder="30">
-            </div>
+          <div class="sp-field">
+            <label class="sp-label">تواريخ الإغلاق</label>
+            <textarea class="sp-input" name="closed_dates" rows="3" placeholder="2026-06-15, 2026-06-20">{{ settings_obj.closed_dates|default:'' }}</textarea>
+            <span class="sp-hint">أدخل تواريخ العطلات أو أيام الإغلاق الخاصة بالمركز، مفصولة بفواصل أو أسطر جديدة.</span>
+          </div>
+
+          <div class="sp-field">
+            <label class="sp-label">مدة الفترة الواحدة (دقيقة)</label>
+            <input class="sp-input" type="number" name="slot_minutes" min="5" max="120" step="5"
+                   value="{{ settings_obj.slot_minutes }}" placeholder="30">
           </div>
 
         </div>
@@ -677,13 +700,18 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
         </div>
         <div class="sp-card-body">
           <div class="sp-store-link-box">
-            <span class="sp-store-url">
-              {% if center.slug %}
-                {{ request.scheme }}://{{ request.get_host }}{% url 'store:home' slug=center.slug %}
-              {% else %}
-                لم يتم إنشاء رابط بعد
-              {% endif %}
-            </span>
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+              <input class="sp-input" type="text" name="store_slug" id="store-slug-input" value="{{ center.slug|default:'' }}" placeholder="example-slug">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div id="store-slug-status" class="sp-status {% if center.slug %}sp-status--on{% else %}sp-status--off{% endif %}">
+                  <span class="sp-status-dot"></span>
+                  {% if center.slug %}متاح{% else %}فارغ{% endif %}
+                </div>
+                <div class="sp-hint" id="store-slug-preview">
+                  {% if center.slug %}{{ request.scheme }}://{{ request.get_host }}{% url 'store:home' slug=center.slug %}{% else %}لم يتم إنشاء رابط بعد{% endif %}
+                </div>
+              </div>
+            </div>
             <div class="sp-store-actions">
               {% if center.slug %}
               <button type="button"
@@ -860,6 +888,68 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
   </button>
 </div>
 
+<script>
+// Store slug availability check
+(function(){
+  const input = document.getElementById('store-slug-input');
+  const status = document.getElementById('store-slug-status');
+  const preview = document.getElementById('store-slug-preview');
+  const base = '{{ request.scheme }}://{{ request.get_host }}' + '/store/';
+  let t;
+  function setStatus(ok, text){
+    if(ok){ status.className = 'sp-status sp-status--on'; status.innerHTML = '<span class="sp-status-dot"></span>'+text; }
+    else { status.className = 'sp-status sp-status--off'; status.innerHTML = '<span class="sp-status-dot"></span>'+text; }
+  }
+  function updatePreview(){
+    const s = input.value.trim();
+    if(s) preview.textContent = base + encodeURIComponent(s) + '/';
+    else preview.textContent = 'لم يتم إنشاء رابط بعد';
+  }
+  function check(){
+    clearTimeout(t);
+    t = setTimeout(()=>{
+      const s = input.value.trim();
+      updatePreview();
+      if(!s){ setStatus(false, 'فارغ'); return; }
+      fetch('{% url "core:store_slug_check" %}?slug=' + encodeURIComponent(s))
+        .then(r=>r.json())
+        .then(data=>{
+          if(data.available) setStatus(true, 'متاح');
+          else if(data.reason === 'invalid_format') setStatus(false, 'صيغة غير صالحة');
+          else setStatus(false, 'محجوز');
+        }).catch(()=> setStatus(false, 'خطأ'));
+    }, 300);
+  }
+  if(input){ input.addEventListener('input', check); updatePreview(); }
+})();
+</script>
+
+<script>
+// Validate work schedule on submit: require both start and end when a day is marked open
+(function(){
+  const form = document.getElementById('settings-form');
+  if(!form) return;
+  form.addEventListener('submit', function(e){
+    for(let i=0;i<7;i++){
+      const chk = document.querySelector('input[name="work_open_'+"+i+"+'"]');
+      const start = document.querySelector('input[name="work_start_'+"+i+"+'"]');
+      const end = document.querySelector('input[name="work_end_'+"+i+"+'"]');
+      if(chk && chk.checked){
+        const s = start && start.value.trim();
+        const t = end && end.value.trim();
+        if(!s || !t){
+          e.preventDefault();
+          alert('يرجى تحديد وقت البداية والنهاية لليوم المحدد أو إلغاء تفعيل اليوم.');
+          if(!s && start) start.focus();
+          else if(!t && end) end.focus();
+          return false;
+        }
+      }
+    }
+  });
+})();
+</script>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -906,7 +996,11 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
   window.copyStoreLink = function (url) {
     if (!navigator.clipboard) return window.prompt('انسخ الرابط يدوياً:', url);
     navigator.clipboard.writeText(url).then(function () {
-      alert('تم نسخ رابط المتجر إلى الحافظة.');
+      if (typeof BCMS !== 'undefined' && BCMS.toast) {
+        BCMS.toast('تم نسخ رابط المتجر!', 'success');
+      } else {
+        alert('تم نسخ رابط المتجر إلى الحافظة.');
+      }
     }, function () {
       window.prompt('انسخ الرابط يدوياً:', url);
     });
