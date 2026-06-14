@@ -21,44 +21,26 @@
 .live-clock {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   background: var(--slate-50, #f8fafc);
   border: 1px solid var(--slate-200, #e2e8f0);
   border-radius: 10px;
-  padding: 5px 11px;
+  padding: 6px 12px;
   cursor: default;
   user-select: none;
+  white-space: nowrap;
 }
 .live-clock__icon {
   color: #db2777;
   font-size: 13px;
   flex-shrink: 0;
 }
-.live-clock__body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  line-height: 1.25;
-  gap: 1px;
-}
-.live-clock__time {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--slate-800, #1e293b);
+#live-clock-full {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700, #334155);
   font-variant-numeric: tabular-nums;
-  letter-spacing: .3px;
-  white-space: nowrap;
-}
-.live-clock__date {
-  font-size: 10.5px;
-  font-weight: 500;
-  color: var(--slate-400, #94a3b8);
-  white-space: nowrap;
-}
-@media (max-width: 640px) {
-  .live-clock { padding: 5px 8px; gap: 6px; }
-  .live-clock__date { display: none; }
-  .live-clock__time { font-size: 13px; }
+  letter-spacing: .2px;
 }
 /* ── PWA Install Banner ───────────────────────── */
 .pwa-banner {
@@ -373,12 +355,9 @@
       </div>
       <div class="topbar__actions">
         {% block topbar_actions %}{% endblock %}
-        <div class="live-clock" title="الوقت والتاريخ الحالي">
+        <div class="live-clock">
           <i class="fas fa-clock live-clock__icon"></i>
-          <div class="live-clock__body">
-            <span id="live-clock-time" class="live-clock__time"></span>
-            <span id="live-clock-date" class="live-clock__date"></span>
-          </div>
+          <span id="live-clock-full"></span>
         </div>
         <div class="topbar__user">
           <div style="position:relative;">
@@ -434,15 +413,12 @@
 
 <script>
 (function () {
-  var timeFmt = new Intl.DateTimeFormat('ar-SA-u-nu-latn', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-  var dateFmt = new Intl.DateTimeFormat('ar-SA-u-nu-latn', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  var tEl = document.getElementById('live-clock-time');
-  var dEl = document.getElementById('live-clock-date');
-  function tick() {
-    var now = new Date();
-    if (tEl) tEl.textContent = timeFmt.format(now);
-    if (dEl) dEl.textContent = dateFmt.format(now);
-  }
+  var fmt = new Intl.DateTimeFormat('ar-SA-u-nu-latn', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+  });
+  var el = document.getElementById('live-clock-full');
+  function tick() { if (el) el.textContent = fmt.format(new Date()); }
   tick();
   setInterval(tick, 1000);
 })();
