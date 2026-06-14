@@ -38,6 +38,7 @@
             <th>الإجمالي</th>
             <th>الحالة</th>
             <th>التاريخ</th>
+            <th>إجراءات</th>
           </tr>
         </thead>
         <tbody>
@@ -54,6 +55,15 @@
               </span>
             </td>
             <td class="text-muted">{{ order.created_at|date:"j/n/Y" }}</td>
+            <td>
+              {% if order.status == 'pending' %}
+              <form method="post" action="{% url 'store:order_action' order.pk %}" style="display:flex;gap:6px;flex-wrap:wrap;">
+                {% csrf_token %}
+                <button name="action" value="confirm" class="btn btn--success btn--sm">تأكيد</button>
+                <button name="action" value="cancel" class="btn btn--danger btn--sm">إلغاء</button>
+              </form>
+              {% else %}—{% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -89,6 +99,15 @@
           </div>
           {% endif %}
         </div>
+        {% if order.status == 'pending' %}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+          <form method="post" action="{% url 'store:order_action' order.pk %}" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;">
+            {% csrf_token %}
+            <button name="action" value="confirm" class="btn btn--success btn--sm" style="flex:1;">تأكيد</button>
+            <button name="action" value="cancel" class="btn btn--danger btn--sm" style="flex:1;">إلغاء</button>
+          </form>
+        </div>
+        {% endif %}
       </div>
       {% endfor %}
     </div>

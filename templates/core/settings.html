@@ -773,7 +773,7 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
               <label class="sp-label">نسبة الضريبة (%)</label>
               <input class="sp-input" type="number" name="tax_percent"
                      min="0" max="100" step="any"
-                     value="{{ settings_obj.tax_percent|default:'0' }}"
+                     value="{{ settings_obj.tax_percent|default_if_none:'' }}"
                      style="max-width:220px;">
             </div>
           </div>

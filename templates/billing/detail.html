@@ -30,11 +30,12 @@
                 onclick="invoiceVoid('{% url 'billing:void' inv.pk %}')">
           <i class="fas fa-ban"></i> إلغاء
         </button>
-        {% endif %}
+        {% elif inv.status == 'cancelled' %}
         <button type="button" class="btn btn--danger btn--sm"
                 onclick="invoiceDelete('{% url 'billing:delete' inv.pk %}', '{% url 'billing:list' %}')">
           <i class="fas fa-trash"></i> حذف
         </button>
+        {% endif %}
       </div>
     </div>
   </div>

@@ -36,11 +36,11 @@
       <div class="form-grid-2">
         <div class="form-group">
           <label class="form-label">السعر</label>
-          <input class="form-control" type="number" name="price" value="{{ instance.price|default:0 }}" step="any" min="0" required>
+          <input class="form-control" type="number" name="price" value="{{ instance.price|default_if_none:'' }}" step="any" min="0" required>
         </div>
         <div class="form-group">
           <label class="form-label">التكلفة (اختياري)</label>
-          <input class="form-control" type="number" name="cost" value="{{ instance.cost|default:0 }}" step="any" min="0">
+          <input class="form-control" type="number" name="cost" value="{{ instance.cost|default_if_none:'' }}" step="any" min="0">
         </div>
       </div>
       <div class="form-group">

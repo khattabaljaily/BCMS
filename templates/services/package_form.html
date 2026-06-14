@@ -36,8 +36,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">السعر</label>
-          <input class="form-control" type="number" name="price" value="{{ package.price|default:0 }}" min="0" step="any" required>
-        </div>
+          <input class="form-control" type="number" name="price" value="{{ package.price|default_if_none:'' }}" min="0" step="any" required>
         <div style="display:flex;gap:8px;margin-top:20px;">
           <button class="btn btn--primary" type="submit"><i class="fas fa-save"></i> حفظ</button>
           <a href="{% url 'services:packages' %}" class="btn btn--ghost">إلغاء</a>

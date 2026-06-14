@@ -209,7 +209,11 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   background: rgba(244,63,94,.12);
   font-weight: 700;
 }
-.nav-subitem.active i:first-child { color: var(--rose-light); }
+..nav-subitem.active i:first-child { color: var(--rose-light); }
+
+.nav-subitem.active .nav-badge {
+  display: none;
+}
 
 /* Nav badge (inside submenu) */
 .nav-badge {
@@ -1763,7 +1767,7 @@ body { background: linear-gradient(160deg, #f0f2f7 0%, #f5f0f9 100%); }
   min-width: 16px;
   height: 16px;
   border-radius: 8px;
-  background: var(--rose-500);
+  background: var(--rose) !important;
   color: #fff;
   font-size: 10px;
   font-weight: 700;

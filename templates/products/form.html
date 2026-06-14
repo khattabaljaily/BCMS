@@ -43,18 +43,18 @@
 
       <div class="form-grid-2">
         <div class="form-group">
-          <label class="form-label">التكلفة</label>
-          <input class="form-control" type="number" name="cost" value="{{ instance.cost|default:'0' }}" min="0" step="any">
+          <label class="form-label">سعر الشراء / التكلفة</label>
+          <input class="form-control" type="number" name="cost" value="{{ instance.cost|default_if_none:'' }}" min="0" step="any">
         </div>
         <div class="form-group">
           <label class="form-label">المخزون الحالي</label>
-          <input class="form-control" type="number" name="stock" value="{{ instance.stock|default:'0' }}" min="0" step="any">
+          <input class="form-control" type="number" name="stock" value="{{ instance.stock|default_if_none:'' }}" min="0" step="any">
         </div>
       </div>
 
       <div class="form-group" style="max-width:50%">
         <label class="form-label">حد التنبيه للمخزون</label>
-        <input class="form-control" type="number" name="min_stock" value="{{ instance.min_stock|default:'5' }}" min="0" step="any">
+        <input class="form-control" type="number" name="min_stock" value="{{ instance.min_stock|default_if_none:'' }}" min="0" step="any">
       </div>
 
       <div class="form-group">

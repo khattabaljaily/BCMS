@@ -47,10 +47,10 @@
           <thead>
             <tr>
               <th>الوصف</th>
-              <th style="width:80px;text-align:center;">الكمية</th>
-              <th style="width:110px;text-align:center;">السعر</th>
-              <th style="width:80px;text-align:center;">خصم%</th>
-              <th style="width:110px;text-align:center;">الإجمالي</th>
+              <th style="width:100px;text-align:center;">الكمية</th>
+              <th style="width:140px;text-align:center;">السعر</th>
+              <th style="width:100px;text-align:center;">خصم%</th>
+              <th style="width:140px;text-align:center;">الإجمالي</th>
               <th style="width:44px;"></th>
             </tr>
           </thead>
@@ -66,15 +66,15 @@
                 </td>
                 <td>
                   <input class="form-control form-control--sm tc" type="number"
-                    name="quantity[]" value="{{ line.quantity }}" min="0.01" step="any" oninput="calcLine(this)">
+                    name="quantity[]" value="{{ line.quantity|floatformat:0 }}" min="1" step="1" oninput="calcLine(this)" style="min-width:100px;">
                 </td>
                 <td>
                   <input class="form-control form-control--sm tc" type="number"
-                    name="unit_price[]" value="{{ line.unit_price }}" min="0" step="any" oninput="calcLine(this)">
+                    name="unit_price[]" value="{{ line.unit_price }}" min="0" step="any" oninput="calcLine(this)" style="min-width:120px;">
                 </td>
                 <td>
                   <input class="form-control form-control--sm tc" type="number"
-                    name="discount_percent[]" value="{{ line.discount_percent }}" min="0" max="100" oninput="calcLine(this)">
+                    name="discount_percent[]" value="{{ line.discount_percent }}" min="0" max="100" oninput="calcLine(this)" style="min-width:100px;">
                 </td>
                 <td class="line-total tc" style="font-weight:800;color:var(--rose);">{{ line.line_total }}</td>
                 <td>
@@ -113,6 +113,8 @@
             oncompositionend="filterClients(this.value)"
             onfocus="filterClients(this.value)">
           <input type="hidden" name="client" id="client-id-input">
+          <input type="hidden" name="appointment" id="appointment-id-input" value="{{ prefill_appointment_id|default:'' }}">
+          <input type="hidden" name="store_order_id" id="store-order-id-input" value="{{ store_order_id|default:'' }}">
           <div id="client-dropdown" class="client-dropdown"></div>
         </div>
 
@@ -270,12 +272,24 @@ if (clientSearchInput) {
   });
 }
 
+const PREFILL_CLIENT_ID = {{ prefill_client_id|default:'null' }};
+const PREFILL_APPOINTMENT_ID = {{ prefill_appointment_id|default:'null' }};
+
 if (clientDropdown) {
   clientDropdown.addEventListener('click', function(e) {
     const item = e.target.closest('.client-dd-item');
     if (!item) return;
     selectClient(item.dataset.clientId);
   });
+}
+
+if (PREFILL_CLIENT_ID) {
+  selectClient(PREFILL_CLIENT_ID);
+}
+
+if (PREFILL_APPOINTMENT_ID) {
+  const appointmentInput = document.getElementById('appointment-id-input');
+  if (appointmentInput) appointmentInput.value = PREFILL_APPOINTMENT_ID;
 }
 
 document.addEventListener('click', function(e) {
@@ -385,15 +399,15 @@ function addLine(desc, qty, price, productId = '', serviceId = '') {
     </td>
     <td>
       <input class="form-control form-control--sm tc" type="number"
-        name="quantity[]" value="${qty}" min="0.01" step="any" oninput="calcLine(this)">
+        name="quantity[]" value="${qty}" min="1" step="1" oninput="calcLine(this)" style="min-width:100px;">
     </td>
     <td>
       <input class="form-control form-control--sm tc" type="number"
-        name="unit_price[]" value="${price}" min="0" step="any" oninput="calcLine(this)">
+        name="unit_price[]" value="${price}" min="0" step="any" oninput="calcLine(this)" style="min-width:120px;">
     </td>
     <td>
       <input class="form-control form-control--sm tc" type="number"
-        name="discount_percent[]" value="0" min="0" max="100" oninput="calcLine(this)">
+        name="discount_percent[]" value="0" min="0" max="100" oninput="calcLine(this)" style="min-width:100px;">
     </td>
     <td class="line-total tc" style="font-weight:800;color:var(--rose);">${tot}</td>
     <td>

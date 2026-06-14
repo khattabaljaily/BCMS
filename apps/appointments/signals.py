@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -22,6 +23,11 @@ def create_invoice_on_confirm(sender, instance, created, **kwargs):
             number=number,
             client=instance.client,
             appointment=instance,
+            subtotal=Decimal('0'),
+            discount_amount=Decimal('0'),
+            tax_amount=Decimal('0'),
+            total=Decimal('0'),
+            paid_amount=Decimal('0'),
             payment_method='cash',
             status='draft',
         )

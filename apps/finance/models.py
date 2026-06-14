@@ -8,8 +8,8 @@ from apps.clients.models import Client
 
 class Treasury(CenterMixin):
     name = models.CharField('اسم الخزينة', max_length=120)
-    initial_balance = models.DecimalField('الرصيد الابتدائي', max_digits=12, decimal_places=2, default=Decimal('0'))
-    balance = models.DecimalField('الرصيد الحالي', max_digits=12, decimal_places=2, default=Decimal('0'))
+    initial_balance = models.DecimalField('الرصيد الابتدائي', max_digits=12, decimal_places=2)
+    balance = models.DecimalField('الرصيد الحالي', max_digits=12, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

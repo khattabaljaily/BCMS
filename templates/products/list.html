@@ -208,18 +208,18 @@
         </div>
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label">التكلفة</label>
-            <input class="form-control" type="number" name="cost" id="product-cost" min="0" step="any" value="0">
+            <label class="form-label">سعر الشراء / التكلفة</label>
+            <input class="form-control" type="number" name="cost" id="product-cost" min="0" step="any" value="">
           </div>
           <div class="form-group">
             <label class="form-label">المخزون الحالي</label>
-            <input class="form-control" type="number" name="stock" id="product-stock" min="0" step="any" value="0">
+            <input class="form-control" type="number" name="stock" id="product-stock" min="0" step="any" value="">
           </div>
         </div>
         <div class="form-grid-2">
           <div class="form-group">
             <label class="form-label">حد التنبيه</label>
-            <input class="form-control" type="number" name="min_stock" id="product-min-stock" min="0" step="any" value="5">
+            <input class="form-control" type="number" name="min_stock" id="product-min-stock" min="0" step="any" value="">
           </div>
           <div class="form-group">
             <label class="form-label">صورة المنتج <span class="form-optional">اختياري</span></label>
@@ -265,9 +265,9 @@ function openAddProduct() {
   document.getElementById('product-sku').value = '';
   document.getElementById('product-category').value = '';
   document.getElementById('product-price').value = '';
-  document.getElementById('product-cost').value = '0';
-  document.getElementById('product-stock').value = '0';
-  document.getElementById('product-min-stock').value = '5';
+  document.getElementById('product-cost').value = '';
+  document.getElementById('product-stock').value = '';
+  document.getElementById('product-min-stock').value = '';
   document.getElementById('product-description').value = '';
   document.getElementById('product-active').checked = true;
   document.getElementById('product-store').checked = true;

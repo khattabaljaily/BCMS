@@ -71,9 +71,6 @@
                 {% csrf_token %}
                 <button name="action" value="confirm" class="btn btn--success btn--sm">تأكيد</button>
                 <button name="action" value="cancel" class="btn btn--danger btn--sm">إلغاء</button>
-                {% if not b.appointment %}
-                <button name="action" value="convert" class="btn btn--primary btn--sm">تحويل لموعد</button>
-                {% endif %}
               </form>
               {% else %}—{% endif %}
             </td>
@@ -124,9 +121,6 @@
           {% csrf_token %}
           <button name="action" value="confirm" class="btn btn--success btn--sm" style="flex:1;">تأكيد</button>
           <button name="action" value="cancel" class="btn btn--danger btn--sm" style="flex:1;">إلغاء</button>
-          {% if not b.appointment %}
-          <button name="action" value="convert" class="btn btn--primary btn--sm" style="width:100%;">تحويل لموعد</button>
-          {% endif %}
         </form>
         {% endif %}
       </div>

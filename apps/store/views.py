@@ -10,6 +10,7 @@ from django.utils import timezone
 from apps.core.models import Center, Settings
 from apps.services.models import Service
 from apps.products.models import Product
+from apps.billing.models import Invoice, InvoiceLine
 from .models import OnlineBooking, StoreOrder, StoreOrderItem
 from apps.appointments.models import Appointment, AppointmentService
 from apps.clients.models import Client
@@ -133,6 +134,7 @@ def store_home(request, slug):
                 client_phone=phone,
                 client_address=address,
                 notes=notes,
+                total=Decimal('0'),
             )
             total = Decimal('0')
             for item in cart:
@@ -160,6 +162,64 @@ def store_home(request, slug):
 
     return render(request, 'store/home.html', ctx)
 
+def _convert_order_to_invoice(order):
+    if order.status != 'pending':
+        return None
+
+    existing = Invoice.objects.filter(
+        center=order.center,
+        notes__startswith=f'طلب متجر #{order.pk}'
+    ).first()
+    if existing:
+        return existing
+
+    center = order.center
+    client = None
+    if order.client_phone:
+        client = Client.objects.filter(center=center, phone=order.client_phone).first()
+
+    settings_obj, _ = Settings.objects.get_or_create(center=center)
+    number = settings_obj.next_invoice_number()
+    invoice = Invoice.objects.create(
+        center=center,
+        number=number,
+        client=client,
+        payment_method='cash',
+        status='draft',
+        subtotal=order.total,
+        discount_amount=Decimal('0'),
+        tax_amount=Decimal('0'),
+        total=order.total,
+        paid_amount=Decimal('0'),
+        notes=f'طلب متجر #{order.pk}',
+    )
+
+    for item in order.items.all():
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            description=item.product.name,
+            product=item.product,
+            quantity=item.quantity,
+            unit_price=item.unit_price,
+            discount_percent=Decimal('0'),
+        )
+
+    return invoice
+
+
+@login_required
+def order_action(request, pk):
+    order = get_object_or_404(StoreOrder, pk=pk, center=request.center)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'confirm' and order.status == 'pending':
+            invoice = _convert_order_to_invoice(order)
+            if invoice:
+                return redirect('billing:edit', pk=invoice.pk)
+        elif action == 'cancel' and order.status == 'pending':
+            order.status = 'cancelled'
+            order.save(update_fields=['status'])
+    return redirect('store:orders')
 
 # ── Staff: manage online bookings ─────────────────────────────────────────────
 
@@ -176,61 +236,59 @@ def bookings_list(request):
     })
 
 
+def _convert_booking_to_appointment(booking):
+    if booking.appointment:
+        return booking.appointment
+
+    center = booking.center
+    client = None
+    if booking.client_phone:
+        client = Client.objects.filter(center=center, phone=booking.client_phone).first()
+
+    appt_time = booking.preferred_time or time_obj(9, 0)
+    appointment = Appointment.objects.create(
+        center=center,
+        client=client,
+        date=booking.preferred_date,
+        start_time=appt_time,
+        walk_in_name=(booking.client_name if not client else ''),
+        walk_in_phone=(booking.client_phone if not client else ''),
+        notes=booking.notes,
+        source='store',
+        status='confirmed',
+        total_price=0,
+    )
+
+    if booking.service:
+        AppointmentService.objects.create(
+            appointment=appointment,
+            service=booking.service,
+            unit_price=getattr(booking.service, 'price', 0)
+        )
+
+    try:
+        appointment.recalculate_price()
+    except Exception:
+        pass
+
+    booking.appointment = appointment
+    booking.status = 'confirmed'
+    booking.save(update_fields=['status', 'appointment'])
+    return appointment
+
+
 @login_required
 def booking_action(request, pk):
     booking = get_object_or_404(OnlineBooking, pk=pk, center=request.center)
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'confirm':
-            booking.status = 'confirmed'
-            booking.save(update_fields=['status'])
+            _convert_booking_to_appointment(booking)
         elif action == 'cancel':
             booking.status = 'cancelled'
             booking.save(update_fields=['status'])
         elif action == 'convert':
-            # create an Appointment from the online booking
-            if booking.appointment:
-                # already converted
-                pass
-            else:
-                center = request.center
-                client = None
-                if booking.client_phone:
-                    client = Client.objects.filter(center=center, phone=booking.client_phone).first()
-
-                appt_time = booking.preferred_time
-                if not appt_time:
-                    appt_time = time_obj(9, 0)
-
-                appointment = Appointment.objects.create(
-                    center=center,
-                    client=client,
-                    date=booking.preferred_date,
-                    start_time=appt_time,
-                    walk_in_name=(booking.client_name if not client else ''),
-                    walk_in_phone=(booking.client_phone if not client else ''),
-                    notes=booking.notes,
-                    source='store',
-                    status='confirmed',
-                )
-
-                # attach service if present
-                if booking.service:
-                    AppointmentService.objects.create(
-                        appointment=appointment,
-                        service=booking.service,
-                        unit_price=getattr(booking.service, 'price', 0)
-                    )
-
-                # recalculate appointment price
-                try:
-                    appointment.recalculate_price()
-                except Exception:
-                    pass
-
-                booking.appointment = appointment
-                booking.status = 'confirmed'
-                booking.save(update_fields=['status', 'appointment'])
+            _convert_booking_to_appointment(booking)
     return redirect('store:bookings')
 
 

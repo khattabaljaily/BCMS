@@ -98,6 +98,7 @@ def appointment_save(request):
     obj.end_time   = request.POST.get('end_time') or None
     obj.status     = request.POST.get('status', 'pending')
     obj.notes      = request.POST.get('notes', '').strip()
+    obj.total_price = 0
     obj.save()
 
     AppointmentService.objects.filter(appointment=obj).delete()

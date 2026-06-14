@@ -17,7 +17,7 @@ class ServiceType(models.Model):
     color   = models.CharField('اللون', max_length=7, default='#ec4899')
     description = models.TextField('الوصف', blank=True)
     is_active   = models.BooleanField('نشط', default=True)
-    order       = models.PositiveIntegerField('الترتيب', default=0)
+    order       = models.PositiveIntegerField('الترتيب')
 
     class Meta:
         db_table = 'service_types'
@@ -124,7 +124,7 @@ class Settings(models.Model):
     invoice_next_number = models.PositiveIntegerField('الرقم التالي', default=1)
     invoice_footer      = models.TextField('تذييل الفاتورة', blank=True)
     show_tax_on_invoice = models.BooleanField('إظهار الضريبة', default=False)
-    tax_percent         = models.DecimalField('نسبة الضريبة %', max_digits=5, decimal_places=2, default=0)
+    tax_percent         = models.DecimalField('نسبة الضريبة %', max_digits=5, decimal_places=2)
 
     # المواعيد
     booking_enabled      = models.BooleanField('الحجز الذاتي عبر المتجر', default=True)
@@ -240,7 +240,7 @@ class CenterBackup(models.Model):
     )
     filename    = models.CharField('اسم الملف', max_length=255)
     file_path   = models.CharField('مسار الملف', max_length=500)
-    file_size   = models.BigIntegerField('الحجم بالبايت', default=0)
+    file_size   = models.BigIntegerField('الحجم بالبايت')
     backup_type = models.CharField('نوع النسخة', max_length=20, choices=BACKUP_TYPES, default='manual')
     status      = models.CharField('الحالة', max_length=20, choices=STATUS_CHOICES, default='in_progress')
     notes       = models.TextField('ملاحظات', blank=True)

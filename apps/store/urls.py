@@ -10,5 +10,6 @@ urlpatterns = [
     # Staff management
     path('manage/bookings/',          views.bookings_list,  name='bookings'),
     path('manage/bookings/<int:pk>/', views.booking_action, name='booking_action'),
+    path('manage/orders/<int:pk>/',   views.order_action,   name='order_action'),
     path('manage/orders/',            views.orders_list,    name='orders'),
 ]

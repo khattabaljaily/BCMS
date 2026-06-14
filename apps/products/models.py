@@ -6,7 +6,7 @@ from apps.core.models import CenterMixin
 
 class ProductCategory(CenterMixin):
     name      = models.CharField('الاسم', max_length=100)
-    order     = models.PositiveIntegerField('الترتيب', default=0)
+    order     = models.PositiveIntegerField('الترتيب')
     is_active = models.BooleanField('نشط', default=True)
 
     class Meta:
@@ -29,8 +29,8 @@ class Product(CenterMixin):
     sku         = models.CharField('الرمز SKU', max_length=100, blank=True)
 
     price     = models.DecimalField('سعر البيع', max_digits=10, decimal_places=2)
-    cost      = models.DecimalField('التكلفة',   max_digits=10, decimal_places=2, default=Decimal('0'))
-    stock     = models.DecimalField('المخزون',   max_digits=10, decimal_places=2, default=Decimal('0'))
+    cost      = models.DecimalField('التكلفة',   max_digits=10, decimal_places=2)
+    stock     = models.DecimalField('المخزون',   max_digits=10, decimal_places=2)
     min_stock = models.DecimalField('حد التنبيه', max_digits=10, decimal_places=2, default=Decimal('5'))
 
     image         = models.ImageField('الصورة', upload_to='products/', blank=True, null=True)
@@ -115,7 +115,7 @@ class PurchaseInvoice(CenterMixin):
     supplier       = models.CharField('المورد', max_length=200, blank=True)
     date           = models.DateField('التاريخ', default=timezone.localdate)
     payment_method = models.CharField('طريقة الدفع', max_length=20, choices=PAYMENT, default='cash')
-    total          = models.DecimalField('الإجمالي', max_digits=12, decimal_places=2, default=Decimal('0'))
+    total          = models.DecimalField('الإجمالي', max_digits=12, decimal_places=2)
     status         = models.CharField('الحالة', max_length=20, choices=STATUS, default='active')
     notes          = models.TextField('ملاحظات', blank=True)
     paid           = models.BooleanField('مدفوعة', default=False)
@@ -140,7 +140,7 @@ class PurchaseInvoiceLine(models.Model):
     product   = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='purchase_lines')
     quantity  = models.DecimalField('الكمية', max_digits=12, decimal_places=2)
     unit_cost = models.DecimalField('تكلفة الوحدة', max_digits=10, decimal_places=2)
-    line_total = models.DecimalField('الإجمالي', max_digits=12, decimal_places=2, default=Decimal('0'))
+    line_total = models.DecimalField('الإجمالي', max_digits=12, decimal_places=2)
 
     class Meta:
         db_table = 'purchase_invoice_lines'

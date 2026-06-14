@@ -29,7 +29,7 @@ class Specialist(CenterMixin):
                                     help_text='قائمة أرقام الأيام: 0=أحد ... 6=سبت')
 
     is_active = models.BooleanField('نشط', default=True)
-    order     = models.PositiveIntegerField('الترتيب', default=0)
+    order     = models.PositiveIntegerField('الترتيب')
 
     class Meta:
         db_table = 'specialists'

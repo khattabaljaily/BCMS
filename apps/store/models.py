@@ -48,7 +48,7 @@ class StoreOrder(CenterMixin):
     client_name    = models.CharField('الاسم', max_length=200)
     client_phone   = models.CharField('الهاتف', max_length=20)
     client_address = models.TextField('عنوان التوصيل', blank=True)
-    total          = models.DecimalField('الإجمالي', max_digits=10, decimal_places=2, default=Decimal('0'))
+    total          = models.DecimalField('الإجمالي', max_digits=10, decimal_places=2)
     status         = models.CharField('الحالة', max_length=20, choices=STATUS, default='pending')
     notes          = models.TextField('ملاحظات', blank=True)
     created_at     = models.DateTimeField(auto_now_add=True)
@@ -69,7 +69,7 @@ class StoreOrderItem(models.Model):
     product    = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity   = models.PositiveIntegerField('الكمية', default=1)
     unit_price = models.DecimalField('سعر الوحدة', max_digits=10, decimal_places=2)
-    line_total = models.DecimalField('الإجمالي',   max_digits=10, decimal_places=2, default=Decimal('0'))
+    line_total = models.DecimalField('الإجمالي',   max_digits=10, decimal_places=2)
 
     class Meta:
         db_table = 'store_order_items'

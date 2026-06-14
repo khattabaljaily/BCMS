@@ -1,4 +1,5 @@
 import json
+import re
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -102,6 +103,13 @@ def get_invoice_lines_from_post(request, center):
     return lines
 
 
+def _parse_store_order_id_from_notes(notes):
+    if not notes:
+        return None
+    match = re.search(r'طلب متجر #(\d+)', notes)
+    return int(match.group(1)) if match else None
+
+
 @login_required
 def invoice_list(request):
     center = request.center
@@ -138,12 +146,24 @@ def invoice_create(request):
     services = Service.objects.filter(center=center, is_active=True).select_related('category')
     products = Product.objects.filter(center=center, is_active=True)
 
+    prefill_client_id = None
+    prefill_appointment_id = None
+    appointment_param = request.GET.get('appointment') or request.POST.get('appointment')
+    if appointment_param:
+        from apps.appointments.models import Appointment
+        appointment = Appointment.objects.filter(pk=appointment_param, center=center).select_related('client').first()
+        if appointment:
+            prefill_appointment_id = appointment.pk
+            if appointment.client_id:
+                prefill_client_id = appointment.client_id
+
     if request.method == 'POST':
         from apps.core.models import Settings
         settings_obj, _ = Settings.objects.get_or_create(center=center)
         number = settings_obj.next_invoice_number()
 
         client_id = request.POST.get('client')
+        appointment_id = request.POST.get('appointment')
         lines = get_invoice_lines_from_post(request, center)
         if not lines:
             messages.error(request, 'يجب إضافة بند واحد على الأقل للفاتورة.')
@@ -153,6 +173,7 @@ def invoice_create(request):
                 center=center,
                 number=number,
                 client_id=client_id or None,
+                appointment_id=appointment_id or None,
                 payment_method=payment_method,
                 notes=request.POST.get('notes', ''),
                 discount_amount=Decimal(request.POST.get('discount_amount') or '0'),
@@ -230,6 +251,9 @@ def invoice_create(request):
         'products_json': products_json,
         'today':         timezone.localdate().isoformat(),
         'payment_choices': Invoice.PAYMENT,
+        'prefill_client_id': prefill_client_id,
+        'prefill_appointment_id': prefill_appointment_id,
+        'edit_mode': False,
     })
 
 
@@ -297,6 +321,12 @@ def invoice_edit(request, pk):
     )
     services = Service.objects.filter(center=center, is_active=True).select_related('category')
     products = Product.objects.filter(center=center, is_active=True)
+
+    store_order_id = _parse_store_order_id_from_notes(inv.notes)
+    store_order = None
+    if store_order_id:
+        from apps.store.models import StoreOrder
+        store_order = StoreOrder.objects.filter(pk=store_order_id, center=center, status='pending').first()
 
     if request.method == 'POST':
         lines = get_invoice_lines_from_post(request, center)
@@ -372,6 +402,10 @@ def invoice_edit(request, pk):
                     # Payment method changed to later without explicit action
                     _delete_invoice_treasury_movement(inv)
 
+            if store_order and store_order.status == 'pending':
+                store_order.status = 'confirmed'
+                store_order.save(update_fields=['status'])
+
             messages.success(request, 'تم التحديث.')
             return redirect('billing:detail', pk=inv.pk)
 
@@ -407,6 +441,7 @@ def invoice_edit(request, pk):
         'products_json': products_json,
         'today':         timezone.localdate().isoformat(),
         'payment_choices': Invoice.PAYMENT,
+        'store_order_id': store_order_id,
     })
 
 

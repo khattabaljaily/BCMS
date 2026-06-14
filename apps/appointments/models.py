@@ -47,7 +47,7 @@ class Appointment(CenterMixin):
     notes  = models.TextField('ملاحظات', blank=True)
 
     total_price = models.DecimalField(
-        'إجمالي السعر', max_digits=10, decimal_places=2, default=Decimal('0')
+        'إجمالي السعر', max_digits=10, decimal_places=2
     )
 
     # زيارة بدون ملف عميل
