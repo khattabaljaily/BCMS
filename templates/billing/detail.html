@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% load static number_format %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/billing.css' %}">{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/billing.css' %}">
+<style>:root { --ic: {{ settings_obj.invoice_color|default:'#ec4899' }}; }</style>
+{% endblock %}
 {% block title %}فاتورة {{ inv.number }}{% endblock %}
 {% block page_title %}فاتورة {{ inv.number }}{% endblock %}
 {% block nav_billing %}active{% endblock %}
@@ -10,7 +13,7 @@
   <div class="cx-hero-inner">
     <div class="cx-hero-left">
       <a href="{% url 'billing:list' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;"><i class="fas fa-arrow-right"></i></a>
-      <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#ec4899,#f472b6);box-shadow:0 4px 14px rgba(236,72,153,.32);">
+      <div class="cx-hero-icon-wrap" style="background:var(--ic);box-shadow:0 4px 14px rgba(0,0,0,.18);">
         <i class="fas fa-file-invoice-dollar"></i>
       </div>
       <div>
@@ -111,7 +114,7 @@
             <span>{{ inv.tax_amount|format_number:2 }}</span>
           </div>
           {% endif %}
-          <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:800;color:var(--rose);padding:10px 0;border-top:2px solid var(--slate-200);">
+          <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:800;color:var(--ic);padding:10px 0;border-top:2px solid var(--slate-200);">
             <span>الإجمالي</span>
             <span>{{ inv.total|format_number:2 }}</span>
           </div>

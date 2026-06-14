@@ -1167,9 +1167,9 @@ textarea.form-control { resize: vertical; min-height: 88px; }
 .cx-card-actions { display: flex; gap: 6px; }
 
 /* ── Empty state ─────────────────────────────────────────── */
-.cx-empty { text-align: center; padding: 52px 24px; color: var(--slate-400); font-size: 13px; }
+.cx-empty { text-align: center; padding: 36px 24px; color: var(--slate-400); font-size: 13px; }
 .cx-empty > i {
-  font-size: 40px; display: block; margin-bottom: 12px;
+  font-size: 26px; display: block; margin-bottom: 10px;
   background: linear-gradient(135deg, var(--rose), var(--pink));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1543,7 +1543,7 @@ body { background: linear-gradient(160deg, #f0f2f7 0%, #f5f0f9 100%); }
 .cx-panel {
   box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.05);
 }
-.cx-panel .cx-empty { padding: 60px 24px; }
+.cx-panel .cx-empty { padding: 40px 24px; }
 
 /* ── cx-table striped look ───────────────────────────────── */
 .cx-table tbody tr:nth-child(even) td { background: rgba(248,250,252,.6); }

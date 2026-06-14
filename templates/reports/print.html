@@ -19,6 +19,7 @@
 <script>
 Chart.defaults.font.family = "Cairo, 'Segoe UI', sans-serif";
 Chart.defaults.color = '#64748b';
+Chart.defaults.animation = false;
 
 const revLabels  = {{ chart_rev_labels|safe }};
 const revData    = {{ chart_rev_data|safe }};
@@ -39,10 +40,10 @@ function initCharts() {
     new Chart(document.getElementById('apptChart'), { type: 'bar', data: { labels: apptLabels, datasets: [{ data: apptData, backgroundColor: 'rgba(236,72,153,.65)', borderRadius:4 }] }, options: { plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ maxTicksLimit:10 } } } } });
   }
   if (document.getElementById('statusChart') && statusData.length) {
-    new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: statusColors }] }, options: { plugins:{ legend:{ position:'bottom' } } } });
+    new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: statusColors }] }, options: { aspectRatio: 1.6, plugins:{ legend:{ position:'bottom' } } } });
   }
   if (document.getElementById('methodChart') && methodData.length) {
-    new Chart(document.getElementById('methodChart'), { type: 'doughnut', data: { labels: methodLabels, datasets: [{ data: methodData, backgroundColor: methodColors }] }, options: { plugins:{ legend:{ position:'bottom' } } } });
+    new Chart(document.getElementById('methodChart'), { type: 'doughnut', data: { labels: methodLabels, datasets: [{ data: methodData, backgroundColor: methodColors }] }, options: { aspectRatio: 1.6, plugins:{ legend:{ position:'bottom' } } } });
   }
 }
 
@@ -52,7 +53,7 @@ try {
   window.addEventListener('load', function() {
     initCharts();
     if (params.has('auto_print')) {
-      setTimeout(function(){ window.print(); }, 600);
+      setTimeout(function(){ window.print(); }, 1500);
     }
   });
 } catch (e) { initCharts(); }

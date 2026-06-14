@@ -8,35 +8,36 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    :root { --ic: {{ settings_obj.invoice_color|default:'#ec4899' }}; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Cairo', sans-serif; background: #fff; color: #1e293b; font-size: 13px; }
     .page { max-width: 680px; margin: 0 auto; padding: 32px 24px; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
     .logo-area img { max-height: 70px; }
-    .logo-area .center-name { font-size: 22px; font-weight: 900; color: #ec4899; }
+    .logo-area .center-name { font-size: 22px; font-weight: 900; color: var(--ic); }
     .logo-area .center-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
     .invoice-badge { text-align: left; }
     .invoice-badge .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-    .invoice-badge .number { font-size: 26px; font-weight: 900; color: #ec4899; }
+    .invoice-badge .number { font-size: 26px; font-weight: 900; color: var(--ic); }
     .invoice-badge .date { font-size: 12px; color: #64748b; margin-top: 4px; }
-    .divider { height: 3px; background: linear-gradient(90deg, #ec4899, #f43f5e, #a855f7); border-radius: 4px; margin-bottom: 24px; }
+    .divider { height: 3px; background: var(--ic); border-radius: 4px; margin-bottom: 24px; }
     .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
-    .meta-box { background: #fdf2f8; border-radius: 10px; padding: 14px; }
+    .meta-box { background: #f8fafc; border-radius: 10px; padding: 14px; }
     .meta-box .box-title { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
     .meta-box .box-value { font-size: 14px; font-weight: 700; }
     .meta-box .box-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
     table.lines { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-    table.lines thead tr { background: #ec4899; color: #fff; }
+    table.lines thead tr { background: var(--ic); color: #fff; }
     table.lines thead th { padding: 10px 12px; font-weight: 700; font-size: 12px; text-align: right; }
-    table.lines tbody tr:nth-child(even) { background: #fdf2f8; }
-    table.lines tbody td { padding: 9px 12px; border-bottom: 1px solid #fce7f3; font-size: 13px; }
+    table.lines tbody tr:nth-child(even) { background: #f8fafc; }
+    table.lines tbody td { padding: 9px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
     .totals { display: flex; justify-content: flex-end; }
     .totals-box { width: 280px; }
-    .totals-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #fce7f3; font-size: 13px; }
-    .totals-row.grand { font-size: 17px; font-weight: 900; color: #ec4899; border-top: 2px solid #ec4899; border-bottom: none; padding-top: 12px; margin-top: 4px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+    .totals-row.grand { font-size: 17px; font-weight: 900; color: var(--ic); border-top: 2px solid var(--ic); border-bottom: none; padding-top: 12px; margin-top: 4px; }
     .totals-row.paid { color: #16a34a; font-weight: 700; border-bottom: none; }
     .totals-row.remaining { color: #dc2626; font-weight: 700; border-bottom: none; }
-    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px dashed #fce7f3; text-align: center; color: #94a3b8; font-size: 12px; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px dashed #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px; }
     .status-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-weight: 700; font-size: 12px; }
     .s-paid { background: #dcfce7; color: #16a34a; }
     .s-partial { background: #fef3c7; color: #b45309; }
@@ -53,7 +54,7 @@
 
   <!-- Print button -->
   <div class="no-print" style="text-align:left;margin-bottom:16px;">
-    <button onclick="window.print()" style="background:#ec4899;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer;font-weight:700;">
+    <button onclick="window.print()" style="background:var(--ic);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer;font-weight:700;">
       🖨️ طباعة
     </button>
   </div>

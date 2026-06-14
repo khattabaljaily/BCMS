@@ -63,7 +63,7 @@ if (document.getElementById('statusChart') && statusData.length) {
   new Chart(document.getElementById('statusChart'), {
     type: 'doughnut',
     data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: statusColors }] },
-    options: { plugins: { legend: { position: 'bottom' } } }
+    options: { aspectRatio: 1.6, plugins: { legend: { position: 'bottom' } } }
   });
 }
 
@@ -71,7 +71,7 @@ if (document.getElementById('methodChart') && methodData.length) {
   new Chart(document.getElementById('methodChart'), {
     type: 'doughnut',
     data: { labels: methodLabels, datasets: [{ data: methodData, backgroundColor: methodColors }] },
-    options: { plugins: { legend: { position: 'bottom' } } }
+    options: { aspectRatio: 1.6, plugins: { legend: { position: 'bottom' } } }
   });
 }
 </script>

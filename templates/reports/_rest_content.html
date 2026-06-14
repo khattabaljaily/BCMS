@@ -37,7 +37,7 @@
           <i class="fas fa-credit-card" style="color:var(--green);"></i> طرق الدفع
         </div>
         {% if chart_method_data != '[]' %}
-        <canvas id="methodChart" height="90"></canvas>
+        <canvas id="methodChart" style="max-height:220px;"></canvas>
         {% else %}
         <div class="cx-empty" style="padding:32px;"><i class="fas fa-credit-card"></i><p>لا بيانات</p></div>
         {% endif %}
@@ -50,7 +50,7 @@
           <i class="fas fa-chart-pie" style="color:var(--blue);"></i> حالات المواعيد
         </div>
         {% if chart_status_data != '[]' %}
-        <canvas id="statusChart" height="90"></canvas>
+        <canvas id="statusChart" style="max-height:220px;"></canvas>
         {% else %}
         <div class="cx-empty" style="padding:32px;"><i class="fas fa-chart-pie"></i><p>لا بيانات</p></div>
         {% endif %}

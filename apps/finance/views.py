@@ -450,7 +450,7 @@ def client_statement(request):
                     e['debit']  = amt
                     e['credit'] = None
                 e['balance'] = running
-            entries = raw
+            entries = list(reversed(raw))
 
         return render(request, 'finance/client_statement.html', {
             'clients':        clients,
