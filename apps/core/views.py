@@ -6,7 +6,6 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.db.models import Count, Sum
-from django.db.models.functions import TruncDate
 from django.views.decorators.cache import cache_control
 
 
@@ -212,37 +211,35 @@ def dashboard(request):
     month_net = (month_revenue or 0) - month_expenses
 
     # ── Chart: revenue + expenses last 30 days ──────────────
+    # Note: use values('date') directly — TruncDate on a DateField returns None in SQLite
     thirty_ago = today - timedelta(days=29)
     rev_rows = (
         Invoice.objects
         .filter(center=center, date__gte=thirty_ago, status='paid',
                 payment_method__in=['cash', 'card_or_bank'])
-        .annotate(day=TruncDate('date'))
-        .values('day')
+        .values('date')
         .annotate(total=Sum('paid_amount'))
-        .order_by('day')
+        .order_by('date')
     )
-    rev_map = {r['day']: float(r['total']) for r in rev_rows}
+    rev_map = {r['date']: float(r['total']) for r in rev_rows}
     pay_rows = (
         _CP.objects
         .filter(center=center, date__gte=thirty_ago, status='confirmed')
-        .annotate(day=TruncDate('date'))
-        .values('day')
+        .values('date')
         .annotate(total=Sum('amount'))
-        .order_by('day')
+        .order_by('date')
     )
     for r in pay_rows:
-        rev_map[r['day']] = rev_map.get(r['day'], 0) + float(r['total'])
+        rev_map[r['date']] = rev_map.get(r['date'], 0) + float(r['total'])
 
     exp_rows = (
         Expense.objects
         .filter(center=center, date__gte=thirty_ago)
-        .annotate(day=TruncDate('date'))
-        .values('day')
+        .values('date')
         .annotate(total=Sum('amount'))
-        .order_by('day')
+        .order_by('date')
     )
-    exp_map = {r['day']: float(r['total']) for r in exp_rows}
+    exp_map = {r['date']: float(r['total']) for r in exp_rows}
 
     chart_rev_labels, chart_rev_data, chart_exp_data = [], [], []
     for i in range(29, -1, -1):
@@ -257,12 +254,11 @@ def dashboard(request):
     appt_rows = (
         Appointment.objects
         .filter(center=center, date__gte=fourteen_ago, date__lte=today)
-        .annotate(day=TruncDate('date'))
-        .values('day')
+        .values('date')
         .annotate(count=Count('id'))
-        .order_by('day')
+        .order_by('date')
     )
-    appt_map = {r['day']: r['count'] for r in appt_rows}
+    appt_map = {r['date']: r['count'] for r in appt_rows}
     chart_appt_labels, chart_appt_data = [], []
     for i in range(13, -1, -1):
         d = today - timedelta(days=i)
