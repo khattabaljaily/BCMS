@@ -182,6 +182,18 @@ def _is_ajax(request):
 
 def _center_payload(c):
     """Return serialisable dict for a center row (used in AJAX responses)."""
+    from datetime import date, datetime
+    
+    # Helper to format dates (handle both datetime objects and strings)
+    def fmt_date(d, fmt='%Y-%m-%d'):
+        if not d:
+            return ''
+        if isinstance(d, str):
+            return d
+        if isinstance(d, (datetime, date)):
+            return d.strftime(fmt)
+        return str(d)
+    
     return {
         'pk':                c.pk,
         'name':              c.name,
@@ -194,12 +206,12 @@ def _center_payload(c):
         'service_type_id':   c.service_type_id or '',
         'service_type_name': c.service_type.name if c.service_type else '',
         'plan':              c.plan,
-        'plan_expires':      c.plan_expires.strftime('%Y-%m-%d') if c.plan_expires else '',
+        'plan_expires':      fmt_date(c.plan_expires),
         'max_staff':         c.max_staff,
         'max_users':         c.max_users,
         'is_active':         c.is_active,
         'is_demo':           c.is_demo,
-        'created_at':        c.created_at.strftime('%d/%m/%Y'),
+        'created_at':        fmt_date(c.created_at, '%d/%m/%Y'),
     }
 
 
