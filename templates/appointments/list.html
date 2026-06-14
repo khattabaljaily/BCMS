@@ -25,7 +25,7 @@
           <a href="{% url 'appointments:calendar' %}" class="btn btn--ghost btn--sm">
             <i class="fas fa-calendar-days"></i> التقويم
           </a>
-          <button class="btn btn--primary" onclick="openModal('modal-add')">
+          <button class="btn btn--primary" onclick="openAddAppt()">
             <i class="fas fa-plus"></i> موعد جديد
           </button>
         </div>
@@ -89,6 +89,9 @@
             </td>
             <td>
               <div class="cx-row-actions">
+                <button type="button" class="cx-act" title="تعديل" onclick="openEditAppt({{ appt.pk }})">
+                  <i class="fas fa-edit"></i>
+                </button>
                 <a href="{% url 'billing:create' %}?appointment={{ appt.pk }}"
                    class="cx-act" title="إنشاء فاتورة" style="color:var(--green);border-color:#a7f3d0;">
                   <i class="fas fa-receipt"></i>
@@ -115,6 +118,9 @@
             <div class="cx-card-sub">{{ appt.start_time|time:"H:i" }}{% if appt.end_time %} — {{ appt.end_time|time:"H:i" }}{% endif %}</div>
           </div>
           <div class="cx-card-actions">
+            <button type="button" class="cx-act" title="تعديل" onclick="openEditAppt({{ appt.pk }})">
+              <i class="fas fa-edit"></i>
+            </button>
             <a href="{% url 'billing:create' %}?appointment={{ appt.pk }}" class="cx-act" style="color:var(--green);border-color:#a7f3d0;" title="فاتورة">
               <i class="fas fa-receipt"></i>
             </a>
@@ -159,7 +165,7 @@
     <div class="cx-empty">
       <i class="fas fa-calendar-check"></i>
       <p>لا توجد مواعيد في هذا اليوم</p>
-      <button class="btn btn--primary" onclick="openModal('modal-add')" style="margin-top:12px;">
+      <button class="btn btn--primary" onclick="openAddAppt()" style="margin-top:12px;">
         <i class="fas fa-plus"></i> إضافة موعد
       </button>
     </div>
@@ -172,11 +178,12 @@
 <div class="modal-overlay" id="modal-add" style="display:none;">
   <div class="modal-dialog" style="max-width:600px;">
     <div class="modal-header">
-      <span class="modal-title"><i class="fas fa-calendar-plus" style="color:var(--rose);margin-left:8px;"></i> موعد جديد</span>
+      <span class="modal-title" id="appt-modal-title"><i class="fas fa-calendar-plus" style="color:var(--rose);margin-left:8px;"></i> موعد جديد</span>
       <button class="modal-close" onclick="closeModal('modal-add')"><i class="fas fa-times"></i></button>
     </div>
-    <form method="post" action="{% url 'appointments:save' %}">
+    <form method="post" action="{% url 'appointments:save' %}" id="appt-form">
       {% csrf_token %}
+      <input type="hidden" name="pk" id="appt-pk" value="">
       <div class="modal-body">
         <div class="form-grid-2">
           <div class="form-group">
@@ -254,13 +261,52 @@ function reloadApptPanel() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  BCMS.ajaxForm(document.querySelector('#modal-add form'), {
+  BCMS.ajaxForm(document.getElementById('appt-form'), {
     onSuccess: function() {
       closeModal('modal-add');
       reloadApptPanel();
     }
   });
 });
+
+var APPT_SAVE_URL = '{% url "appointments:save" %}';
+
+function openAddAppt() {
+  document.getElementById('appt-pk').value = '';
+  document.getElementById('appt-modal-title').innerHTML = '<i class="fas fa-calendar-plus" style="color:var(--rose);margin-left:8px;"></i> موعد جديد';
+  document.querySelector('[name="client_id"]').value = '';
+  document.querySelector('[name="specialist_id"]').value = '';
+  document.querySelector('[name="date"]').value = '{{ view_date|date:"Y-m-d" }}';
+  document.querySelector('[name="start_time"]').value = '';
+  document.querySelector('[name="notes"]').value = '';
+  document.querySelectorAll('[name="service_ids"]').forEach(function(cb) { cb.checked = false; });
+  openModal('modal-add');
+}
+
+function openEditAppt(pk) {
+  GSpinner.show();
+  fetch(APPT_SAVE_URL + '?pk=' + pk, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    credentials: 'same-origin',
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    GSpinner.hide();
+    document.getElementById('appt-pk').value = d.pk;
+    document.getElementById('appt-modal-title').innerHTML = '<i class="fas fa-calendar-edit" style="color:var(--rose);margin-left:8px;"></i> تعديل الموعد';
+    document.querySelector('[name="client_id"]').value = d.client_id || '';
+    document.querySelector('[name="specialist_id"]').value = d.specialist_id || '';
+    document.querySelector('[name="date"]').value = d.date;
+    document.querySelector('[name="start_time"]').value = d.start_time;
+    document.querySelector('[name="notes"]').value = d.notes || '';
+    var svcIds = (d.service_ids || []).map(String);
+    document.querySelectorAll('[name="service_ids"]').forEach(function(cb) {
+      cb.checked = svcIds.includes(String(cb.value));
+    });
+    openModal('modal-add');
+  })
+  .catch(function() { GSpinner.hide(); BCMS.toast('تعذر تحميل بيانات الموعد', 'error'); });
+}
 
 // After delete animation finishes, reload panel (handles empty state + count)
 document.addEventListener('bcms:recordDeleted', function() {

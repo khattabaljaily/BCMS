@@ -21,9 +21,13 @@ def _billing_ref(pk):
     return f'billing_{pk}'
 
 
+def _payment_ref(pk):
+    return f'payment_{pk}'
+
+
 def _create_invoice_treasury_movement(invoice):
-    """Record cash invoice payment as treasury inflow. No-op for non-cash or if already recorded."""
-    if invoice.payment_method != 'cash':
+    """Record a paid cash/card invoice as a treasury inflow. No-op for 'later' or if already recorded."""
+    if invoice.payment_method not in ('cash', 'card_or_bank'):
         return
     from apps.finance.models import Treasury, TreasuryMovement
     treasury = Treasury.objects.filter(center=invoice.center).first()
@@ -35,20 +39,36 @@ def _create_invoice_treasury_movement(invoice):
     TreasuryMovement.objects.create(
         treasury=treasury,
         type='in',
-        amount=invoice.total,
+        amount=invoice.paid_amount,
         reference=ref,
         notes=f'فاتورة {invoice.number}',
     )
 
 
 def _delete_invoice_treasury_movement(invoice):
-    """Remove treasury movement when invoice is voided/cancelled."""
+    """Remove treasury movement recorded for this invoice's direct payment."""
     from apps.finance.models import TreasuryMovement
     for tm in TreasuryMovement.objects.filter(
         treasury__center=invoice.center,
         reference=_billing_ref(invoice.pk),
     ):
         tm.delete()
+
+
+def _cancel_invoice_client_payments(invoice):
+    """
+    Cancel all confirmed client payments for this invoice and remove their
+    treasury movements. Called before voiding or deleting an invoice.
+    """
+    from apps.finance.models import TreasuryMovement
+    for payment in invoice.payments.filter(status='confirmed'):
+        for tm in TreasuryMovement.objects.filter(
+            treasury__center=invoice.center,
+            reference=_payment_ref(payment.pk),
+        ):
+            tm.delete()
+        payment.status = 'cancelled'
+        payment.save(update_fields=['status'])
 
 
 def get_invoice_lines_from_post(request, center):
@@ -162,15 +182,18 @@ def invoice_create(request):
 
             inv.recalculate()
 
-            if request.POST.get('action') == 'pay':
+            action = request.POST.get('action')
+            if action == 'pay':
                 if payment_method == 'later':
+                    # Pay-later: save as draft, no treasury movement
                     inv.status = 'draft'
                     inv.paid_amount = Decimal('0')
                     inv.save(update_fields=['status', 'paid_amount'])
                 else:
                     inv.mark_paid(amount=inv.total, method=payment_method)
                     _create_invoice_treasury_movement(inv)
-            elif request.POST.get('action') == 'later':
+            else:
+                # draft — save without payment
                 inv.status = 'draft'
                 inv.paid_amount = Decimal('0')
                 inv.save(update_fields=['status', 'paid_amount'])
@@ -234,18 +257,27 @@ def invoice_print(request, pk):
 
 
 @login_required
+@transaction.atomic
 def invoice_void(request, pk):
     inv = get_object_or_404(Invoice, pk=pk, center=request.center)
     if request.method == 'POST':
-        # delete stock movements (restores stock), reverse treasury, and mark cancelled
+        # 1. Cancel all confirmed client payments (later-pay flow) + remove their treasury movements
+        _cancel_invoice_client_payments(inv)
+
+        # 2. Remove the invoice's own direct treasury movement (cash/card pay-now flow)
         _delete_invoice_treasury_movement(inv)
+
+        # 3. Restore stock
         StockMovement.objects.filter(reference=f'invoice_{inv.pk}').delete()
+
+        # 4. Mark cancelled and zero out paid amount
         inv.status = 'cancelled'
         inv.paid_amount = Decimal('0')
         inv.save(update_fields=['status', 'paid_amount'])
+
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم إلغاء الفاتورة واستعادة المخزون.'})
-        messages.success(request, 'تم إلغاء الفاتورة واستعادة المخزون.')
+            return JsonResponse({'success': True, 'message': 'تم إلغاء الفاتورة واستعادة المخزون والخزينة.'})
+        messages.success(request, 'تم إلغاء الفاتورة واستعادة المخزون والخزينة.')
     return redirect('billing:list')
 
 
@@ -254,7 +286,7 @@ def invoice_void(request, pk):
 def invoice_edit(request, pk):
     center = request.center
     inv = get_object_or_404(Invoice, pk=pk, center=center)
-    
+
     clients = (
         Client.objects.filter(center=center, is_active=True)
         .annotate(
@@ -271,24 +303,23 @@ def invoice_edit(request, pk):
         if not lines:
             messages.error(request, 'يجب إضافة بند واحد على الأقل للفاتورة.')
         else:
-            # Delete old stock movements for this invoice
-            old_movements = StockMovement.objects.filter(
-                reference=f'invoice_{inv.pk}'
-            )
-            for movement in old_movements:
-                movement.delete()  # This will automatically adjust stock
+            prev_method = inv.payment_method
+            prev_status = inv.status
 
-            # Update invoice
+            # Restore old stock movements
+            for movement in StockMovement.objects.filter(reference=f'invoice_{inv.pk}'):
+                movement.delete()
+
+            # Update invoice header
             payment_method = request.POST.get('payment_method', 'cash')
-            inv.client_id = request.POST.get('client') or None
+            inv.client_id      = request.POST.get('client') or None
             inv.payment_method = payment_method
-            inv.notes = request.POST.get('notes', '')
+            inv.notes          = request.POST.get('notes', '')
             inv.discount_amount = Decimal(request.POST.get('discount_amount') or '0')
             inv.save(update_fields=['client_id', 'payment_method', 'notes', 'discount_amount'])
 
-            # Delete and recreate lines
+            # Rebuild lines
             inv.lines.all().delete()
-
             for item in lines:
                 InvoiceLine.objects.create(
                     invoice=inv,
@@ -299,7 +330,6 @@ def invoice_edit(request, pk):
                     unit_price=item['unit_price'],
                     discount_percent=item['discount_percent'],
                 )
-                
                 if item['product']:
                     StockMovement.objects.create(
                         center=center,
@@ -312,20 +342,35 @@ def invoice_edit(request, pk):
 
             inv.recalculate()
 
-            if request.POST.get('action') == 'pay':
+            action = request.POST.get('action')
+            if action == 'pay':
                 if payment_method == 'later':
+                    # Switching to pay-later: remove direct treasury movement, cancel prior client payments
+                    _delete_invoice_treasury_movement(inv)
                     inv.status = 'draft'
                     inv.paid_amount = Decimal('0')
                     inv.save(update_fields=['status', 'paid_amount'])
                 else:
+                    # Pay now (cash/card): replace treasury movement with updated amount
                     _delete_invoice_treasury_movement(inv)
                     inv.mark_paid(amount=inv.total, method=payment_method)
                     _create_invoice_treasury_movement(inv)
-            elif request.POST.get('action') == 'later':
-                _delete_invoice_treasury_movement(inv)
-                inv.status = 'draft'
-                inv.paid_amount = Decimal('0')
-                inv.save(update_fields=['status', 'paid_amount'])
+            else:
+                # Draft save — reconcile treasury if already paid
+                if prev_status == 'paid' and payment_method in ('cash', 'card_or_bank'):
+                    # Total may have changed: replace movement with new amount
+                    _delete_invoice_treasury_movement(inv)
+                    inv.mark_paid(amount=inv.total, method=payment_method)
+                    _create_invoice_treasury_movement(inv)
+                elif prev_status == 'paid' and payment_method == 'later':
+                    # Switched from paid to later: remove treasury, clear payment
+                    _delete_invoice_treasury_movement(inv)
+                    inv.status = 'draft'
+                    inv.paid_amount = Decimal('0')
+                    inv.save(update_fields=['status', 'paid_amount'])
+                elif prev_method in ('cash', 'card_or_bank') and payment_method == 'later':
+                    # Payment method changed to later without explicit action
+                    _delete_invoice_treasury_movement(inv)
 
             messages.success(request, 'تم التحديث.')
             return redirect('billing:detail', pk=inv.pk)
@@ -369,13 +414,23 @@ def invoice_edit(request, pk):
 @transaction.atomic
 def invoice_delete(request, pk):
     inv = get_object_or_404(Invoice, pk=pk, center=request.center)
-    
+
     if request.method == 'POST':
+        # Cancel client payments + remove their treasury movements BEFORE cascade delete
+        _cancel_invoice_client_payments(inv)
+
+        # Remove direct invoice treasury movement
+        _delete_invoice_treasury_movement(inv)
+
+        # Restore stock
         StockMovement.objects.filter(reference=f'invoice_{inv.pk}').delete()
+
+        # Delete invoice (cascades to lines and payments)
         inv.delete()
+
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم حذف الفاتورة واستعادة المخزون.'})
-        messages.success(request, 'تم حذف الفاتورة واستعادة المخزون.')
+            return JsonResponse({'success': True, 'message': 'تم حذف الفاتورة واستعادة المخزون والخزينة.'})
+        messages.success(request, 'تم حذف الفاتورة واستعادة المخزون والخزينة.')
         return redirect('billing:list')
 
     return redirect('billing:detail', pk=pk)

@@ -57,6 +57,18 @@ def appointment_save(request):
     if request.method == 'GET':
         pk = request.GET.get('pk')
         obj = get_object_or_404(Appointment, pk=pk, center=center) if pk else None
+        if obj and _is_ajax(request):
+            return JsonResponse({
+                'pk':           obj.pk,
+                'client_id':    obj.client_id or '',
+                'specialist_id': obj.specialist_id or '',
+                'date':         str(obj.date),
+                'start_time':   obj.start_time.strftime('%H:%M'),
+                'end_time':     obj.end_time.strftime('%H:%M') if obj.end_time else '',
+                'service_ids':  list(obj.appointment_services.values_list('service_id', flat=True)),
+                'notes':        obj.notes,
+                'status':       obj.status,
+            })
         selected_ids = list(
             obj.appointment_services.values_list('service_id', flat=True)
         ) if obj else []
