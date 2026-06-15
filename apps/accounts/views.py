@@ -10,15 +10,16 @@ from .forms import LoginForm, RegisterForm
 from .models import User, Role, PERMISSIONS
 
 SECTION_LABELS = {
-    'appointments': ('المواعيد',      'fas fa-calendar-check', '#6366f1'),
-    'clients':      ('العملاء',       'fas fa-users',          '#0ea5e9'),
-    'services':     ('الخدمات',       'fas fa-spa',            '#ec4899'),
-    'billing':      ('الفواتير',      'fas fa-file-invoice',   '#10b981'),
-    'products':     ('المنتجات والمخزون', 'fas fa-boxes',     '#f59e0b'),
-    'staff':        ('الفريق',        'fas fa-user-tie',       '#8b5cf6'),
-    'store':        ('المتجر',        'fas fa-store',          '#14b8a6'),
-    'reports':      ('التقارير',      'fas fa-chart-bar',      '#f97316'),
-    'settings':     ('الإعدادات',     'fas fa-sliders',        '#64748b'),
+    'appointments': ('المواعيد',          'fas fa-calendar-check',    '#6366f1'),
+    'clients':      ('العملاء',           'fas fa-users',             '#0ea5e9'),
+    'services':     ('الخدمات',           'fas fa-spa',               '#ec4899'),
+    'billing':      ('الفواتير ونقطة البيع', 'fas fa-cash-register',  '#10b981'),
+    'products':     ('المنتجات والمخزون', 'fas fa-boxes-stacked',     '#f59e0b'),
+    'staff':        ('الفريق',            'fas fa-user-tie',          '#8b5cf6'),
+    'store':        ('المتجر الإلكتروني', 'fas fa-store',             '#14b8a6'),
+    'finance':      ('المالية والحسابات', 'fas fa-wallet',            '#ef4444'),
+    'reports':      ('التقارير',          'fas fa-chart-bar',         '#f97316'),
+    'settings':     ('الإعدادات',         'fas fa-sliders',           '#64748b'),
 }
 
 

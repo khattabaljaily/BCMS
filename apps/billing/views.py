@@ -526,6 +526,9 @@ def invoice_delete(request, pk):
 
 @login_required
 def pos_view(request):
+    if not request.user.can('billing', 'pos') and not request.user.can('billing', 'create'):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden('ليس لديك صلاحية الوصول لنقطة البيع')
     center = request.center
     from apps.services.models import ServiceCategory
 
@@ -569,6 +572,8 @@ def pos_view(request):
 @login_required
 @transaction.atomic
 def pos_save(request):
+    if not request.user.can('billing', 'pos') and not request.user.can('billing', 'create'):
+        return JsonResponse({'error': 'ليس لديك صلاحية'}, status=403)
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 

@@ -702,6 +702,8 @@ def salary_detail(request, pk):
 
 @login_required
 def user_advance_list(request):
+    if not request.user.can('finance', 'user_advances'):
+        return HttpResponseForbidden('ليس لديك صلاحية عرض سلف الموظفين')
     center = request.user.center
     user_id = request.GET.get('user')
     status_filter = request.GET.get('status', '')
@@ -723,6 +725,8 @@ def user_advance_list(request):
 
 @login_required
 def user_advance_create(request):
+    if not request.user.can('finance', 'user_advances'):
+        return HttpResponseForbidden('ليس لديك صلاحية إدارة سلف الموظفين')
     center = request.user.center
     if request.method == 'POST':
         user_id    = request.POST.get('user')
@@ -762,6 +766,8 @@ def user_advance_cancel(request, pk):
 
 @login_required
 def user_salary_list(request):
+    if not request.user.can('finance', 'user_salaries'):
+        return HttpResponseForbidden('ليس لديك صلاحية عرض رواتب الموظفين')
     center = request.user.center
     user_id = request.GET.get('user')
     status_filter = request.GET.get('status', '')
@@ -781,6 +787,8 @@ def user_salary_list(request):
 
 @login_required
 def user_salary_create(request):
+    if not request.user.can('finance', 'user_salaries'):
+        return HttpResponseForbidden('ليس لديك صلاحية إدارة رواتب الموظفين')
     center = request.user.center
     if request.method == 'POST':
         user_id       = request.POST.get('user')
