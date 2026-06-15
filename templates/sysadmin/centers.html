@@ -261,9 +261,9 @@
             <div class="form-group">
               <label>الباقة</label>
               <select name="plan" class="form-control">
-                {% for val, label in plans %}
-                <option value="{{ val }}">{{ label }}</option>
-                {% endfor %}
+                {% for val, label in plans %}{% if val != 'trial' %}
+                <option value="{{ val }}" {% if val == 'starter' %}selected{% endif %}>{{ label }}</option>
+                {% endif %}{% endfor %}
               </select>
             </div>
           </div>
@@ -406,9 +406,9 @@
             <div class="form-group">
               <label>الباقة</label>
               <select name="plan" id="edit-plan" class="form-control">
-                {% for val, label in plans %}
+                {% for val, label in plans %}{% if val != 'trial' %}
                 <option value="{{ val }}">{{ label }}</option>
-                {% endfor %}
+                {% endif %}{% endfor %}
               </select>
             </div>
           </div>

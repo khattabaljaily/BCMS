@@ -135,9 +135,9 @@
         <div class="form-group" style="margin-bottom:12px;">
           <label>الباقة</label>
           <select name="plan" class="form-control">
-            {% for val, label in plans %}
-            <option value="{{ val }}" {% if obj and obj.plan == val %}selected{% elif not obj and val == 'trial' %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
+            {% for val, label in plans %}{% if val != 'trial' %}
+            <option value="{{ val }}" {% if obj and obj.plan == val %}selected{% elif not obj and val == 'starter' %}selected{% endif %}>{{ label }}</option>
+            {% endif %}{% endfor %}
           </select>
         </div>
         <div class="form-group" style="margin-bottom:12px;">
