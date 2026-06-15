@@ -506,6 +506,21 @@ details[open] .faq-q i{transform:rotate(90deg)}
     <p class="section__desc">جميع الباقات تشمل تجربة مجانية 30 يوماً • إلغاء في أي وقت</p>
   </div>
 
+  <!-- Shared features banner -->
+  <div style="max-width:860px;margin:0 auto 40px;background:var(--slate-50);border:1px solid var(--slate-200);border-radius:16px;padding:20px 28px;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--pink);text-transform:uppercase;margin-bottom:14px;">جميع الباقات تشمل</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px 28px;">
+      <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate-700);"><i class="fas fa-check" style="color:#10b981;font-size:11px;"></i>إدارة المواعيد والتقويم</span>
+      <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate-700);"><i class="fas fa-check" style="color:#10b981;font-size:11px;"></i>الخدمات والمنتجات</span>
+      <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate-700);"><i class="fas fa-check" style="color:#10b981;font-size:11px;"></i>الفواتير والمدفوعات</span>
+      <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate-700);"><i class="fas fa-check" style="color:#10b981;font-size:11px;"></i>الحسابات والمالية الكاملة</span>
+      <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate-700);"><i class="fas fa-check" style="color:#10b981;font-size:11px;"></i>فريق الخدمة والرواتب</span>
+      <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate-700);"><i class="fas fa-check" style="color:#10b981;font-size:11px;"></i>الأدوار والصلاحيات</span>
+      <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate-700);"><i class="fas fa-check" style="color:#10b981;font-size:11px;"></i>إدارة المخزون</span>
+      <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate-700);"><i class="fas fa-check" style="color:#10b981;font-size:11px;"></i>نقاط الولاء</span>
+    </div>
+  </div>
+
   <div class="pricing-grid">
 
     <!-- ─ Starter ─ -->
@@ -521,16 +536,11 @@ details[open] .faq-q i{transform:rotate(90deg)}
       <div class="card-trial-note"><i class="fas fa-gift"></i> 30 يوم مجاناً</div>
       <div class="card-divider"></div>
       <ul class="card-features">
-        <li class="card-feature"><i class="fas fa-check"></i> إدارة المواعيد والتقويم</li>
-        <li class="card-feature"><i class="fas fa-check"></i> إدارة العملاء (حتى 500 عميل)</li>
-        <li class="card-feature"><i class="fas fa-check"></i> إدارة الخدمات والباقات</li>
-        <li class="card-feature"><i class="fas fa-check"></i> الفواتير والمدفوعات</li>
-        <li class="card-feature"><i class="fas fa-check"></i> التقارير الأساسية</li>
-        <li class="card-feature"><i class="fas fa-check"></i> حتى 3 موظفين</li>
-        <li class="card-feature"><i class="fas fa-check"></i> مستخدمان</li>
+        <li class="card-feature"><i class="fas fa-check"></i> <span><strong>2</strong> مستخدمين</span></li>
+        <li class="card-feature"><i class="fas fa-check"></i> <span>ملفات العملاء حتى <strong>1,000</strong></span></li>
+        <li class="card-feature card-feature--dim"><i class="fas fa-xmark"></i> تقارير متقدمة</li>
         <li class="card-feature card-feature--dim"><i class="fas fa-xmark"></i> المتجر الإلكتروني</li>
-        <li class="card-feature card-feature--dim"><i class="fas fa-xmark"></i> إدارة المخزون</li>
-        <li class="card-feature card-feature--dim"><i class="fas fa-xmark"></i> الحسابات والمالية</li>
+        <li class="card-feature card-feature--dim"><i class="fas fa-circle-info" style="color:var(--slate-400)"></i> دعم فني مدفوع</li>
       </ul>
       <a href="{% url 'accounts:register' %}?plan=starter" class="card-btn card-btn--starter">
         <i class="fas fa-rocket"></i> ابدأ مجاناً
@@ -551,16 +561,11 @@ details[open] .faq-q i{transform:rotate(90deg)}
       <div class="card-trial-note"><i class="fas fa-gift"></i> 30 يوم مجاناً</div>
       <div class="card-divider"></div>
       <ul class="card-features">
-        <li class="card-feature"><i class="fas fa-check"></i> كل ميزات الباقة الأساسية</li>
-        <li class="card-feature"><i class="fas fa-check"></i> عملاء غير محدودين</li>
-        <li class="card-feature"><i class="fas fa-check"></i> حتى 10 موظفين</li>
-        <li class="card-feature"><i class="fas fa-check"></i> حتى 5 مستخدمين وأدوار</li>
-        <li class="card-feature"><i class="fas fa-check"></i> إدارة المخزون والمنتجات</li>
-        <li class="card-feature"><i class="fas fa-check"></i> الحسابات والمالية الكاملة</li>
-        <li class="card-feature"><i class="fas fa-check"></i> المتجر الإلكتروني والحجز الذاتي</li>
-        <li class="card-feature"><i class="fas fa-check"></i> نظام نقاط الولاء</li>
-        <li class="card-feature"><i class="fas fa-check"></i> إدارة الرواتب والسلف</li>
-        <li class="card-feature"><i class="fas fa-check"></i> التقارير المتقدمة</li>
+        <li class="card-feature"><i class="fas fa-check"></i> <span><strong>5</strong> مستخدمين</span></li>
+        <li class="card-feature"><i class="fas fa-check"></i> <span>ملفات العملاء حتى <strong>2,500</strong></span></li>
+        <li class="card-feature"><i class="fas fa-check"></i> تقارير متقدمة <strong>محدودة</strong></li>
+        <li class="card-feature"><i class="fas fa-check"></i> المتجر الإلكتروني</li>
+        <li class="card-feature"><i class="fas fa-check"></i> دعم فني محدود</li>
       </ul>
       <a href="{% url 'accounts:register' %}?plan=pro" class="card-btn card-btn--pro">
         <i class="fas fa-rocket"></i> ابدأ مجاناً
@@ -580,16 +585,11 @@ details[open] .faq-q i{transform:rotate(90deg)}
       <div class="card-trial-note"><i class="fas fa-gift"></i> 30 يوم مجاناً</div>
       <div class="card-divider"></div>
       <ul class="card-features">
-        <li class="card-feature"><i class="fas fa-check"></i> كل ميزات الباقة الاحترافية</li>
-        <li class="card-feature"><i class="fas fa-check"></i> موظفون ومستخدمون غير محدودين</li>
-        <li class="card-feature"><i class="fas fa-check"></i> النسخ الاحتياطي واستعادة البيانات</li>
-        <li class="card-feature"><i class="fas fa-check"></i> تخصيص الفواتير والعلامة التجارية</li>
-        <li class="card-feature"><i class="fas fa-check"></i> دعم فني على مدار الساعة</li>
-        <li class="card-feature"><i class="fas fa-check"></i> مدير حساب مخصص</li>
-        <li class="card-feature"><i class="fas fa-check"></i> إعداد وتهيئة مجاني</li>
-        <li class="card-feature"><i class="fas fa-check"></i> تدريب الفريق</li>
-        <li class="card-feature"><i class="fas fa-check"></i> اتفاقية مستوى خدمة (SLA)</li>
-        <li class="card-feature"><i class="fas fa-check"></i> جميع الميزات القادمة</li>
+        <li class="card-feature"><i class="fas fa-check"></i> مستخدمون <strong>غير محدودين</strong></li>
+        <li class="card-feature"><i class="fas fa-check"></i> ملفات العملاء <strong>غير محدودة</strong></li>
+        <li class="card-feature"><i class="fas fa-check"></i> تقارير متقدمة <strong>كاملة</strong></li>
+        <li class="card-feature"><i class="fas fa-check"></i> المتجر الإلكتروني</li>
+        <li class="card-feature"><i class="fas fa-check"></i> دعم فني <strong>غير محدود</strong></li>
       </ul>
       <a href="{% url 'accounts:register' %}?plan=enterprise" class="card-btn card-btn--enterprise">
         <i class="fas fa-rocket"></i> ابدأ مجاناً
@@ -629,8 +629,8 @@ details[open] .faq-q i{transform:rotate(90deg)}
     </div>
     <div class="sys-card">
       <div class="sys-card__icon"><i class="fas fa-spa"></i></div>
-      <div class="sys-card__title">الخدمات والباقات</div>
-      <div class="sys-card__desc">تصنيفات مرنة، تسعير محكم، وباقات متكاملة من عدة خدمات بسعر واحد.</div>
+      <div class="sys-card__title">الخدمات والمنتجات</div>
+      <div class="sys-card__desc">تصنيفات مرنة، تسعير محكم، وإدارة دقيقة للخدمات والمنتجات.</div>
     </div>
     <div class="sys-card">
       <div class="sys-card__icon"><i class="fas fa-user-friends"></i></div>
@@ -690,23 +690,21 @@ details[open] .faq-q i{transform:rotate(90deg)}
           </tr>
         </thead>
         <tbody>
-          <tr><td><b>الموظفون</b></td><td class="check-partial">3</td><td class="check-partial">10</td><td class="check-partial">∞ غير محدود</td></tr>
-          <tr><td><b>المستخدمون</b></td><td class="check-partial">2</td><td class="check-partial">5</td><td class="check-partial">∞ غير محدود</td></tr>
-          <tr><td>إدارة المواعيد</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>ملفات العملاء</td><td class="check-partial">500 عميل</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الخدمات والباقات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الفواتير</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>التقارير الأساسية</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الأدوار والصلاحيات</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>إدارة المخزون</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الحسابات والمالية</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>إدارة الرواتب</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr style="background:var(--slate-50)"><td colspan="4" style="font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--pink);text-transform:uppercase;padding:10px 16px;">مشترك في جميع الباقات</td></tr>
+          <tr><td>إدارة المواعيد والتقويم</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الخدمات والمنتجات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الفواتير والمدفوعات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الحسابات والمالية الكاملة</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>فريق الخدمة والرواتب</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الأدوار والصلاحيات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>إدارة المخزون</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>نقاط الولاء</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr style="background:var(--slate-50)"><td colspan="4" style="font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--slate-600);text-transform:uppercase;padding:10px 16px;">يختلف حسب الباقة</td></tr>
+          <tr><td><b>المستخدمون</b></td><td class="check-partial col-starter">2</td><td class="check-partial col-pro">5</td><td class="check-partial col-enterprise">∞ غير محدود</td></tr>
+          <tr><td>ملفات العملاء</td><td class="check-partial">1,000 عميل</td><td class="check-partial">2,500 عميل</td><td class="check-partial">∞ غير محدود</td></tr>
+          <tr><td>التقارير المتقدمة</td><td><i class="fas fa-xmark check-no"></i></td><td class="check-partial">محدودة</td><td class="check-partial">كاملة</td></tr>
           <tr><td>المتجر الإلكتروني</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>نقاط الولاء</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>التقارير المتقدمة</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>النسخ الاحتياطي</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>مدير حساب مخصص</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>دعم 24/7</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الدعم الفني</td><td class="check-partial">مدفوع</td><td class="check-partial">محدود</td><td class="check-partial">غير محدود</td></tr>
         </tbody>
       </table>
     </div>
@@ -724,15 +722,12 @@ details[open] .faq-q i{transform:rotate(90deg)}
           </div>
         </div>
         <div class="cmp-rows">
-          <div class="cmp-row"><span class="cmp-row__lbl">الموظفون</span><span class="cmp-row__val">3</span></div>
+          <div class="cmp-row" style="background:var(--slate-50);font-size:11px;color:var(--pink);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">يختلف عن باقي الباقات</div>
           <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">2</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">إدارة المواعيد</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">500 عميل</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">الخدمات والباقات</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">الفواتير</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">التقارير الأساسية</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">المخزون والمالية</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">1,000 عميل</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">التقارير المتقدمة</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
           <div class="cmp-row"><span class="cmp-row__lbl">المتجر الإلكتروني</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">الدعم الفني</span><span class="cmp-row__val">مدفوع</span></div>
         </div>
         <a href="{% url 'accounts:register' %}?plan=starter" class="cmp-card__cta cmp-card__cta--starter">ابدأ مجاناً</a>
       </div>
@@ -748,17 +743,12 @@ details[open] .faq-q i{transform:rotate(90deg)}
           <span class="cmp-badge">الأكثر طلباً</span>
         </div>
         <div class="cmp-rows">
-          <div class="cmp-row"><span class="cmp-row__lbl">الموظفون</span><span class="cmp-row__val">10</span></div>
+          <div class="cmp-row" style="background:var(--slate-50);font-size:11px;color:var(--pink);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">يختلف عن باقي الباقات</div>
           <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">5</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">إدارة المواعيد</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">غير محدود</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">الخدمات والباقات</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">الفواتير</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">المخزون والمالية</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">2,500 عميل</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">التقارير المتقدمة</span><span class="cmp-row__val">محدودة</span></div>
           <div class="cmp-row"><span class="cmp-row__lbl">المتجر الإلكتروني</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">نقاط الولاء</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">التقارير المتقدمة</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">النسخ الاحتياطي</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">الدعم الفني</span><span class="cmp-row__val">محدود</span></div>
         </div>
         <a href="{% url 'accounts:register' %}?plan=pro" class="cmp-card__cta cmp-card__cta--pro">ابدأ مجاناً</a>
       </div>
@@ -773,12 +763,12 @@ details[open] .faq-q i{transform:rotate(90deg)}
           </div>
         </div>
         <div class="cmp-rows">
-          <div class="cmp-row"><span class="cmp-row__lbl">الموظفون</span><span class="cmp-row__val">∞ غير محدود</span></div>
+          <div class="cmp-row" style="background:var(--slate-50);font-size:11px;color:var(--pink);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">يختلف عن باقي الباقات</div>
           <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">∞ غير محدود</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">كل ميزات الاحترافي</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">النسخ الاحتياطي</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">مدير حساب مخصص</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">دعم 24/7</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">∞ غير محدود</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">التقارير المتقدمة</span><span class="cmp-row__val">كاملة</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">المتجر الإلكتروني</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">الدعم الفني</span><span class="cmp-row__val">غير محدود</span></div>
         </div>
         <a href="{% url 'accounts:register' %}?plan=enterprise" class="cmp-card__cta cmp-card__cta--enterprise">ابدأ مجاناً</a>
       </div>

@@ -39,6 +39,9 @@ def store_home(request, slug):
     center       = get_object_or_404(Center, slug=slug, is_active=True)
     settings_obj, _ = Settings.objects.get_or_create(center=center)
 
+    if not center.has_store:
+        return render(request, 'store/disabled.html', {'center': center})
+
     if not settings_obj.store_enabled and not settings_obj.booking_enabled:
         return render(request, 'store/disabled.html', {'center': center})
 

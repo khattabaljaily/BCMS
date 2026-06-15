@@ -310,7 +310,8 @@
         </div>
       </div>
 
-      <!-- المتجر (submenu) -->
+      <!-- المتجر (submenu) — متاح للباقة الاحترافية والمؤسسات فقط -->
+      {% if center and center.has_store %}
       <div class="nav-group">
         <div class="nav-item nav-item--parent">
           <span class="nav-icon"><i class="fas fa-store"></i></span>
@@ -351,6 +352,7 @@
           </a>
         </div>
       </div>
+      {% endif %}
 
       <a href="{% url 'reports:home' %}" class="nav-item {% block nav_reports %}{% endblock %}">
         <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>

@@ -107,6 +107,10 @@ class Center(models.Model):
         return self.plan == 'trial'
 
     @property
+    def has_store(self):
+        return self.plan in ('pro', 'enterprise')
+
+    @property
     def is_expired(self):
         if self.plan_expires is None:
             return False
