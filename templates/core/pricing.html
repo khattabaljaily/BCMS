@@ -416,7 +416,6 @@ details[open] .faq-q i{transform:rotate(90deg)}
   <nav class="navbar__links">
     <a href="{% url 'core:about' %}" class="navbar__link">عن النظام</a>
     <a href="#features" class="navbar__link">المميزات</a>
-    <a href="#compare" class="navbar__link">المقارنة</a>
     <a href="#faq" class="navbar__link">الأسئلة الشائعة</a>
     <a href="{% url 'accounts:login' %}" class="navbar__link">تسجيل الدخول</a>
     <a href="{% url 'accounts:register' %}" class="navbar__link navbar__cta">ابدأ مجاناً</a>
@@ -450,9 +449,9 @@ details[open] .faq-q i{transform:rotate(90deg)}
         <i class="fas fa-rocket"></i>
         ابدأ تجربتك المجانية
       </a>
-      <a href="#compare" class="hero__cta-sec">
-        <i class="fas fa-table-list"></i>
-        قارن الباقات
+      <a href="#features" class="hero__cta-sec">
+        <i class="fas fa-list-check"></i>
+        استكشف المميزات
       </a>
     </div>
 
@@ -675,113 +674,6 @@ details[open] .faq-q i{transform:rotate(90deg)}
       <div class="sys-card__icon"><i class="fas fa-headset"></i></div>
       <div class="sys-card__title">الدعم الفني</div>
       <div class="sys-card__desc">نظام تذاكر دعم متكامل، متابعة المشكلات، والرد السريع من فريقنا.</div>
-    </div>
-  </div>
-</section>
-
-<!-- ── Compare ── -->
-<section class="compare-section" id="compare">
-  <div class="section__header">
-    <div class="section__label">مقارنة الباقات</div>
-    <h2 class="section__title">ماذا تشمل كل باقة؟</h2>
-  </div>
-  <div class="compare-wrap">
-
-    <!-- Desktop table -->
-    <div class="compare-table-wrap">
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th class="col-starter">أساسي<br><small>$49/شهر</small></th>
-            <th class="col-pro">متقدم<br><small>$99/شهر</small></th>
-            <th class="col-enterprise">أعمال<br><small>$199/شهر</small></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="background:var(--slate-50)"><td colspan="4" style="font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--pink);text-transform:uppercase;padding:10px 16px;">مشترك في جميع الباقات</td></tr>
-          <tr><td>إدارة المواعيد والتقويم</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الخدمات والمنتجات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الفواتير والمدفوعات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الحسابات والمالية الكاملة</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>فريق الخدمة والرواتب</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الأدوار والصلاحيات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>إدارة المخزون</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>نقاط الولاء</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr style="background:var(--slate-50)"><td colspan="4" style="font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--slate-600);text-transform:uppercase;padding:10px 16px;">يختلف حسب الباقة</td></tr>
-          <tr><td><b>المستخدمون</b></td><td class="check-partial col-starter">2</td><td class="check-partial col-pro">5</td><td class="check-partial col-enterprise">∞ غير محدود</td></tr>
-          <tr><td>ملفات العملاء</td><td class="check-partial">1,000 عميل</td><td class="check-partial">2,500 عميل</td><td class="check-partial">∞ غير محدود</td></tr>
-          <tr><td>التقارير المتقدمة</td><td><i class="fas fa-xmark check-no"></i></td><td class="check-partial">محدودة</td><td class="check-partial">كاملة</td></tr>
-          <tr><td>المتجر الإلكتروني</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-          <tr><td>الدعم الفني</td><td class="check-partial">مدفوع</td><td class="check-partial">محدود</td><td class="check-partial">غير محدود</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Mobile cards -->
-    <div class="compare-mobile">
-
-      <!-- Starter -->
-      <div class="cmp-card">
-        <div class="cmp-card__head cmp-card__head--starter">
-          <div class="cmp-icon" style="background:linear-gradient(135deg,var(--blue),#2563eb)"><i class="fas fa-seedling"></i></div>
-          <div class="cmp-meta">
-            <div class="cmp-meta__name">أساسي</div>
-            <div class="cmp-meta__price">$49 / شهرياً</div>
-          </div>
-        </div>
-        <div class="cmp-rows">
-          <div class="cmp-row" style="background:var(--slate-50);font-size:11px;color:var(--pink);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">يختلف عن باقي الباقات</div>
-          <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">2</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">1,000 عميل</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">التقارير المتقدمة</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">المتجر الإلكتروني</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">الدعم الفني</span><span class="cmp-row__val">مدفوع</span></div>
-        </div>
-        <a href="{% url 'accounts:register' %}?plan=starter" class="cmp-card__cta cmp-card__cta--starter">ابدأ مجاناً</a>
-      </div>
-
-      <!-- Pro -->
-      <div class="cmp-card cmp-card--pro">
-        <div class="cmp-card__head cmp-card__head--pro">
-          <div class="cmp-icon" style="background:linear-gradient(135deg,var(--purple),#6d28d9)"><i class="fas fa-star"></i></div>
-          <div class="cmp-meta">
-            <div class="cmp-meta__name">متقدم</div>
-            <div class="cmp-meta__price">$99 / شهرياً</div>
-          </div>
-          <span class="cmp-badge">الأكثر طلباً</span>
-        </div>
-        <div class="cmp-rows">
-          <div class="cmp-row" style="background:var(--slate-50);font-size:11px;color:var(--pink);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">يختلف عن باقي الباقات</div>
-          <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">5</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">2,500 عميل</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">التقارير المتقدمة</span><span class="cmp-row__val">محدودة</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">المتجر الإلكتروني</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">الدعم الفني</span><span class="cmp-row__val">محدود</span></div>
-        </div>
-        <a href="{% url 'accounts:register' %}?plan=pro" class="cmp-card__cta cmp-card__cta--pro">ابدأ مجاناً</a>
-      </div>
-
-      <!-- Enterprise -->
-      <div class="cmp-card">
-        <div class="cmp-card__head cmp-card__head--enterprise">
-          <div class="cmp-icon" style="background:linear-gradient(135deg,var(--amber),#d97706)"><i class="fas fa-building"></i></div>
-          <div class="cmp-meta">
-            <div class="cmp-meta__name">أعمال</div>
-            <div class="cmp-meta__price">$199 / شهرياً</div>
-          </div>
-        </div>
-        <div class="cmp-rows">
-          <div class="cmp-row" style="background:var(--slate-50);font-size:11px;color:var(--pink);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">يختلف عن باقي الباقات</div>
-          <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">∞ غير محدود</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">∞ غير محدود</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">التقارير المتقدمة</span><span class="cmp-row__val">كاملة</span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">المتجر الإلكتروني</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
-          <div class="cmp-row"><span class="cmp-row__lbl">الدعم الفني</span><span class="cmp-row__val">غير محدود</span></div>
-        </div>
-        <a href="{% url 'accounts:register' %}?plan=enterprise" class="cmp-card__cta cmp-card__cta--enterprise">ابدأ مجاناً</a>
-      </div>
-
     </div>
   </div>
 </section>
