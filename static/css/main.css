@@ -1798,18 +1798,26 @@ body { background: linear-gradient(160deg, #f0f2f7 0%, #f5f0f9 100%); }
 }
 
 .notif-panel {
-  position: fixed;
-  top: calc(var(--topbar-h) + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 360px;
-  max-width: calc(100vw - 24px);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
   background: #fff;
   border: 1px solid var(--slate-200);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.14);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
   z-index: 600;
   overflow: hidden;
+}
+@media (max-width: 768px) {
+  .notif-panel {
+    position: fixed;
+    top: calc(var(--topbar-h) + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100vw - 24px);
+    max-width: 380px;
+  }
 }
 
 .notif-panel__header {
