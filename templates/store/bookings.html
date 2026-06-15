@@ -57,7 +57,11 @@
               <div style="font-weight:700;">{{ b.client_name }}</div>
               <div class="text-muted" style="font-size:11px;">{{ b.client_phone }}</div>
             </td>
-            <td>{{ b.service.name|default:"—" }}</td>
+            <td>
+              {% with svcs=b.services.all %}
+                {% if svcs %}{{ svcs|join:"، " }}{% elif b.service %}{{ b.service.name }}{% else %}—{% endif %}
+              {% endwith %}
+            </td>
             <td class="text-muted">{{ b.preferred_date }}</td>
             <td class="text-muted">{{ b.preferred_time|default:"مرن" }}</td>
             <td>
@@ -105,7 +109,11 @@
         <div class="cx-card-meta">
           <div>
             <span class="cx-card-meta-label">الخدمة</span>
-            <span class="cx-card-meta-value">{{ b.service.name|default:"—" }}</span>
+            <span class="cx-card-meta-value">
+              {% with svcs=b.services.all %}
+                {% if svcs %}{{ svcs|join:"، " }}{% elif b.service %}{{ b.service.name }}{% else %}—{% endif %}
+              {% endwith %}
+            </span>
           </div>
           <div>
             <span class="cx-card-meta-label">التاريخ</span>

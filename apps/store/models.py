@@ -17,6 +17,7 @@ class OnlineBooking(CenterMixin):
     client_phone   = models.CharField('رقم الهاتف', max_length=20)
     client_email   = models.EmailField('البريد', blank=True)
     service        = models.ForeignKey(Service, on_delete=models.SET_NULL, null=True, blank=True)
+    services       = models.ManyToManyField(Service, blank=True, related_name='online_bookings', verbose_name='الخدمات')
     preferred_date = models.DateField('التاريخ المفضل')
     preferred_time = models.TimeField('الوقت المفضل', null=True, blank=True)
     notes          = models.TextField('ملاحظات', blank=True)

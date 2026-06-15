@@ -89,7 +89,8 @@ def store_home(request, slug):
     if request.method == 'POST' and request.POST.get('_form') == 'booking':
         name    = request.POST.get('name', '').strip()
         phone   = request.POST.get('phone', '').strip()
-        svc_id  = request.POST.get('service') or None
+        svc_ids = request.POST.getlist('services')
+        svc_id  = svc_ids[0] if svc_ids else (request.POST.get('service') or None)
         bdate   = request.POST.get('date', '').strip()
         btime   = request.POST.get('time', '').strip() or None
         notes   = request.POST.get('notes', '').strip()
@@ -110,7 +111,7 @@ def store_home(request, slug):
                 date_ok = False
 
         if name and phone and bdate and date_ok:
-            OnlineBooking.objects.create(
+            booking = OnlineBooking.objects.create(
                 center=center,
                 client_name=name,
                 client_phone=phone,
@@ -120,6 +121,10 @@ def store_home(request, slug):
                 preferred_time=btime,
                 notes=notes,
             )
+            if svc_ids:
+                from apps.services.models import Service as Svc
+                valid_ids = Svc.objects.filter(pk__in=svc_ids, center=center).values_list('pk', flat=True)
+                booking.services.set(valid_ids)
             return render(request, 'store/success.html', {
                 'center': center,
                 'type': 'booking',
@@ -275,11 +280,14 @@ def _convert_booking_to_appointment(booking):
         total_price=0,
     )
 
-    if booking.service:
+    svcs = list(booking.services.all())
+    if not svcs and booking.service:
+        svcs = [booking.service]
+    for svc in svcs:
         AppointmentService.objects.create(
             appointment=appointment,
-            service=booking.service,
-            unit_price=getattr(booking.service, 'price', 0)
+            service=svc,
+            unit_price=getattr(svc, 'price', 0)
         )
 
     try:

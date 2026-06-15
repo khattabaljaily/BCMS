@@ -244,14 +244,15 @@ p{margin:0;}
   <form method="post" id="booking-form">
     {% csrf_token %}
     <input type="hidden" name="_form" value="booking">
-    <input type="hidden" name="service" id="hid-service">
-    <input type="hidden" name="time"    id="hid-time">
+    <div id="hid-services-container"></div>
+    <input type="hidden" name="time" id="hid-time">
 
     {% if services %}
-    <!-- Step 1: Service -->
+    <!-- Step 1: Services (multi-select) -->
     <div class="booking-step" id="step-service">
       <div class="step-header">
-        <div class="step-num">1</div> اختاري الخدمة
+        <div class="step-num">1</div> اختاري الخدمات
+        <span id="svc-count-badge" style="display:none;margin-right:auto;font-size:12px;font-weight:700;background:var(--rose);color:#fff;border-radius:20px;padding:2px 10px;"></span>
       </div>
       <div class="svc-grid">
         {% for svc in services %}
@@ -260,16 +261,26 @@ p{margin:0;}
              data-name="{{ svc.name|escapejs }}"
              data-dur="{{ svc.duration }}"
              data-price="{{ svc.price }}"
-             onclick="selectService(this)">
+             onclick="toggleService(this)">
           <div class="svc-card__name">{{ svc.name }}</div>
           <div class="svc-card__meta">
             <span class="svc-card__price">{{ svc.price|format_number:0 }}</span>
             <span><i class="fas fa-clock" style="font-size:10px;"></i> {{ svc.duration }}د</span>
           </div>
+          <div class="svc-card__check" style="display:none;position:absolute;top:8px;left:8px;width:20px;height:20px;border-radius:50%;background:var(--rose);color:#fff;font-size:11px;align-items:center;justify-content:center;">
+            <i class="fas fa-check"></i>
+          </div>
         </div>
         {% endfor %}
       </div>
-      <div class="svc-skip" onclick="skipService()">تجاوز — لم أحدد الخدمة بعد</div>
+      <div id="svc-total-bar" style="display:none;margin-top:10px;padding:10px 14px;background:#fff1f2;border-radius:10px;font-size:13px;font-weight:700;color:var(--rose-d,#be185d);display:flex;justify-content:space-between;align-items:center;">
+        <span>الإجمالي المبدئي</span>
+        <span id="svc-total-val"></span>
+      </div>
+      <button type="button" id="svc-next-btn" onclick="goToDate()" style="display:none;width:100%;margin-top:10px;padding:12px;background:var(--rose);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
+        التالي — اختاري التاريخ <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="svc-skip" onclick="goToDate()">تجاوز — لم أحدد الخدمة بعد</div>
     </div>
     {% endif %}
 
@@ -437,19 +448,40 @@ function switchTab(tab) {
 /* ── Booking ──────────────────────── */
 const ALL_SLOTS  = {{ time_slots|safe }};
 const WORK_DAYS  = {{ work_days|safe }};
-let selService = null, selDate = null, selTime = null;
+let selServices = [], selDate = null, selTime = null;
 
-function selectService(card) {
-  document.querySelectorAll('.svc-card').forEach(c => c.classList.remove('selected'));
-  card.classList.add('selected');
-  selService = {id: card.dataset.id, name: card.dataset.name, price: card.dataset.price, dur: card.dataset.dur};
-  document.getElementById('hid-service').value = selService.id;
-  show('step-date');
+function toggleService(card) {
+  const id = card.dataset.id;
+  const idx = selServices.findIndex(s => s.id === id);
+  if (idx === -1) {
+    selServices.push({id, name: card.dataset.name, price: parseFloat(card.dataset.price)||0, dur: card.dataset.dur});
+    card.classList.add('selected');
+    const chk = card.querySelector('.svc-card__check');
+    if (chk) chk.style.display = 'flex';
+  } else {
+    selServices.splice(idx, 1);
+    card.classList.remove('selected');
+    const chk = card.querySelector('.svc-card__check');
+    if (chk) chk.style.display = 'none';
+  }
+  // Update hidden inputs
+  document.getElementById('hid-services-container').innerHTML =
+    selServices.map(s => `<input type="hidden" name="services" value="${s.id}">`).join('');
+  updateServiceUI();
 }
-function skipService() {
-  selService = null;
-  document.getElementById('hid-service').value = '';
-  document.querySelectorAll('.svc-card').forEach(c => c.classList.remove('selected'));
+function updateServiceUI() {
+  const count = selServices.length;
+  const total = selServices.reduce((s, x) => s + x.price, 0);
+  const badge = document.getElementById('svc-count-badge');
+  const bar   = document.getElementById('svc-total-bar');
+  const totalVal = document.getElementById('svc-total-val');
+  const nextBtn  = document.getElementById('svc-next-btn');
+  if (badge) { badge.textContent = count + ' خدمة'; badge.style.display = count>0 ? 'inline-block' : 'none'; }
+  if (bar)   bar.style.display = count>0 ? 'flex' : 'none';
+  if (totalVal) totalVal.textContent = total.toFixed(0);
+  if (nextBtn)  nextBtn.style.display = count>0 ? 'block' : 'none';
+}
+function goToDate() {
   show('step-date');
 }
 function show(id) {
@@ -506,9 +538,13 @@ function updateSummary() {
   const el = document.getElementById('booking-summary');
   if (!el) return;
   let html = '';
-  if (selService) html += `<div>🌸 <strong>الخدمة:</strong> ${selService.name} — ${parseFloat(selService.price).toFixed(0)}</div>`;
-  if (selDate)    html += `<div>📅 <strong>التاريخ:</strong> ${fmtDate(selDate)}</div>`;
-  if (selTime)    html += `<div>🕐 <strong>الوقت:</strong> ${selTime}</div>`;
+  if (selServices.length) {
+    const names = selServices.map(s => s.name).join('، ');
+    const total = selServices.reduce((s, x) => s + x.price, 0);
+    html += `<div>🌸 <strong>الخدمات:</strong> ${names} — ${total.toFixed(0)}</div>`;
+  }
+  if (selDate) html += `<div>📅 <strong>التاريخ:</strong> ${fmtDate(selDate)}</div>`;
+  if (selTime) html += `<div>🕐 <strong>الوقت:</strong> ${selTime}</div>`;
   el.innerHTML = html || '';
 }
 function fmtDate(d) {
