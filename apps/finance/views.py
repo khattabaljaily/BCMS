@@ -521,7 +521,9 @@ def advance_create(request):
             messages.error(request, str(e))
     specialists = Specialist.objects.filter(center=center, is_active=True)
     treasuries = Treasury.objects.filter(center=center)
-    return render(request, 'finance/advance_form.html', {
+    is_modal = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.GET.get('modal') == '1'
+    template = 'finance/partials/advance_form_partial.html' if is_modal else 'finance/advance_form.html'
+    return render(request, template, {
         'specialists': specialists,
         'treasuries': treasuries,
     })
@@ -684,4 +686,12 @@ def salary_detail(request, pk):
     center = request.user.center
     sp = get_object_or_404(SalaryPayment, pk=pk, center=center)
     advances = sp.advance_items.all()
-    return render(request, 'finance/salary_detail.html', {'sp': sp, 'advances': advances})
+    rows = [
+        ('الراتب الأساسي',    f'{sp.base_salary:,.2f}',       None),
+        ('العمولة',           f'{sp.commission_amount:,.2f}',  None),
+        ('الحوافز',           f'+{sp.bonus:,.2f}',             '#10b981' if sp.bonus else None),
+        ('السلف المخصومة',   f'−{sp.advances_deducted:,.2f}', '#ef4444' if sp.advances_deducted else None),
+        ('خصومات أخرى',      f'−{sp.deductions:,.2f}',        '#ef4444' if sp.deductions else None),
+        ('الخزينة',           sp.treasury.short_name if sp.treasury else '—', None),
+    ]
+    return render(request, 'finance/salary_detail.html', {'sp': sp, 'advances': advances, 'rows': rows})

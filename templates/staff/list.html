@@ -83,7 +83,7 @@
             <td>
               <div class="cx-row-actions">
                 <button type="button" class="cx-act" title="تعديل"
-                        onclick="openEditSpecialist({{ sp.pk }}, '{{ sp.name|escapejs }}', '{{ sp.phone|default:''|escapejs }}', '{{ sp.specialty|default:''|escapejs }}', '{{ sp.work_start|time:"H:i"|default:'' }}', '{{ sp.work_end|time:"H:i"|default:'' }}', '{{ sp.bio|default:''|escapejs }}', {{ sp.is_active|yesno:'true,false' }}, '{% for svc in sp.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}')">
+                        onclick="openEditSpecialist({{ sp.pk }}, '{{ sp.name|escapejs }}', '{{ sp.phone|default:''|escapejs }}', '{{ sp.specialty|default:''|escapejs }}', '{{ sp.work_start|time:"H:i"|default:'' }}', '{{ sp.work_end|time:"H:i"|default:'' }}', '{{ sp.bio|default:''|escapejs }}', {{ sp.is_active|yesno:'true,false' }}, '{% for svc in sp.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}', '{{ sp.salary_type }}', '{{ sp.base_salary }}', '{{ sp.commission_rate }}')">
                   <i class="fas fa-edit"></i>
                 </button>
                 <button type="button" class="cx-act cx-act--del" title="حذف"
@@ -126,7 +126,7 @@
           </div>
           <div class="cx-card-actions">
             <button type="button" class="cx-act"
-                    onclick="openEditSpecialist({{ sp.pk }}, '{{ sp.name|escapejs }}', '{{ sp.phone|default:''|escapejs }}', '{{ sp.specialty|default:''|escapejs }}', '{{ sp.work_start|time:"H:i"|default:'' }}', '{{ sp.work_end|time:"H:i"|default:'' }}', '{{ sp.bio|default:''|escapejs }}', {{ sp.is_active|yesno:'true,false' }}, '{% for svc in sp.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}')">
+                    onclick="openEditSpecialist({{ sp.pk }}, '{{ sp.name|escapejs }}', '{{ sp.phone|default:''|escapejs }}', '{{ sp.specialty|default:''|escapejs }}', '{{ sp.work_start|time:"H:i"|default:'' }}', '{{ sp.work_end|time:"H:i"|default:'' }}', '{{ sp.bio|default:''|escapejs }}', {{ sp.is_active|yesno:'true,false' }}, '{% for svc in sp.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}', '{{ sp.salary_type }}', '{{ sp.base_salary }}', '{{ sp.commission_rate }}')">
               <i class="fas fa-edit"></i>
             </button>
             <button type="button" class="cx-act cx-act--del"
@@ -230,6 +230,28 @@
             الفرد نشط
           </label>
         </div>
+
+        <div style="border-top:1px solid var(--slate-200);margin:12px 0;padding-top:12px;">
+          <p style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em;">الراتب</p>
+          <div class="form-group">
+            <label class="form-label">نوع الراتب</label>
+            <select name="salary_type" id="specialist-salary-type" class="form-control" onchange="toggleSpecialistSalaryFields()">
+              <option value="fixed">راتب ثابت</option>
+              <option value="commission">نسبة عمولة</option>
+              <option value="both">ثابت + نسبة</option>
+            </select>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group" id="sp-base-salary-field">
+              <label class="form-label">الراتب الأساسي</label>
+              <input class="form-control" type="number" step="0.01" min="0" name="base_salary" id="specialist-base-salary" value="0">
+            </div>
+            <div class="form-group" id="sp-commission-field">
+              <label class="form-label">نسبة العمولة %</label>
+              <input class="form-control" type="number" step="0.01" min="0" max="100" name="commission_rate" id="specialist-commission-rate" value="0">
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn--ghost" onclick="closeModal('modal-specialist')">إلغاء</button>
@@ -249,6 +271,12 @@ document.addEventListener('DOMContentLoaded', function() {
 const specialistAddUrl = "{% url 'staff:add' %}";
 const specialistEditUrlTemplate = "{% url 'staff:edit' 0 %}";
 
+function toggleSpecialistSalaryFields() {
+  var t = document.getElementById('specialist-salary-type').value;
+  document.getElementById('sp-base-salary-field').style.display = (t === 'commission') ? 'none' : '';
+  document.getElementById('sp-commission-field').style.display = (t === 'fixed') ? 'none' : '';
+}
+
 function openAddSpecialist() {
   document.getElementById('specialist-modal-title').textContent = 'إضافة فرد';
   const form = document.getElementById('specialist-form');
@@ -261,11 +289,15 @@ function openAddSpecialist() {
   document.getElementById('specialist-work-end').value = '';
   document.getElementById('specialist-bio').value = '';
   document.getElementById('specialist-active').checked = true;
+  document.getElementById('specialist-salary-type').value = 'fixed';
+  document.getElementById('specialist-base-salary').value = '0';
+  document.getElementById('specialist-commission-rate').value = '0';
   document.querySelectorAll('[name="services"]').forEach(el => el.checked = false);
+  toggleSpecialistSalaryFields();
   openModal('modal-specialist');
 }
 
-function openEditSpecialist(pk, name, phone, specialty, workStart, workEnd, bio, isActive, servicesCsv) {
+function openEditSpecialist(pk, name, phone, specialty, workStart, workEnd, bio, isActive, servicesCsv, salaryType, baseSalary, commissionRate) {
   document.getElementById('specialist-modal-title').textContent = 'تعديل الفرد';
   const form = document.getElementById('specialist-form');
   form.action = specialistEditUrlTemplate.replace('/0/', '/' + pk + '/');
@@ -277,10 +309,14 @@ function openEditSpecialist(pk, name, phone, specialty, workStart, workEnd, bio,
   document.getElementById('specialist-work-end').value = workEnd || '';
   document.getElementById('specialist-bio').value = bio || '';
   document.getElementById('specialist-active').checked = isActive === true || isActive === 'true';
+  document.getElementById('specialist-salary-type').value = salaryType || 'fixed';
+  document.getElementById('specialist-base-salary').value = baseSalary || '0';
+  document.getElementById('specialist-commission-rate').value = commissionRate || '0';
   const selected = servicesCsv ? String(servicesCsv).split(',').filter(Boolean) : [];
   document.querySelectorAll('[name="services"]').forEach(el => {
     el.checked = selected.includes(String(el.value));
   });
+  toggleSpecialistSalaryFields();
   openModal('modal-specialist');
 }
 </script>

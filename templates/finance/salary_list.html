@@ -16,7 +16,7 @@
         </div>
         <div>
           <h1 class="cx-hero-title">كشوف الرواتب</h1>
-          <p class="cx-hero-desc">{{ salaries.count }} كشف مسجل</p>
+          <p class="cx-hero-desc">{{ salaries.count }} كشف</p>
         </div>
       </div>
       <div class="cx-hero-right">
@@ -30,10 +30,10 @@
   </div>
 
   <!-- فلاتر -->
-  <div class="cx-panel" style="padding:16px 20px;margin-bottom:12px;">
+  <div class="cx-panel" style="padding:14px 20px;margin-bottom:0;border-bottom:1px solid var(--border,#f1f5f9);">
     <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
-      <div class="form-group" style="margin:0;min-width:180px;">
-        <label>الفنية</label>
+      <div class="form-group" style="margin:0;min-width:180px;flex:1;">
+        <label class="form-label">الفنية</label>
         <select name="specialist" class="form-control" onchange="this.form.submit()">
           <option value="">الكل</option>
           {% for s in specialists %}
@@ -41,8 +41,8 @@
           {% endfor %}
         </select>
       </div>
-      <div class="form-group" style="margin:0;min-width:160px;">
-        <label>الحالة</label>
+      <div class="form-group" style="margin:0;min-width:150px;flex:1;">
+        <label class="form-label">الحالة</label>
         <select name="status" class="form-control" onchange="this.form.submit()">
           <option value="">الكل</option>
           <option value="draft"     {% if status_filter == 'draft'     %}selected{% endif %}>مسودة</option>
@@ -60,27 +60,17 @@
           <tr>
             <th>الفنية</th>
             <th>الفترة</th>
-            <th>الأساسي</th>
-            <th>العمولة</th>
-            <th>الحوافز</th>
-            <th>السلف</th>
-            <th>الخصومات</th>
             <th>الصافي</th>
             <th>الحالة</th>
-            <th>إجراءات</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {% for sp in salaries %}
           <tr>
             <td><strong>{{ sp.specialist.name }}</strong></td>
-            <td class="text-muted" style="white-space:nowrap;">{{ sp.period_start }} — {{ sp.period_end }}</td>
-            <td>{{ sp.base_salary|format_number:2 }}</td>
-            <td>{{ sp.commission_amount|format_number:2 }}</td>
-            <td style="color:var(--green,#10b981);">{{ sp.bonus|format_number:2 }}</td>
-            <td style="color:var(--red);">{{ sp.advances_deducted|format_number:2 }}</td>
-            <td style="color:var(--red);">{{ sp.deductions|format_number:2 }}</td>
-            <td><strong style="color:var(--primary);">{{ sp.total_due|format_number:2 }}</strong></td>
+            <td class="text-muted" style="white-space:nowrap;font-size:13px;">{{ sp.period_start }} — {{ sp.period_end }}</td>
+            <td><strong style="color:#8b5cf6;">{{ sp.total_due|format_number:2 }}</strong></td>
             <td>
               {% if sp.status == 'draft' %}
                 <span class="badge badge--warning">مسودة</span>
@@ -96,17 +86,17 @@
                   <i class="fas fa-eye"></i>
                 </a>
                 {% if sp.status == 'draft' %}
-                <button class="cx-act" title="صرف الراتب" style="color:var(--green,#10b981);"
-                  onclick="BCMS.confirmDelete('تأكيد صرف الراتب وخصمه من الخزينة؟').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}});} });">
+                <button class="cx-act" title="صرف" style="color:var(--green,#10b981);"
+                  onclick="BCMS.confirmDelete('تأكيد صرف الراتب؟').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
                   <i class="fas fa-check-circle"></i>
                 </button>
                 <button class="cx-act cx-act--del" title="إلغاء"
-                  onclick="BCMS.confirmDelete('إلغاء كشف الراتب؟').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','success');setTimeout(()=>location.reload(),400);}});} });">
+                  onclick="BCMS.confirmDelete('إلغاء كشف الراتب؟').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','success');setTimeout(()=>location.reload(),400);}}); })">
                   <i class="fas fa-times-circle"></i>
                 </button>
                 {% elif sp.status == 'paid' %}
-                <button class="cx-act cx-act--del" title="عكس الصرف"
-                  onclick="BCMS.confirmDelete('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.').then(function(ok){ if(ok){ fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','success');setTimeout(()=>location.reload(),400);}});} });">
+                <button class="cx-act" title="عكس الصرف" style="color:var(--red);"
+                  onclick="BCMS.confirmDelete('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','success');setTimeout(()=>location.reload(),400);}}); })">
                   <i class="fas fa-undo"></i>
                 </button>
                 {% endif %}
@@ -115,10 +105,10 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="10">
+            <td colspan="5">
               <div class="cx-empty" style="padding:48px 24px;">
                 <i class="fas fa-file-invoice-dollar"></i>
-                <p>لا كشوف رواتب مسجلة</p>
+                <p>لا كشوف رواتب</p>
                 <a href="{% url 'finance:salary_create' %}" class="btn btn--primary" style="margin-top:12px;">
                   <i class="fas fa-plus"></i> كشف جديد
                 </a>
@@ -130,7 +120,6 @@
       </table>
     </div>
 
-    <!-- Mobile -->
     <div class="cx-mobile-cards">
       {% for sp in salaries %}
       <div class="cx-card">
@@ -140,29 +129,38 @@
             <div class="cx-card-sub">{{ sp.period_start }} — {{ sp.period_end }}</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
-            {% if sp.status == 'draft' %}
-              <span class="badge badge--warning">مسودة</span>
-            {% elif sp.status == 'paid' %}
-              <span class="badge badge--success">مدفوع</span>
-            {% else %}
-              <span class="badge badge--danger">ملغى</span>
-            {% endif %}
-            <a href="{% url 'finance:salary_detail' sp.pk %}" class="cx-act"><i class="fas fa-eye"></i></a>
+            {% if sp.status == 'draft' %}<span class="badge badge--warning">مسودة</span>
+            {% elif sp.status == 'paid' %}<span class="badge badge--success">مدفوع</span>
+            {% else %}<span class="badge badge--danger">ملغى</span>{% endif %}
           </div>
         </div>
         <div class="cx-card-meta">
           <div>
             <span class="cx-card-meta-label">الصافي</span>
-            <span class="cx-card-meta-value" style="color:var(--primary);font-weight:800;">{{ sp.total_due|format_number:2 }}</span>
+            <span class="cx-card-meta-value" style="color:#8b5cf6;font-weight:800;">{{ sp.total_due|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الأساسي</span>
+            <span class="cx-card-meta-value">{{ sp.base_salary|format_number:2 }}</span>
           </div>
           <div>
             <span class="cx-card-meta-label">العمولة</span>
             <span class="cx-card-meta-value">{{ sp.commission_amount|format_number:2 }}</span>
           </div>
-          <div>
-            <span class="cx-card-meta-label">الحوافز</span>
-            <span class="cx-card-meta-value" style="color:var(--green,#10b981);">{{ sp.bonus|format_number:2 }}</span>
-          </div>
+        </div>
+        <div style="display:flex;gap:8px;padding:4px 0 2px;justify-content:flex-end;">
+          <a href="{% url 'finance:salary_detail' sp.pk %}" class="cx-act"><i class="fas fa-eye"></i></a>
+          {% if sp.status == 'draft' %}
+          <button class="cx-act" style="color:var(--green,#10b981);"
+            onclick="BCMS.confirmDelete('تأكيد صرف الراتب؟').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
+            <i class="fas fa-check-circle"></i>
+          </button>
+          {% elif sp.status == 'paid' %}
+          <button class="cx-act" style="color:var(--red);"
+            onclick="BCMS.confirmDelete('عكس الصرف؟').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
+            <i class="fas fa-undo"></i>
+          </button>
+          {% endif %}
         </div>
       </div>
       {% empty %}
