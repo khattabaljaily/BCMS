@@ -178,9 +178,9 @@
             {% elif center.plan == 'starter' %}
               الباقة الأساسية — مثالية للحسابات الصغيرة
             {% elif center.plan == 'pro' %}
-              الباقة الاحترافية — الأكثر شمولاً للحسابات النشطة
+              الباقة المتقدمة — الأكثر شمولاً للحسابات النشطة
             {% elif center.plan == 'enterprise' %}
-              باقة المؤسسات — لا حدود لنمو حسابك
+              باقة الأعمال — لا حدود لنمو حسابك
             {% endif %}
           </p>
         </div>
@@ -324,21 +324,21 @@
       <div class="compare-mini">
         <a href="{% url 'core:pricing' %}" class="compare-mini-item {% if center.plan == 'starter' %}current-plan{% endif %}">
           <div>
-            <div class="plan-name"><i class="fas fa-seedling" style="color:#3b82f6;font-size:12px;"></i> مبتدئ</div>
+            <div class="plan-name"><i class="fas fa-seedling" style="color:#3b82f6;font-size:12px;"></i> أساسي</div>
             <div class="plan-price">$49 / شهر</div>
           </div>
           {% if center.plan == 'starter' %}<i class="fas fa-check plan-check"></i>{% else %}<i class="fas fa-chevron-left" style="color:#cbd5e1;font-size:11px;"></i>{% endif %}
         </a>
         <a href="{% url 'core:pricing' %}" class="compare-mini-item {% if center.plan == 'pro' or center.plan == 'trial' %}current-plan{% endif %}">
           <div>
-            <div class="plan-name"><i class="fas fa-star" style="color:#8b5cf6;font-size:12px;"></i> احترافي</div>
+            <div class="plan-name"><i class="fas fa-star" style="color:#8b5cf6;font-size:12px;"></i> متقدم</div>
             <div class="plan-price">$99 / شهر</div>
           </div>
           {% if center.plan == 'pro' or center.plan == 'trial' %}<i class="fas fa-check plan-check"></i>{% else %}<i class="fas fa-chevron-left" style="color:#cbd5e1;font-size:11px;"></i>{% endif %}
         </a>
         <a href="{% url 'core:pricing' %}" class="compare-mini-item {% if center.plan == 'enterprise' %}current-plan{% endif %}">
           <div>
-            <div class="plan-name"><i class="fas fa-building" style="color:#f59e0b;font-size:12px;"></i> مؤسسات</div>
+            <div class="plan-name"><i class="fas fa-building" style="color:#f59e0b;font-size:12px;"></i> أعمال</div>
             <div class="plan-price">$199 / شهر</div>
           </div>
           {% if center.plan == 'enterprise' %}<i class="fas fa-check plan-check"></i>{% else %}<i class="fas fa-chevron-left" style="color:#cbd5e1;font-size:11px;"></i>{% endif %}

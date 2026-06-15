@@ -40,9 +40,9 @@
         {% else %}<span class="badge badge-red"><i class="fas fa-circle" style="font-size:7px;"></i> موقوف</span>{% endif %}
 
         {% if center.plan == 'trial' %}<span class="badge badge-gray">تجريبي</span>
-        {% elif center.plan == 'starter' %}<span class="badge badge-blue">مبتدئ</span>
-        {% elif center.plan == 'pro' %}<span class="badge badge-purple">احترافي</span>
-        {% else %}<span class="badge badge-yellow">مؤسسات</span>{% endif %}
+        {% elif center.plan == 'starter' %}<span class="badge badge-blue">أساسي</span>
+        {% elif center.plan == 'pro' %}<span class="badge badge-purple">متقدم</span>
+        {% else %}<span class="badge badge-yellow">أعمال</span>{% endif %}
 
         {% if center.is_demo %}<span class="badge badge-yellow"><i class="fas fa-flask"></i> تجريبي</span>{% endif %}
         {% if center.is_expired %}<span class="badge badge-red"><i class="fas fa-clock"></i> اشتراك منتهٍ</span>{% endif %}
@@ -125,9 +125,9 @@
           <span class="detail-item__label">الباقة</span>
           <span class="detail-item__value">
             {% if center.plan == 'trial' %}تجريبي
-            {% elif center.plan == 'starter' %}مبتدئ
-            {% elif center.plan == 'pro' %}احترافي
-            {% else %}مؤسسات{% endif %}
+            {% elif center.plan == 'starter' %}أساسي
+            {% elif center.plan == 'pro' %}متقدم
+            {% else %}أعمال{% endif %}
           </span>
         </div>
         <div class="detail-item">

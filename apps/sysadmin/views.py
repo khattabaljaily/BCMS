@@ -39,8 +39,8 @@ def dashboard(request):
         .order_by('plan')
     )
     PLAN_LABELS = {
-        'trial': 'تجريبي', 'starter': 'مبتدئ',
-        'pro': 'احترافي', 'enterprise': 'مؤسسات',
+        'trial': 'تجريبي', 'starter': 'أساسي',
+        'pro': 'متقدم', 'enterprise': 'أعمال',
     }
     PLAN_COLORS = {
         'trial': '#94a3b8', 'starter': '#3b82f6',

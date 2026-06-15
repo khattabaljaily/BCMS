@@ -51,9 +51,9 @@ class Center(models.Model):
     """
     PLANS = [
         ('trial',      'تجريبي'),
-        ('starter',    'مبتدئ'),
-        ('pro',        'احترافي'),
-        ('enterprise', 'مؤسسات'),
+        ('starter',    'أساسي'),
+        ('pro',        'متقدم'),
+        ('enterprise', 'أعمال'),
     ]
 
     # هوية الحساب
