@@ -1812,7 +1812,7 @@ body { background: linear-gradient(160deg, #f0f2f7 0%, #f5f0f9 100%); }
 @media (max-width: 768px) {
   .notif-panel {
     position: fixed;
-    top: calc(var(--topbar-h) + 6px);
+    top: calc(var(--topbar-h) + 8px);
     left: 50%;
     transform: translateX(-50%);
     width: calc(100vw - 24px);
