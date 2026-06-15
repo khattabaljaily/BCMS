@@ -53,7 +53,7 @@ class Center(models.Model):
         ('trial',      'تجريبي'),
         ('starter',    'أساسي'),
         ('pro',        'متقدم'),
-        ('enterprise', 'أعمال'),
+        ('enterprise', 'بريميوم'),
     ]
 
     # هوية الحساب

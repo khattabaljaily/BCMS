@@ -42,7 +42,7 @@
         {% if center.plan == 'trial' %}<span class="badge badge-gray">تجريبي</span>
         {% elif center.plan == 'starter' %}<span class="badge badge-blue">أساسي</span>
         {% elif center.plan == 'pro' %}<span class="badge badge-purple">متقدم</span>
-        {% else %}<span class="badge badge-yellow">أعمال</span>{% endif %}
+        {% else %}<span class="badge badge-yellow">بريميوم</span>{% endif %}
 
         {% if center.is_demo %}<span class="badge badge-yellow"><i class="fas fa-flask"></i> تجريبي</span>{% endif %}
         {% if center.is_expired %}<span class="badge badge-red"><i class="fas fa-clock"></i> اشتراك منتهٍ</span>{% endif %}
@@ -127,7 +127,7 @@
             {% if center.plan == 'trial' %}تجريبي
             {% elif center.plan == 'starter' %}أساسي
             {% elif center.plan == 'pro' %}متقدم
-            {% else %}أعمال{% endif %}
+            {% else %}بريميوم{% endif %}
           </span>
         </div>
         <div class="detail-item">

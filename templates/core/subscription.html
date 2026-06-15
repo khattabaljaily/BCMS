@@ -180,7 +180,7 @@
             {% elif center.plan == 'pro' %}
               الباقة المتقدمة — الأكثر شمولاً للحسابات النشطة
             {% elif center.plan == 'enterprise' %}
-              باقة الأعمال — لا حدود لنمو حسابك
+              باقة بريميوم — لا حدود لنمو حسابك
             {% endif %}
           </p>
         </div>
@@ -338,7 +338,7 @@
         </a>
         <a href="{% url 'core:pricing' %}" class="compare-mini-item {% if center.plan == 'enterprise' %}current-plan{% endif %}">
           <div>
-            <div class="plan-name"><i class="fas fa-building" style="color:#f59e0b;font-size:12px;"></i> أعمال</div>
+            <div class="plan-name"><i class="fas fa-building" style="color:#f59e0b;font-size:12px;"></i> بريميوم</div>
             <div class="plan-price">$199 / شهر</div>
           </div>
           {% if center.plan == 'enterprise' %}<i class="fas fa-check plan-check"></i>{% else %}<i class="fas fa-chevron-left" style="color:#cbd5e1;font-size:11px;"></i>{% endif %}

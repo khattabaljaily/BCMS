@@ -596,7 +596,7 @@ def subscription_view(request):
             'icon': 'fas fa-star',
         },
         'enterprise': {
-            'label': 'أعمال',
+            'label': 'بريميوم',
             'color': '#f59e0b',
             'badge_class': 'badge-enterprise',
             'icon': 'fas fa-building',

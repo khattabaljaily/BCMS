@@ -40,7 +40,7 @@ def dashboard(request):
     )
     PLAN_LABELS = {
         'trial': 'تجريبي', 'starter': 'أساسي',
-        'pro': 'متقدم', 'enterprise': 'أعمال',
+        'pro': 'متقدم', 'enterprise': 'بريميوم',
     }
     PLAN_COLORS = {
         'trial': '#94a3b8', 'starter': '#3b82f6',
