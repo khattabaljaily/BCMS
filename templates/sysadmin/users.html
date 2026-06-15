@@ -8,7 +8,7 @@
 <div class="pg-head">
   <div class="pg-head__left">
     <h2 class="pg-head__title">جميع المستخدمين</h2>
-    <div class="pg-head__sub">{{ total }} مستخدم عبر جميع المراكز</div>
+    <div class="pg-head__sub">{{ total }} مستخدم عبر جميع الحسابات</div>
   </div>
 </div>
 
@@ -17,7 +17,7 @@
 <div class="filter-strip">
   <div class="sa-search">
     <i class="fas fa-search"></i>
-    <input type="text" name="q" value="{{ q }}" placeholder="بحث بالاسم أو اسم المستخدم أو المركز...">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث بالاسم أو اسم المستخدم أو الحساب...">
   </div>
   <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> بحث</button>
   {% if q %}
@@ -34,7 +34,7 @@
         <tr>
           <th>المستخدم</th>
           <th>اسم الدخول</th>
-          <th>المركز</th>
+          <th>الحساب</th>
           <th>الدور</th>
           <th>الهاتف</th>
           <th>الحالة</th>
@@ -140,10 +140,10 @@
       </div>
     </div>
     <div class="m-card__foot">
-      <a href="{% url 'sysadmin:center_detail' u.center.pk %}" class="ia-btn ia-btn--view" title="تفاصيل المركز">
+      <a href="{% url 'sysadmin:center_detail' u.center.pk %}" class="ia-btn ia-btn--view" title="تفاصيل الحساب">
         <i class="fas fa-building"></i>
       </a>
-      <span style="font-size:11px;color:var(--sa-muted);margin-right:4px;">عرض المركز</span>
+      <span style="font-size:11px;color:var(--sa-muted);margin-right:4px;">عرض الحساب</span>
     </div>
   </div>
   {% empty %}

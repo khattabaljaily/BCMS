@@ -1,13 +1,13 @@
 {% extends "sysadmin/base.html" %}
-{% block title %}أنواع المراكز{% endblock %}
-{% block page_title %}أنواع المراكز{% endblock %}
+{% block title %}أنواع الحسابات{% endblock %}
+{% block page_title %}أنواع الحسابات{% endblock %}
 {% block nav_service_types %}active{% endblock %}
 
 {% block content %}
 
 <div class="pg-head">
   <div class="pg-head__left">
-    <h2 class="pg-head__title">أنواع المراكز</h2>
+    <h2 class="pg-head__title">أنواع الحسابات</h2>
     <div class="pg-head__sub">{{ types|length }} نوع مسجل</div>
   </div>
   <div class="pg-head__actions">
@@ -26,7 +26,7 @@
           <th>الأيقونة</th>
           <th>الاسم</th>
           <th>الوصف</th>
-          <th>عدد المراكز</th>
+          <th>عدد الحسابات</th>
 
           <th>الحالة</th>
           <th>الإجراءات</th>
@@ -71,7 +71,7 @@
         <tr>
           <td colspan="7" style="text-align:center;padding:48px;color:var(--sa-muted);">
             <i class="fas fa-spa" style="font-size:32px;display:block;margin-bottom:12px;opacity:.2;"></i>
-            لا توجد أنواع مراكز بعد
+            لا توجد أنواع حسابات بعد
           </td>
         </tr>
         {% endfor %}
@@ -99,7 +99,7 @@
     </div>
     <div class="m-card__body">
       <div>
-        <div class="m-card__field-label">عدد المراكز</div>
+        <div class="m-card__field-label">عدد الحسابات</div>
         <div class="m-card__field-value">{{ t.centers.count }}</div>
       </div>
 
@@ -124,7 +124,7 @@
   {% empty %}
   <div style="text-align:center;padding:48px 20px;color:var(--sa-muted);">
     <i class="fas fa-spa" style="font-size:32px;display:block;margin-bottom:12px;opacity:.2;"></i>
-    لا توجد أنواع مراكز بعد
+    لا توجد أنواع حسابات بعد
   </div>
   {% endfor %}
 </div>
@@ -133,7 +133,7 @@
 <div class="modal-backdrop" id="modal-st-add">
   <div class="modal">
     <div class="modal-header">
-      <h3><i class="fas fa-plus-circle" style="color:var(--sa-accent);margin-left:8px;"></i> إضافة نوع مركز جديد</h3>
+      <h3><i class="fas fa-plus-circle" style="color:var(--sa-accent);margin-left:8px;"></i> إضافة نوع حساب جديد</h3>
       <button class="modal-close" onclick="closeModal('modal-st-add')">×</button>
     </div>
     <form id="form-st-add" autocomplete="off">
@@ -188,7 +188,7 @@
 <div class="modal-backdrop" id="modal-st-edit">
   <div class="modal">
     <div class="modal-header">
-      <h3><i class="fas fa-pencil" style="color:var(--sa-accent);margin-left:8px;"></i> تعديل نوع المركز</h3>
+      <h3><i class="fas fa-pencil" style="color:var(--sa-accent);margin-left:8px;"></i> تعديل نوع الحساب</h3>
       <button class="modal-close" onclick="closeModal('modal-st-edit')">×</button>
     </div>
     <form id="form-st-edit" autocomplete="off">
@@ -242,7 +242,7 @@
 <div class="modal-backdrop" id="modal-st-delete">
   <div class="modal">
     <div class="modal-header">
-      <h3 style="color:var(--sa-red);"><i class="fas fa-triangle-exclamation"></i> حذف نوع المركز</h3>
+      <h3 style="color:var(--sa-red);"><i class="fas fa-triangle-exclamation"></i> حذف نوع الحساب</h3>
       <button class="modal-close" onclick="closeModal('modal-st-delete')">×</button>
     </div>
     <div class="del-confirm">
@@ -309,7 +309,7 @@ function openStDelete(pk, name, centersCount) {
   const warnEl = document.getElementById('del-st-warn');
   const delBtn = document.getElementById('btn-st-del');
   if (centersCount > 0) {
-    warnEl.innerHTML = `<i class="fas fa-lock"></i> لا يمكن الحذف — مرتبط بـ ${centersCount} مراكز`;
+    warnEl.innerHTML = `<i class="fas fa-lock"></i> لا يمكن الحذف — مرتبط بـ ${centersCount} حسابات`;
     warnEl.style.color = 'var(--sa-red)';
     delBtn.disabled  = true;
   } else {

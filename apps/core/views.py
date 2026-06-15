@@ -62,7 +62,7 @@ def manifest(request):
     data = {
         'name': center_name,
         'short_name': 'BCMS',
-        'description': 'نظام إدارة مراكز التجميل',
+        'description': 'نظام إدارة حسابات',
         'start_url': '/dashboard/',
         'display': 'standalone',
         'orientation': 'portrait',

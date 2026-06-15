@@ -365,18 +365,18 @@
     <div>
       <div class="sa-hero__kicker">لوحة التحكم الرئيسية</div>
       <div class="sa-hero__title">مشرف النظام</div>
-      <div class="sa-hero__desc">نظرة شاملة على المراكز، الاشتراكات، والنسخ الاحتياطية.</div>
+      <div class="sa-hero__desc">نظرة شاملة على الحسابات، الاشتراكات، والنسخ الاحتياطية.</div>
     </div>
   </div>
   <div class="sa-hero__kpis">
     <div class="sa-hero__kpi">
       <span class="sa-hero__kpi-num">{{ total_centers }}</span>
-      <span class="sa-hero__kpi-lbl">إجمالي المراكز</span>
+      <span class="sa-hero__kpi-lbl">إجمالي الحسابات</span>
     </div>
     <div class="sa-hero__kpi-div"></div>
     <div class="sa-hero__kpi">
       <span class="sa-hero__kpi-num sa-hero__kpi-num--green">{{ active_centers }}</span>
-      <span class="sa-hero__kpi-lbl">مراكز نشطة</span>
+      <span class="sa-hero__kpi-lbl">حسابات نشطة</span>
     </div>
     <div class="sa-hero__kpi-div"></div>
     <div class="sa-hero__kpi">
@@ -393,7 +393,7 @@
     <div class="kpi-card__icon"><i class="fas fa-building"></i></div>
     <div>
       <div class="kpi-card__num">{{ total_centers }}</div>
-      <div class="kpi-card__lbl">إجمالي المراكز</div>
+      <div class="kpi-card__lbl">إجمالي الحسابات</div>
     </div>
   </div>
 
@@ -401,7 +401,7 @@
     <div class="kpi-card__icon"><i class="fas fa-circle-check"></i></div>
     <div>
       <div class="kpi-card__num">{{ active_centers }}</div>
-      <div class="kpi-card__lbl">مراكز نشطة</div>
+      <div class="kpi-card__lbl">حسابات نشطة</div>
     </div>
   </div>
 
@@ -409,7 +409,7 @@
     <div class="kpi-card__icon"><i class="fas fa-ban"></i></div>
     <div>
       <div class="kpi-card__num">{{ inactive_centers }}</div>
-      <div class="kpi-card__lbl">مراكز موقوفة</div>
+      <div class="kpi-card__lbl">حسابات موقوفة</div>
     </div>
   </div>
 
@@ -445,7 +445,7 @@
     <div class="ch-panel__head">
       <div class="ch-panel__icon ch-panel__icon--indigo"><i class="fas fa-chart-area"></i></div>
       <div>
-        <div class="ch-panel__title">تسجيلات المراكز الجديدة</div>
+        <div class="ch-panel__title">تسجيلات الحسابات الجديدة</div>
         <div class="ch-panel__subtitle">التسجيلات اليومية خلال آخر 30 يوماً</div>
       </div>
     </div>
@@ -472,7 +472,7 @@
         <canvas id="planChart" width="160" height="160"></canvas>
         <div id="planTotal" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
           <span style="font-size:26px;font-weight:900;color:var(--sa-text);">{{ total_centers }}</span>
-          <span style="font-size:11px;color:var(--sa-muted);">مركز</span>
+          <span style="font-size:11px;color:var(--sa-muted);">حساب</span>
         </div>
       </div>
       <div id="planLegend" style="font-size:12.5px;"></div>
@@ -503,8 +503,8 @@
     <div class="ch-panel__head">
       <div class="ch-panel__icon" style="background:#dbeafe;color:#3b82f6;"><i class="fas fa-clock-rotate-left"></i></div>
       <div style="flex:1;">
-        <div class="ch-panel__title">أحدث المراكز المسجلة</div>
-        <div class="ch-panel__subtitle">آخر 8 مراكز انضمت للنظام</div>
+        <div class="ch-panel__title">أحدث الحسابات المسجلة</div>
+        <div class="ch-panel__subtitle">آخر 8 حسابات انضمت للنظام</div>
       </div>
       <a href="{% url 'sysadmin:center_list' %}"
          style="font-size:12px;color:var(--sa-accent);font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap;">
@@ -516,7 +516,7 @@
       <table class="rc-table">
         <thead>
           <tr>
-            <th>المركز</th>
+            <th>الحساب</th>
             <th>النوع</th>
             <th>الباقة</th>
             <th>الحالة</th>
@@ -547,7 +547,7 @@
           <tr>
             <td colspan="5" style="text-align:center;color:var(--sa-muted);padding:40px;">
               <i class="fas fa-building" style="font-size:32px;opacity:.2;display:block;margin-bottom:10px;"></i>
-              لا توجد مراكز بعد
+              لا توجد حسابات بعد
             </td>
           </tr>
           {% endfor %}
@@ -595,7 +595,7 @@
       {% empty %}
       <div style="text-align:center;color:var(--sa-muted);padding:40px 16px;">
         <i class="fas fa-building" style="font-size:32px;opacity:.2;display:block;margin-bottom:10px;"></i>
-        لا توجد مراكز بعد
+        لا توجد حسابات بعد
       </div>
       {% endfor %}
     </div>
@@ -614,12 +614,12 @@
       <div class="qa-list">
         <a href="{% url 'sysadmin:center_add' %}" class="qa-item qa-item--indigo">
           <div class="qa-icon"><i class="fas fa-plus-circle"></i></div>
-          <div><div class="qa-title">إضافة مركز</div><div class="qa-sub">تسجيل مركز جديد</div></div>
+          <div><div class="qa-title">إضافة حساب</div><div class="qa-sub">تسجيل حساب جديد</div></div>
           <i class="fas fa-arrow-left qa-arrow"></i>
         </a>
         <a href="{% url 'sysadmin:center_list' %}" class="qa-item qa-item--blue">
           <div class="qa-icon"><i class="fas fa-building"></i></div>
-          <div><div class="qa-title">إدارة المراكز</div><div class="qa-sub">عرض وتعديل المراكز</div></div>
+          <div><div class="qa-title">إدارة الحسابات</div><div class="qa-sub">عرض وتعديل الحسابات</div></div>
           <i class="fas fa-arrow-left qa-arrow"></i>
         </a>
         <a href="{% url 'sysadmin:backup_list' %}" class="qa-item qa-item--green">
@@ -634,7 +634,7 @@
         </a>
         <a href="{% url 'sysadmin:service_types' %}" class="qa-item qa-item--purple">
           <div class="qa-icon"><i class="fas fa-spa"></i></div>
-          <div><div class="qa-title">أنواع المراكز</div><div class="qa-sub">إدارة التصنيفات</div></div>
+          <div><div class="qa-title">أنواع الحسابات</div><div class="qa-sub">إدارة التصنيفات</div></div>
           <i class="fas fa-arrow-left qa-arrow"></i>
         </a>
       </div>

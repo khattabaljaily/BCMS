@@ -28,8 +28,8 @@ VALID_PLANS = {'starter', 'pro', 'enterprise'}
 
 
 class RegisterForm(forms.Form):
-    # بيانات المركز
-    center_name   = forms.CharField(label='اسم المركز', max_length=200)
+    # بيانات الحساب
+    center_name   = forms.CharField(label='اسم الحساب', max_length=200)
     phone         = forms.CharField(label='رقم الهاتف', max_length=20)
     country       = forms.ChoiceField(label='الدولة', choices=COUNTRY_CHOICES)
     city          = forms.CharField(label='المدينة', max_length=100, required=False)

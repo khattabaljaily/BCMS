@@ -11,7 +11,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('بيانات شخصية', {'fields': ('full_name', 'phone', 'email', 'avatar')}),
-        ('المركز والدور', {'fields': ('center', 'role', 'is_owner')}),
+        ('الحساب والدور', {'fields': ('center', 'role', 'is_owner')}),
         ('الصلاحيات', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
     )
     add_fieldsets = (

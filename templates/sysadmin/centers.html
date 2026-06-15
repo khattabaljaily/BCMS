@@ -1,6 +1,6 @@
 {% extends "sysadmin/base.html" %}
-{% block title %}المراكز{% endblock %}
-{% block page_title %}المراكز{% endblock %}
+{% block title %}الحسابات{% endblock %}
+{% block page_title %}الحسابات{% endblock %}
 {% block nav_centers %}active{% endblock %}
 
 {% block content %}
@@ -8,12 +8,12 @@
 <!-- Page header -->
 <div class="pg-head">
   <div class="pg-head__left">
-    <h2 class="pg-head__title">المراكز المسجلة</h2>
-    <div class="pg-head__sub">{{ total }} مركز إجمالاً</div>
+    <h2 class="pg-head__title">الحسابات المسجلة</h2>
+    <div class="pg-head__sub">{{ total }} حساب إجمالاً</div>
   </div>
   <div class="pg-head__actions">
     <button class="btn btn-primary" onclick="openModal('modal-add')">
-      <i class="fas fa-plus"></i> مركز جديد
+      <i class="fas fa-plus"></i> حساب جديد
     </button>
   </div>
 </div>
@@ -51,7 +51,7 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>المركز</th>
+          <th>الحساب</th>
           <th>النوع</th>
           <th>المدينة</th>
           <th>الباقة</th>
@@ -129,7 +129,7 @@
         <tr>
           <td colspan="9" style="text-align:center;padding:48px 20px;color:var(--sa-muted);">
             <i class="fas fa-building" style="font-size:36px;display:block;margin-bottom:12px;opacity:.2;"></i>
-            لا توجد مراكز مطابقة
+            لا توجد حسابات مطابقة
           </td>
         </tr>
         {% endfor %}
@@ -221,7 +221,7 @@
   {% empty %}
   <div style="text-align:center;padding:48px 20px;color:var(--sa-muted);">
     <i class="fas fa-building" style="font-size:36px;display:block;margin-bottom:12px;opacity:.2;"></i>
-    لا توجد مراكز مطابقة
+    لا توجد حسابات مطابقة
   </div>
   {% endfor %}
 </div>
@@ -230,7 +230,7 @@
 <div class="modal-backdrop" id="modal-add">
   <div class="modal modal-lg modal-scroll">
     <div class="modal-header">
-      <h3><i class="fas fa-plus-circle" style="color:var(--sa-accent);margin-left:8px;"></i> إضافة مركز جديد</h3>
+      <h3><i class="fas fa-plus-circle" style="color:var(--sa-accent);margin-left:8px;"></i> إضافة حساب جديد</h3>
       <button class="modal-close" onclick="closeModal('modal-add')">×</button>
     </div>
     <form id="form-add" autocomplete="off">
@@ -241,16 +241,16 @@
         <div class="modal-section__body">
           <div class="form-grid">
             <div class="form-group full">
-              <label>اسم المركز *</label>
+              <label>اسم الحساب *</label>
               <input type="text" name="name" id="add-name" class="form-control" placeholder="مثال: صالون الجمال الراقي" required>
             </div>
             <div class="form-group full">
               <label>الرابط المختصر *</label>
               <input type="text" name="slug" id="add-slug" class="form-control" placeholder="beauty-salon" required>
-              <span class="form-hint">أحرف إنجليزية وأرقام وشرطات فقط — يُستخدم في رابط المركز</span>
+              <span class="form-hint">أحرف إنجليزية وأرقام وشرطات فقط — يُستخدم في رابط الحساب</span>
             </div>
             <div class="form-group">
-              <label>نوع المركز</label>
+              <label>نوع الحساب</label>
               <select name="service_type" class="form-control">
                 <option value="">— اختر النوع —</option>
                 {% for st in service_types %}
@@ -324,7 +324,7 @@
           <div style="display:flex;gap:28px;margin-top:12px;">
             <div class="form-check">
               <input type="checkbox" name="is_active" id="add-is-active" checked>
-              <label for="add-is-active">مركز نشط</label>
+              <label for="add-is-active">حساب نشط</label>
             </div>
             <div class="form-check">
               <input type="checkbox" name="is_demo" id="add-is-demo">
@@ -335,7 +335,7 @@
       </div>
 
       <div class="modal-section">
-        <div class="modal-section__head"><i class="fas fa-user-shield"></i> بيانات مالك المركز (حساب الدخول)</div>
+        <div class="modal-section__head"><i class="fas fa-user-shield"></i> بيانات مالك الحساب (حساب الدخول)</div>
         <div class="modal-section__body">
           <div class="form-grid">
             <div class="form-group">
@@ -367,7 +367,7 @@
 
       <div class="modal-footer">
         <button type="submit" class="btn btn-primary" id="btn-add-submit">
-          <i class="fas fa-check"></i> إنشاء المركز
+          <i class="fas fa-check"></i> إنشاء الحساب
         </button>
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add')">إلغاء</button>
         <span id="add-error" style="color:var(--sa-red);font-size:12.5px;display:none;margin-right:auto;"></span>
@@ -380,7 +380,7 @@
 <div class="modal-backdrop" id="modal-edit">
   <div class="modal modal-lg modal-scroll">
     <div class="modal-header">
-      <h3><i class="fas fa-pencil" style="color:var(--sa-accent);margin-left:8px;"></i> تعديل بيانات المركز</h3>
+      <h3><i class="fas fa-pencil" style="color:var(--sa-accent);margin-left:8px;"></i> تعديل بيانات الحساب</h3>
       <button class="modal-close" onclick="closeModal('modal-edit')">×</button>
     </div>
     <form id="form-edit" autocomplete="off">
@@ -391,11 +391,11 @@
         <div class="modal-section__body">
           <div class="form-grid">
             <div class="form-group full">
-              <label>اسم المركز *</label>
+              <label>اسم الحساب *</label>
               <input type="text" name="name" id="edit-name" class="form-control" required>
             </div>
             <div class="form-group">
-              <label>نوع المركز</label>
+              <label>نوع الحساب</label>
               <select name="service_type" id="edit-service-type" class="form-control">
                 <option value="">— اختر النوع —</option>
                 {% for st in service_types %}
@@ -469,7 +469,7 @@
           <div style="display:flex;gap:28px;margin-top:12px;">
             <div class="form-check">
               <input type="checkbox" name="is_active" id="edit-is-active">
-              <label for="edit-is-active">مركز نشط</label>
+              <label for="edit-is-active">حساب نشط</label>
             </div>
             <div class="form-check">
               <input type="checkbox" name="is_demo" id="edit-is-demo">
@@ -494,13 +494,13 @@
 <div class="modal-backdrop" id="modal-delete">
   <div class="modal">
     <div class="modal-header">
-      <h3 style="color:var(--sa-red);"><i class="fas fa-triangle-exclamation"></i> حذف المركز</h3>
+      <h3 style="color:var(--sa-red);"><i class="fas fa-triangle-exclamation"></i> حذف الحساب</h3>
       <button class="modal-close" onclick="closeModal('modal-delete')">×</button>
     </div>
     <div class="del-confirm">
       <div class="del-confirm__icon"><i class="fas fa-trash"></i></div>
       <div class="del-confirm__title">تأكيد الحذف</div>
-      <div class="del-confirm__msg">هل أنت متأكد من حذف المركز التالي؟</div>
+      <div class="del-confirm__msg">هل أنت متأكد من حذف الحساب التالي؟</div>
       <div class="del-confirm__name" id="del-center-name">—</div>
       <div class="del-confirm__warn"><i class="fas fa-triangle-exclamation"></i> سيتم حذف جميع البيانات المرتبطة به نهائياً ولا يمكن التراجع</div>
     </div>
@@ -627,7 +627,7 @@ document.getElementById('form-add').addEventListener('submit', async function (e
     if (data.success) {
       closeModal('modal-add');
       this.reset();
-      const msg = 'تم إنشاء المركز "' + data.center.name + '" — اسم المستخدم: ' + (data.owner_username || '');
+      const msg = 'تم إنشاء الحساب "' + data.center.name + '" — اسم المستخدم: ' + (data.owner_username || '');
       showToast(msg);
       setTimeout(() => location.reload(), 1200);
     } else {
@@ -639,7 +639,7 @@ document.getElementById('form-add').addEventListener('submit', async function (e
     errEl.style.display = 'inline';
   }
   btn.disabled  = false;
-  btn.innerHTML = '<i class="fas fa-check"></i> إنشاء المركز';
+  btn.innerHTML = '<i class="fas fa-check"></i> إنشاء الحساب';
 });
 
 /* ── Edit form submit ── */
@@ -688,7 +688,7 @@ async function confirmDelete() {
       closeModal('modal-delete');
       document.getElementById(`row-${deletePk}`)?.remove();
       document.getElementById(`card-${deletePk}`)?.remove();
-      showToast('تم حذف المركز بنجاح');
+      showToast('تم حذف الحساب بنجاح');
     } else {
       const err = data.error || 'حدث خطأ في الحذف';
       if (data.blocked && data.blocked.length) {
@@ -728,7 +728,7 @@ async function toggleCenter(pk, btn) {
         el.innerHTML = `<i class="fas ${active ? 'fa-pause' : 'fa-play'}"></i>`;
         el.disabled  = false;
       });
-      showToast(active ? 'تم تفعيل المركز' : 'تم إيقاف المركز');
+      showToast(active ? 'تم تفعيل الحساب' : 'تم إيقاف الحساب');
       return;
     }
     showToast('حدث خطأ', false);

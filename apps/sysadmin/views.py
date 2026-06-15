@@ -259,7 +259,7 @@ def center_add(request):
         # Validation
         errors = []
         if not name or not slug:
-            errors.append('اسم المركز والرابط المختصر مطلوبان.')
+            errors.append('اسم الحساب والرابط المختصر مطلوبان.')
         if Center.objects.filter(slug=slug).exists():
             errors.append('هذا الرابط المختصر مستخدم بالفعل.')
         if not owner_full_name:
@@ -311,14 +311,14 @@ def center_add(request):
                         'owner_username': owner_username,
                         'owner_full_name': owner_full_name,
                     })
-                messages.success(request, f'تم إنشاء المركز "{name}" بنجاح. بيانات الدخول: المستخدم "{owner_username}".')
+                messages.success(request, f'تم إنشاء الحساب "{name}" بنجاح. بيانات الدخول: المستخدم "{owner_username}".')
                 return redirect('sysadmin:center_detail', pk=c.pk)
             except Exception as e:
                 import logging
                 logging.exception("Error creating center")
                 if ajax:
                     return JsonResponse({'success': False, 'error': str(e)}, status=500)
-                messages.error(request, f'حدث خطأ أثناء إنشاء المركز: {e}')
+                messages.error(request, f'حدث خطأ أثناء إنشاء الحساب: {e}')
 
     return render(request, 'sysadmin/center_form.html', {
         'service_types':   service_types,
@@ -361,7 +361,7 @@ def center_edit(request, pk):
             center.save()
             if ajax:
                 return JsonResponse({'success': True, 'center': _center_payload(center)})
-            messages.success(request, 'تم حفظ بيانات المركز.')
+            messages.success(request, 'تم حفظ بيانات الحساب.')
             return redirect('sysadmin:center_detail', pk=center.pk)
         except Exception as e:
             import logging
@@ -388,7 +388,7 @@ def center_toggle(request, pk):
         if _is_ajax(request):
             return JsonResponse({'success': True, 'is_active': center.is_active})
         state = 'تم تفعيل' if center.is_active else 'تم إيقاف'
-        messages.success(request, f'{state} المركز "{center.name}".')
+        messages.success(request, f'{state} الحساب "{center.name}".')
     return redirect(request.POST.get('next', 'sysadmin:center_list'))
 
 
@@ -470,12 +470,12 @@ def center_delete(request, pk):
             logging.exception("Error force-deleting center %s", pk)
             if _is_ajax(request):
                 return JsonResponse({'success': False, 'error': str(e)}, status=500)
-            messages.error(request, f'حدث خطأ أثناء حذف المركز: {e}')
+            messages.error(request, f'حدث خطأ أثناء حذف الحساب: {e}')
             return redirect('sysadmin:center_detail', pk=pk)
 
         if _is_ajax(request):
             return JsonResponse({'success': True})
-        messages.success(request, f'تم حذف المركز "{name}" وجميع بياناته.')
+        messages.success(request, f'تم حذف الحساب "{name}" وجميع بياناته.')
     return redirect('sysadmin:center_list')
 
 
@@ -513,7 +513,7 @@ def service_type_save(request, pk=None):
                 obj.save()
                 if ajax:
                     return JsonResponse({'success': True, 'type': _service_type_payload(obj)})
-                messages.success(request, 'تم تعديل نوع المركز.')
+                messages.success(request, 'تم تعديل نوع الحساب.')
             else:
                 t = ServiceType.objects.create(
                     name=name, icon=icon, color=color,
@@ -521,7 +521,7 @@ def service_type_save(request, pk=None):
                 )
                 if ajax:
                     return JsonResponse({'success': True, 'type': _service_type_payload(t)})
-                messages.success(request, 'تم إضافة نوع المركز.')
+                messages.success(request, 'تم إضافة نوع الحساب.')
         if not ajax:
             return redirect('sysadmin:service_types')
 
@@ -536,7 +536,7 @@ def service_type_delete(request, pk):
         obj  = get_object_or_404(ServiceType, pk=pk)
         ajax = _is_ajax(request)
         if obj.centers.exists():
-            err = 'لا يمكن حذف نوع مرتبط بمراكز موجودة.'
+            err = 'لا يمكن حذف نوع مرتبط بحسابات موجودة.'
             if ajax:
                 return JsonResponse({'success': False, 'error': err})
             messages.error(request, err)
@@ -544,7 +544,7 @@ def service_type_delete(request, pk):
             obj.delete()
             if ajax:
                 return JsonResponse({'success': True})
-            messages.success(request, 'تم حذف نوع المركز.')
+            messages.success(request, 'تم حذف نوع الحساب.')
     return redirect('sysadmin:service_types')
 
 

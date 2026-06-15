@@ -45,7 +45,7 @@ PERMISSIONS = {
         'view': 'عرض التقارير',
     },
     'settings': {
-        'manage': 'إدارة إعدادات المركز',
+        'manage': 'إدارة إعدادات الحساب',
     },
 }
 
@@ -64,7 +64,7 @@ class UserManager(BaseUserManager):
 
 
 class Role(models.Model):
-    """دور / مجموعة صلاحيات داخل المركز"""
+    """دور / مجموعة صلاحيات داخل الحساب"""
     center      = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='roles')
     name        = models.CharField('الاسم', max_length=100)
     permissions = models.JSONField('الصلاحيات', default=dict)
@@ -88,7 +88,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """موظف / مستخدم النظام"""
     center    = models.ForeignKey(
         Center, on_delete=models.CASCADE,
-        null=True, blank=True, related_name='users', verbose_name='المركز'
+        null=True, blank=True, related_name='users', verbose_name='الحساب'
     )
     username  = models.CharField('اسم المستخدم', max_length=150, unique=True)
     full_name = models.CharField('الاسم الكامل', max_length=200)
@@ -102,7 +102,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_active    = models.BooleanField('نشط', default=True)
     is_staff     = models.BooleanField('موظف إداري', default=False)
-    is_owner     = models.BooleanField('مالك المركز', default=False)
+    is_owner     = models.BooleanField('مالك الحساب', default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     last_login_at = models.DateTimeField(null=True, blank=True)

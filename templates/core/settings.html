@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}الإعدادات{% endblock %}
-{% block page_title %}إعدادات المركز{% endblock %}
+{% block page_title %}إعدادات الحساب{% endblock %}
 {% block nav_store_settings %}active{% endblock %}
 {% block extra_css %}
 <style>
@@ -462,8 +462,8 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
 <div class="sp-hero">
   <div class="sp-hero-inner">
     <div class="sp-hero-text">
-      <h1>إعدادات المركز</h1>
-      <p>تحكم كامل في بيانات المركز، واجهة المتجر، جدول الحجز، الفواتير، وبرنامج الولاء.</p>
+      <h1>إعدادات الحساب</h1>
+      <p>تحكم كامل في بيانات الحساب، واجهة المتجر، جدول الحجز، الفواتير، وبرنامج الولاء.</p>
       <div class="sp-hero-badges">
         <span class="sp-hero-badge"><i class="fas fa-store"></i> {{ center.name }}</span>
         <span class="sp-hero-badge">
@@ -488,7 +488,7 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
   <!-- Tab Navigation -->
   <div class="sp-tabs" role="tablist">
     <button class="sp-tab active" onclick="switchTab('center',this)" role="tab" type="button">
-      <i class="fas fa-store"></i><span class="tab-label"> معلومات المركز</span>
+      <i class="fas fa-store"></i><span class="tab-label"> معلومات الحساب</span>
     </button>
     <button class="sp-tab" onclick="switchTab('booking',this)" role="tab" type="button">
       <i class="fas fa-calendar-alt"></i><span class="tab-label"> الحجز والمواعيد</span>
@@ -521,7 +521,7 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
         <div class="sp-card-body">
           <div class="sp-grid-2">
             <div class="sp-field">
-              <label class="sp-label">اسم المركز <span class="sp-label-badge">للعرض فقط</span></label>
+              <label class="sp-label">اسم الحساب <span class="sp-label-badge">للعرض فقط</span></label>
               <input class="sp-input" type="text" value="{{ center.name }}" disabled>
             </div>
             <div class="sp-field">
@@ -548,15 +548,15 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
         <div class="sp-card-header">
           <div class="sp-card-icon sp-card-icon--purple"><i class="fas fa-image"></i></div>
           <div class="sp-card-header-text">
-            <h3>شعار المركز</h3>
-            <p>الصورة التي تمثل هوية المركز وتظهر في الشريط الجانبي والمتجر.</p>
+            <h3>شعار الحساب</h3>
+            <p>الصورة التي تمثل هوية الحساب وتظهر في الشريط الجانبي والمتجر.</p>
           </div>
         </div>
         <div class="sp-card-body">
           <div class="sp-upload-zone">
             {% if center.logo %}
             <div class="sp-preview-wrap">
-              <img src="{{ center.logo.url }}" alt="شعار المركز">
+              <img src="{{ center.logo.url }}" alt="شعار الحساب">
             </div>
             <label class="sp-remove-label">
               <input type="checkbox" name="remove_logo"> إزالة الشعار الحالي
@@ -653,7 +653,7 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
           <div class="sp-field">
             <label class="sp-label">تواريخ الإغلاق</label>
             <textarea class="sp-input" name="closed_dates" rows="3" placeholder="2026-06-15, 2026-06-20">{{ settings_obj.closed_dates|default:'' }}</textarea>
-            <span class="sp-hint">أدخل تواريخ العطلات أو أيام الإغلاق الخاصة بالمركز، مفصولة بفواصل أو أسطر جديدة.</span>
+            <span class="sp-hint">أدخل تواريخ العطلات أو أيام الإغلاق الخاصة بالحساب، مفصولة بفواصل أو أسطر جديدة.</span>
           </div>
 
           <div class="sp-field">
@@ -733,7 +733,7 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
             <input class="sp-input" type="text" name="store_name"
                    value="{{ settings_obj.store_name|default:'' }}"
                    placeholder="{{ center.name }}">
-            <span class="sp-hint">اتركه فارغاً لاستخدام اسم المركز تلقائياً.</span>
+            <span class="sp-hint">اتركه فارغاً لاستخدام اسم الحساب تلقائياً.</span>
           </div>
 
           <div class="sp-field">

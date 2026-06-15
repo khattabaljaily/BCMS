@@ -13,7 +13,7 @@ DEFAULT_COUNTRY  = 'SD'
 
 
 class ServiceType(models.Model):
-    """نوع مركز التجميل — صالون شعر، عيادة تجميل، مشغل أظافر ..."""
+    """نوع حساب — صالون شعر، عيادة تجميل، مشغل أظافر ..."""
     name    = models.CharField('الاسم', max_length=100)
     icon    = models.CharField('الأيقونة', max_length=60, default='fas fa-spa')
     color   = models.CharField('اللون', max_length=7, default='#ec4899')
@@ -24,8 +24,8 @@ class ServiceType(models.Model):
     class Meta:
         db_table = 'service_types'
         ordering = ['order', 'name']
-        verbose_name = 'نوع المركز'
-        verbose_name_plural = 'أنواع المراكز'
+        verbose_name = 'نوع الحساب'
+        verbose_name_plural = 'أنواع الحسابات'
 
     def __str__(self):
         return self.name
@@ -46,8 +46,8 @@ class CenterManager(models.Manager):
 
 class Center(models.Model):
     """
-    المركز / الصالون — وحدة الاشتراك الأساسية (Tenant).
-    كل بيانات المركز معزولة تماماً.
+    الحساب / الصالون — وحدة الاشتراك الأساسية (Tenant).
+    كل بيانات الحساب معزولة تماماً.
     """
     PLANS = [
         ('trial',      'تجريبي'),
@@ -56,12 +56,12 @@ class Center(models.Model):
         ('enterprise', 'مؤسسات'),
     ]
 
-    # هوية المركز
-    name         = models.CharField('اسم المركز', max_length=200)
+    # هوية الحساب
+    name         = models.CharField('اسم الحساب', max_length=200)
     slug         = models.SlugField('الرابط المختصر', max_length=200, unique=True)
     service_type = models.ForeignKey(
         ServiceType, on_delete=models.PROTECT,
-        verbose_name='نوع المركز', related_name='centers'
+        verbose_name='نوع الحساب', related_name='centers'
     )
     logo    = models.ImageField('الشعار', upload_to='centers/logos/', blank=True, null=True)
 
@@ -96,8 +96,8 @@ class Center(models.Model):
     class Meta:
         db_table = 'centers'
         ordering = ['-created_at']
-        verbose_name = 'مركز'
-        verbose_name_plural = 'المراكز'
+        verbose_name = 'حساب'
+        verbose_name_plural = 'الحسابات'
 
     def __str__(self):
         return self.name
@@ -114,10 +114,10 @@ class Center(models.Model):
 
 
 class Settings(models.Model):
-    """إعدادات المركز"""
+    """إعدادات الحساب"""
     center = models.OneToOneField(
         Center, on_delete=models.CASCADE, related_name='settings',
-        verbose_name='المركز'
+        verbose_name='الحساب'
     )
 
     # الفواتير
@@ -288,7 +288,7 @@ class Settings(models.Model):
 
 
 class CenterBackup(models.Model):
-    """نسخة احتياطية لبيانات مركز معين"""
+    """نسخة احتياطية لبيانات حساب معين"""
 
     BACKUP_TYPES = (
         ('manual',      'يدوي'),
@@ -303,7 +303,7 @@ class CenterBackup(models.Model):
 
     center      = models.ForeignKey(
         Center, on_delete=models.CASCADE,
-        related_name='backups', verbose_name='المركز',
+        related_name='backups', verbose_name='الحساب',
     )
     filename    = models.CharField('اسم الملف', max_length=255)
     file_path   = models.CharField('مسار الملف', max_length=500)
@@ -340,10 +340,10 @@ class CenterBackup(models.Model):
 
 
 class CenterMixin(models.Model):
-    """قاعدة مشتركة لجميع نماذج البيانات المرتبطة بمركز"""
+    """قاعدة مشتركة لجميع نماذج البيانات المرتبطة بحساب"""
     center = models.ForeignKey(
         Center, on_delete=models.CASCADE,
-        verbose_name='المركز', db_index=True
+        verbose_name='الحساب', db_index=True
     )
 
     class Meta:
@@ -422,7 +422,7 @@ class SupportTicket(models.Model):
     )
 
     center      = models.ForeignKey(Center, on_delete=models.CASCADE,
-                                    verbose_name='المركز', related_name='support_tickets')
+                                    verbose_name='الحساب', related_name='support_tickets')
     created_by  = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                     null=True, verbose_name='أنشئ بواسطة',
                                     related_name='created_support_tickets')
@@ -460,7 +460,7 @@ class SupportTicket(models.Model):
 
 class SupportMessage(models.Model):
     SENDER_TYPE_CHOICES = (
-        ('center', 'المركز'),
+        ('center', 'الحساب'),
         ('admin',  'المشرف'),
     )
 

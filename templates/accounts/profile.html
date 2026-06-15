@@ -16,7 +16,7 @@
         <h1 class="profile-hero-name">{{ user.full_name|default:user.username }}</h1>
         <div class="profile-hero-meta">
           {% if user.is_owner or user.is_superuser %}
-          <span class="profile-badge profile-badge--owner"><i class="fas fa-crown"></i> مالك المركز</span>
+          <span class="profile-badge profile-badge--owner"><i class="fas fa-crown"></i> مالك الحساب</span>
           {% elif user.role %}
           <span class="profile-badge profile-badge--role"><i class="fas fa-shield-alt"></i> {{ user.role.name }}</span>
           {% else %}
@@ -190,11 +190,11 @@
           <div class="profile-info-row">
             <span class="profile-info-label"><i class="fas fa-shield-alt"></i> الدور</span>
             <span class="profile-info-value">
-              {% if user.is_owner or user.is_superuser %}مالك المركز{% elif user.role %}{{ user.role.name }}{% else %}—{% endif %}
+              {% if user.is_owner or user.is_superuser %}مالك الحساب{% elif user.role %}{{ user.role.name }}{% else %}—{% endif %}
             </span>
           </div>
           <div class="profile-info-row">
-            <span class="profile-info-label"><i class="fas fa-building"></i> المركز</span>
+            <span class="profile-info-label"><i class="fas fa-building"></i> الحساب</span>
             <span class="profile-info-value">{{ user.center.name }}</span>
           </div>
           <div class="profile-info-row">
