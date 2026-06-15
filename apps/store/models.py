@@ -3,6 +3,7 @@ from django.db import models
 from apps.core.models import CenterMixin
 from apps.services.models import Service
 from apps.products.models import Product
+from apps.clients.models import Client
 
 
 class OnlineBooking(CenterMixin):
@@ -20,6 +21,11 @@ class OnlineBooking(CenterMixin):
     services       = models.ManyToManyField(Service, blank=True, related_name='online_bookings', verbose_name='الخدمات')
     preferred_date = models.DateField('التاريخ المفضل')
     preferred_time = models.TimeField('الوقت المفضل', null=True, blank=True)
+    client         = models.ForeignKey(
+        Client, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='online_bookings',
+        verbose_name='العميل'
+    )
     notes          = models.TextField('ملاحظات', blank=True)
     status         = models.CharField('الحالة', max_length=20, choices=STATUS, default='new')
     appointment    = models.OneToOneField(
@@ -46,6 +52,11 @@ class StoreOrder(CenterMixin):
         ('delivered', 'تم التسليم'),
         ('cancelled', 'ملغي'),
     ]
+    client         = models.ForeignKey(
+        Client, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='store_orders',
+        verbose_name='العميل'
+    )
     client_name    = models.CharField('الاسم', max_length=200)
     client_phone   = models.CharField('الهاتف', max_length=20)
     client_address = models.TextField('عنوان التوصيل', blank=True)

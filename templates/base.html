@@ -229,6 +229,12 @@
         فريق الخدمة
       </a>
 
+      <!-- نقطة البيع -->
+      <a href="{% url 'billing:pos' %}" class="nav-item {% block nav_pos %}{% endblock %}">
+        <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
+        نقطة البيع
+      </a>
+
       <!-- الفواتير -->
       <a href="{% url 'billing:list' %}" class="nav-item {% block nav_billing %}{% endblock %}">
         <span class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></span>

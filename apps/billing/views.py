@@ -518,3 +518,125 @@ def invoice_delete(request, pk):
         return redirect('billing:list')
 
     return redirect('billing:detail', pk=pk)
+
+
+# ══════════════════════════════════════════════════════════════
+# POS — نقطة البيع
+# ══════════════════════════════════════════════════════════════
+
+@login_required
+def pos_view(request):
+    center = request.center
+    from apps.services.models import ServiceCategory
+
+    clients = (
+        Client.objects.filter(center=center, is_active=True)
+        .order_by('name')
+        .values('id', 'name', 'phone')
+    )
+    categories = ServiceCategory.objects.filter(center=center, is_active=True).prefetch_related(
+        'services'
+    ).order_by('order', 'name')
+    services = Service.objects.filter(center=center, is_active=True).select_related('category').order_by('category__order', 'order', 'name')
+    products = Product.objects.filter(center=center, is_active=True).order_by('name')
+
+    clients_json = json.dumps(list(clients))
+    services_json = json.dumps([{
+        'id': s.pk, 'name': s.name,
+        'price': float(s.price),
+        'category_id': s.category_id,
+        'category': s.category.name if s.category else 'عام',
+    } for s in services])
+    products_json = json.dumps([{
+        'id': p.pk, 'name': p.name,
+        'price': float(p.price),
+        'stock': float(p.stock),
+        'sku': p.sku,
+    } for p in products])
+    categories_json = json.dumps([{
+        'id': c.pk, 'name': c.name, 'icon': c.icon, 'color': c.color,
+    } for c in categories])
+
+    return render(request, 'billing/pos.html', {
+        'clients_json':    clients_json,
+        'services_json':   services_json,
+        'products_json':   products_json,
+        'categories_json': categories_json,
+        'payment_choices': Invoice.PAYMENT,
+    })
+
+
+@login_required
+@transaction.atomic
+def pos_save(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'بيانات غير صحيحة'}, status=400)
+
+    center = request.center
+    items = data.get('items', [])
+    if not items:
+        return JsonResponse({'error': 'لا توجد بنود في الفاتورة'}, status=400)
+
+    client_id = data.get('client_id')
+    client = Client.objects.filter(pk=client_id, center=center).first() if client_id else None
+
+    payment_method = data.get('payment_method', 'cash')
+    discount_amount = Decimal(str(data.get('discount', 0) or 0))
+    notes = data.get('notes', '')
+
+    from apps.core.models import Settings
+    settings_obj, _ = Settings.objects.get_or_create(center=center)
+    number = settings_obj.next_invoice_number()
+
+    inv = Invoice.objects.create(
+        center=center,
+        number=number,
+        client=client,
+        payment_method=payment_method,
+        discount_amount=discount_amount,
+        notes=notes,
+        status='draft',
+    )
+
+    for item in items:
+        svc = Service.objects.filter(pk=item.get('service_id'), center=center).first() if item.get('service_id') else None
+        prd = Product.objects.filter(pk=item.get('product_id'), center=center).first() if item.get('product_id') else None
+        qty = Decimal(str(item.get('qty', 1)))
+
+        InvoiceLine.objects.create(
+            invoice=inv,
+            description=item.get('name', '—'),
+            service=svc,
+            product=prd,
+            quantity=qty,
+            unit_price=Decimal(str(item.get('price', 0))),
+            discount_percent=Decimal('0'),
+        )
+
+        if prd:
+            StockMovement.objects.create(
+                center=center,
+                product=prd,
+                change=-qty,
+                type='sale',
+                reference=f'invoice_{inv.pk}',
+                notes=f'POS {number}',
+            )
+
+    inv.recalculate()
+
+    if payment_method != 'later':
+        inv.mark_paid(amount=inv.total, method=payment_method)
+        _create_invoice_treasury_movement(inv)
+
+    return JsonResponse({
+        'ok': True,
+        'invoice_pk': inv.pk,
+        'invoice_number': inv.number,
+        'print_url': f'/billing/{inv.pk}/print/',
+    })

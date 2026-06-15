@@ -1,0 +1,881 @@
+{% extends "base.html" %}
+{% block title %}نقطة البيع{% endblock %}
+{% block nav_billing_open %}open{% endblock %}
+{% block nav_pos %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════
+   POS LAYOUT
+═══════════════════════════════════════ */
+.pos-wrap {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 0;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+  margin: -20px;
+}
+
+/* ── Left: Catalog ── */
+.pos-catalog {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  border-left: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+.pos-catalog__top {
+  padding: 14px 16px 0;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.pos-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0;
+}
+.pos-tab {
+  padding: 9px 18px;
+  border-radius: 10px 10px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  transition: all .15s;
+  font-family: inherit;
+}
+.pos-tab.active {
+  background: #f8fafc;
+  color: #6366f1;
+  box-shadow: 0 -1px 0 #6366f1 inset;
+}
+.pos-search-bar {
+  padding: 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.pos-search-bar input {
+  width: 100%;
+  padding: 8px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-family: Cairo, sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border .15s;
+}
+.pos-search-bar input:focus { border-color: #6366f1; }
+
+/* category filter */
+.cat-filter {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.cat-filter::-webkit-scrollbar { display: none; }
+.cat-chip {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+  font-family: inherit;
+}
+.cat-chip.active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+
+/* items grid */
+.pos-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+.pos-item {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 12px;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pos-item:hover {
+  border-color: #6366f1;
+  box-shadow: 0 3px 12px rgba(99,102,241,.12);
+  transform: translateY(-1px);
+}
+.pos-item__icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+.pos-item__name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+}
+.pos-item__price {
+  font-size: 14px;
+  font-weight: 900;
+  color: #6366f1;
+}
+.pos-item__sku {
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+.pos-item__stock {
+  font-size: 11px;
+  color: #10b981;
+}
+.pos-empty {
+  grid-column: 1/-1;
+  text-align: center;
+  color: #94a3b8;
+  padding: 40px 20px;
+  font-size: 13px;
+}
+
+/* ── Right: Cart ── */
+.pos-cart {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  height: 100%;
+  overflow: hidden;
+}
+.pos-cart__client {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.pos-cart__client-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 6px;
+}
+.client-search-wrap {
+  position: relative;
+}
+.client-search-wrap input {
+  width: 100%;
+  padding: 9px 14px 9px 38px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-family: Cairo, sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border .15s;
+}
+.client-search-wrap input:focus { border-color: #6366f1; }
+.client-search-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 13px;
+  pointer-events: none;
+}
+.client-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0; left: 0;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.1);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+}
+.client-option {
+  padding: 9px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background .12s;
+}
+.client-option:hover { background: #f8fafc; }
+.client-option__name { font-size: 13px; font-weight: 700; }
+.client-option__phone { font-size: 11.5px; color: #64748b; }
+.client-selected {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: #eef2ff;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4338ca;
+  display: none;
+}
+.client-selected button {
+  border: none; background: none; color: #94a3b8;
+  cursor: pointer; font-size: 14px; line-height: 1;
+}
+.client-selected button:hover { color: #ef4444; }
+
+/* cart items */
+.pos-cart__items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 16px;
+}
+.cart-empty {
+  text-align: center;
+  color: #cbd5e1;
+  padding: 40px 0;
+  font-size: 13px;
+}
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.cart-item:last-child { border-bottom: none; }
+.cart-item__name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.cart-item__price {
+  font-size: 12.5px;
+  color: #64748b;
+  white-space: nowrap;
+}
+.cart-item__qty {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cart-item__qty button {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all .12s;
+  font-family: inherit;
+}
+.cart-item__qty button:hover { border-color: #6366f1; color: #6366f1; }
+.cart-item__qty span {
+  min-width: 24px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+.cart-item__remove {
+  border: none; background: none;
+  color: #cbd5e1; cursor: pointer;
+  font-size: 15px; line-height: 1;
+  padding: 2px;
+  transition: color .12s;
+}
+.cart-item__remove:hover { color: #ef4444; }
+
+/* totals */
+.pos-cart__totals {
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.totals-row.total {
+  font-size: 18px;
+  font-weight: 900;
+  color: #1e293b;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px solid #e2e8f0;
+}
+.totals-row.total .label { color: #1e293b; }
+.totals-row .label { color: #64748b; font-weight: 600; }
+.totals-row .val { font-weight: 700; }
+.discount-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.discount-row label { font-size: 12px; font-weight: 700; color: #64748b; white-space: nowrap; }
+.discount-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: Cairo, sans-serif;
+  font-size: 13px;
+  outline: none;
+  text-align: left;
+  direction: ltr;
+  min-width: 0;
+}
+.discount-input:focus { border-color: #6366f1; }
+
+/* payment */
+.pos-cart__payment {
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.pay-methods {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.pay-method {
+  padding: 8px 6px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  background: #f8fafc;
+  color: #64748b;
+  font-family: inherit;
+}
+.pay-method.active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+}
+.pay-method i { display: block; font-size: 16px; margin-bottom: 3px; }
+
+.pos-notes {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: Cairo, sans-serif;
+  font-size: 12.5px;
+  resize: none;
+  outline: none;
+  margin-bottom: 10px;
+  transition: border .15s;
+}
+.pos-notes:focus { border-color: #6366f1; }
+
+.pos-save-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.pos-btn {
+  padding: 11px 8px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all .15s;
+  font-family: inherit;
+}
+.pos-btn--save {
+  background: #6366f1;
+  color: #fff;
+}
+.pos-btn--save:hover { background: #4f46e5; box-shadow: 0 4px 12px rgba(99,102,241,.3); }
+.pos-btn--print {
+  background: #f0fdf4;
+  color: #059669;
+  border: 1.5px solid #bbf7d0;
+}
+.pos-btn--print:hover { background: #dcfce7; }
+.pos-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* success overlay */
+.pos-success {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.pos-success.show { display: flex; }
+.pos-success__card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px 32px;
+  text-align: center;
+  max-width: 380px;
+  width: 90%;
+  animation: popIn .2s ease;
+}
+@keyframes popIn { from { transform: scale(.9); opacity: 0; } }
+.pos-success__icon {
+  width: 72px; height: 72px;
+  background: #d1fae5;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  color: #059669;
+  margin: 0 auto 16px;
+}
+.pos-success__title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.pos-success__num { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+.pos-success__btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .pos-wrap {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+    margin: -12px;
+  }
+  .pos-catalog { height: 60vh; }
+  .pos-cart { height: auto; }
+  .pos-items { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-wrap">
+
+  <!-- ═══════════════ LEFT: Catalog ═══════════════ -->
+  <div class="pos-catalog">
+    <!-- Tabs -->
+    <div class="pos-catalog__top">
+      <div class="pos-tabs">
+        <button class="pos-tab active" data-tab="services" onclick="switchTab('services', this)">
+          <i class="fas fa-spa"></i> الخدمات
+        </button>
+        <button class="pos-tab" data-tab="products" onclick="switchTab('products', this)">
+          <i class="fas fa-box"></i> المنتجات
+        </button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="pos-search-bar">
+      <input type="text" id="item-search" placeholder="بحث عن خدمة أو منتج..." oninput="filterItems()" autocomplete="off">
+    </div>
+
+    <!-- Category filter (services only) -->
+    <div class="cat-filter" id="cat-filter">
+      <button class="cat-chip active" data-cat="all" onclick="filterCat('all', this)">الكل</button>
+    </div>
+
+    <!-- Items grid -->
+    <div class="pos-items" id="items-grid">
+      <div class="pos-empty"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ RIGHT: Cart ═══════════════ -->
+  <div class="pos-cart">
+
+    <!-- Client -->
+    <div class="pos-cart__client">
+      <div class="pos-cart__client-label"><i class="fas fa-user"></i> العميل</div>
+      <div class="client-search-wrap" id="client-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="client-input" placeholder="اسم أو رقم هاتف العميل..."
+               oninput="searchClients()" onfocus="searchClients()" autocomplete="off">
+        <div class="client-dropdown" id="client-dropdown"></div>
+      </div>
+      <div class="client-selected" id="client-selected">
+        <span id="client-selected-name"></span>
+        <button onclick="clearClient()" title="إلغاء"><i class="fas fa-xmark"></i></button>
+      </div>
+    </div>
+
+    <!-- Cart items -->
+    <div class="pos-cart__items" id="cart-items">
+      <div class="cart-empty" id="cart-empty">
+        <i class="fas fa-shopping-basket" style="font-size:32px;margin-bottom:8px;display:block;"></i>
+        أضف خدمات أو منتجات من القائمة
+      </div>
+    </div>
+
+    <!-- Totals -->
+    <div class="pos-cart__totals">
+      <div class="totals-row">
+        <span class="label">المجموع</span>
+        <span class="val" id="subtotal-display">0.00</span>
+      </div>
+      <div class="discount-row">
+        <label>خصم</label>
+        <input type="number" class="discount-input" id="discount-input" min="0" step="0.01" value="0"
+               oninput="recalcTotals()" placeholder="0">
+      </div>
+      <div class="totals-row total">
+        <span class="label">الإجمالي</span>
+        <span id="total-display">0.00</span>
+      </div>
+    </div>
+
+    <!-- Payment -->
+    <div class="pos-cart__payment">
+      <div class="pay-methods">
+        <button class="pay-method active" data-method="cash" onclick="selectPayment('cash', this)">
+          <i class="fas fa-money-bill-wave"></i> نقد
+        </button>
+        <button class="pay-method" data-method="card_or_bank" onclick="selectPayment('card_or_bank', this)">
+          <i class="fas fa-credit-card"></i> بطاقة
+        </button>
+        <button class="pay-method" data-method="later" onclick="selectPayment('later', this)">
+          <i class="fas fa-clock"></i> لاحقاً
+        </button>
+      </div>
+
+      <textarea class="pos-notes" id="pos-notes" rows="2" placeholder="ملاحظات (اختياري)..."></textarea>
+
+      <div class="pos-save-btns">
+        <button class="pos-btn pos-btn--save" onclick="saveInvoice(false)" id="btn-save">
+          <i class="fas fa-check"></i> حفظ
+        </button>
+        <button class="pos-btn pos-btn--print" onclick="saveInvoice(true)" id="btn-print">
+          <i class="fas fa-print"></i> حفظ وطباعة
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Success modal -->
+<div class="pos-success" id="pos-success">
+  <div class="pos-success__card">
+    <div class="pos-success__icon"><i class="fas fa-check"></i></div>
+    <div class="pos-success__title">تمت العملية!</div>
+    <div class="pos-success__num" id="success-num"></div>
+    <div class="pos-success__btns">
+      <a id="btn-view-inv" href="#" class="pos-btn pos-btn--save" style="text-decoration:none;">
+        <i class="fas fa-eye"></i> عرض الفاتورة
+      </a>
+      <a id="btn-print-inv" href="#" target="_blank" class="pos-btn pos-btn--print" style="text-decoration:none;">
+        <i class="fas fa-print"></i> طباعة
+      </a>
+      <button class="pos-btn" onclick="resetPOS()"
+              style="background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0;grid-column:1/-1;">
+        <i class="fas fa-plus"></i> عملية جديدة
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CLIENTS    = {{ clients_json|safe }};
+const SERVICES   = {{ services_json|safe }};
+const PRODUCTS   = {{ products_json|safe }};
+const CATEGORIES = {{ categories_json|safe }};
+const SAVE_URL   = '{% url "billing:pos_save" %}';
+const CSRF       = '{{ csrf_token }}';
+
+let cart = [];
+let selectedClient = null;
+let selectedPayment = 'cash';
+let activeTab = 'services';
+let activeCat = 'all';
+
+/* ── Tabs ── */
+function switchTab(tab, btn) {
+  activeTab = tab;
+  document.querySelectorAll('.pos-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cat-filter').style.display = tab === 'services' ? 'flex' : 'none';
+  document.getElementById('item-search').value = '';
+  activeCat = 'all';
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.toggle('active', c.dataset.cat === 'all'));
+  renderItems();
+}
+
+/* ── Category chips ── */
+function buildCatChips() {
+  const cf = document.getElementById('cat-filter');
+  cf.innerHTML = '<button class="cat-chip active" data-cat="all" onclick="filterCat(\'all\', this)">الكل</button>';
+  CATEGORIES.forEach(cat => {
+    const b = document.createElement('button');
+    b.className = 'cat-chip';
+    b.dataset.cat = String(cat.id);
+    b.onclick = function() { filterCat(String(cat.id), this); };
+    b.innerHTML = `<i class="${cat.icon}" style="margin-left:4px;color:${cat.color}"></i>${cat.name}`;
+    cf.appendChild(b);
+  });
+}
+
+function filterCat(catId, btn) {
+  activeCat = catId;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderItems();
+}
+
+/* ── Item search ── */
+function filterItems() { renderItems(); }
+
+function renderItems() {
+  const q = document.getElementById('item-search').value.trim().toLowerCase();
+  const grid = document.getElementById('items-grid');
+  grid.innerHTML = '';
+
+  let items = activeTab === 'services' ? SERVICES : PRODUCTS;
+
+  if (activeTab === 'services' && activeCat !== 'all') {
+    items = items.filter(s => String(s.category_id) === activeCat);
+  }
+  if (q) {
+    items = items.filter(it => it.name.toLowerCase().includes(q));
+  }
+
+  if (!items.length) {
+    grid.innerHTML = '<div class="pos-empty">لا توجد نتائج</div>';
+    return;
+  }
+
+  items.forEach(it => {
+    const div = document.createElement('div');
+    div.className = 'pos-item';
+    if (activeTab === 'services') {
+      const cat = CATEGORIES.find(c => c.id === it.category_id) || {};
+      div.innerHTML = `
+        <div class="pos-item__icon" style="background:${(cat.color||'#6366f1')}20;color:${cat.color||'#6366f1'}">
+          <i class="${cat.icon||'fas fa-spa'}"></i>
+        </div>
+        <div class="pos-item__name">${it.name}</div>
+        <div class="pos-item__price">${fmt(it.price)}</div>`;
+      div.onclick = () => addToCart({ id: it.id, name: it.name, price: it.price, service_id: it.id, product_id: null });
+    } else {
+      const lowStock = it.stock <= 0;
+      div.innerHTML = `
+        <div class="pos-item__icon" style="background:#fef3c720;color:#f59e0b">
+          <i class="fas fa-box"></i>
+        </div>
+        <div class="pos-item__name">${it.name}</div>
+        ${it.sku ? `<div class="pos-item__sku">${it.sku}</div>` : ''}
+        <div class="pos-item__price">${fmt(it.price)}</div>
+        <div class="pos-item__stock" style="${lowStock ? 'color:#ef4444' : ''}">
+          ${lowStock ? '⚠ نفد المخزون' : `المخزون: ${it.stock}`}
+        </div>`;
+      if (!lowStock) {
+        div.onclick = () => addToCart({ id: it.id, name: it.name, price: it.price, service_id: null, product_id: it.id });
+      } else {
+        div.style.opacity = '.5';
+        div.style.cursor = 'not-allowed';
+      }
+    }
+    grid.appendChild(div);
+  });
+}
+
+/* ── Cart ── */
+function addToCart(item) {
+  const existing = cart.find(c => c.id === item.id && c.service_id === item.service_id && c.product_id === item.product_id);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    cart.push({ ...item, qty: 1 });
+  }
+  renderCart();
+}
+
+function changeQty(idx, delta) {
+  cart[idx].qty = Math.max(1, cart[idx].qty + delta);
+  renderCart();
+}
+
+function removeItem(idx) {
+  cart.splice(idx, 1);
+  renderCart();
+}
+
+function renderCart() {
+  const el = document.getElementById('cart-items');
+  const empty = document.getElementById('cart-empty');
+  if (!cart.length) {
+    el.innerHTML = '';
+    el.appendChild(empty);
+    empty.style.display = '';
+    recalcTotals();
+    return;
+  }
+  empty.style.display = 'none';
+  let html = '';
+  cart.forEach((it, i) => {
+    html += `
+    <div class="cart-item">
+      <div class="cart-item__name">${it.name}</div>
+      <div class="cart-item__price">${fmt(it.price)}</div>
+      <div class="cart-item__qty">
+        <button onclick="changeQty(${i}, -1)">−</button>
+        <span>${it.qty}</span>
+        <button onclick="changeQty(${i}, +1)">+</button>
+      </div>
+      <button class="cart-item__remove" onclick="removeItem(${i})"><i class="fas fa-xmark"></i></button>
+    </div>`;
+  });
+  el.innerHTML = html;
+  recalcTotals();
+}
+
+function recalcTotals() {
+  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+  const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+  const total = Math.max(subtotal - discount, 0);
+  document.getElementById('subtotal-display').textContent = fmt(subtotal);
+  document.getElementById('total-display').textContent = fmt(total);
+}
+
+/* ── Client search ── */
+function searchClients() {
+  const q = document.getElementById('client-input').value.trim().toLowerCase();
+  const dd = document.getElementById('client-dropdown');
+  if (!q) { dd.style.display = 'none'; return; }
+  const matches = CLIENTS.filter(c =>
+    c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
+  ).slice(0, 8);
+  if (!matches.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = matches.map(c => `
+    <div class="client-option" onclick="selectClient(${c.id}, '${esc(c.name)}', '${esc(c.phone||'')}')">
+      <div>
+        <div class="client-option__name">${c.name}</div>
+        <div class="client-option__phone">${c.phone || ''}</div>
+      </div>
+    </div>`).join('');
+  dd.style.display = 'block';
+}
+
+function selectClient(id, name, phone) {
+  selectedClient = id;
+  document.getElementById('client-input').value = '';
+  document.getElementById('client-dropdown').style.display = 'none';
+  document.getElementById('client-search-wrap');
+  const sel = document.getElementById('client-selected');
+  const wrap = document.querySelector('.client-search-wrap');
+  document.getElementById('client-selected-name').textContent = `${name}  ${phone}`;
+  sel.style.display = 'flex';
+  wrap.style.display = 'none';
+}
+
+function clearClient() {
+  selectedClient = null;
+  document.getElementById('client-selected').style.display = 'none';
+  document.querySelector('.client-search-wrap').style.display = 'block';
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.client-search-wrap')) {
+    document.getElementById('client-dropdown').style.display = 'none';
+  }
+});
+
+/* ── Payment method ── */
+function selectPayment(method, btn) {
+  selectedPayment = method;
+  document.querySelectorAll('.pay-method').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ── Save ── */
+async function saveInvoice(print) {
+  if (!cart.length) { alert('أضف بنداً واحداً على الأقل'); return; }
+  const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+  const body = {
+    client_id:      selectedClient,
+    payment_method: selectedPayment,
+    discount:       discount,
+    notes:          document.getElementById('pos-notes').value.trim(),
+    items: cart.map(it => ({
+      name:       it.name,
+      service_id: it.service_id,
+      product_id: it.product_id,
+      qty:        it.qty,
+      price:      it.price,
+    })),
+  };
+
+  document.getElementById('btn-save').disabled = true;
+  document.getElementById('btn-print').disabled = true;
+
+  try {
+    const res = await fetch(SAVE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'خطأ في الحفظ');
+    document.getElementById('success-num').textContent = `فاتورة رقم ${data.invoice_number}`;
+    document.getElementById('btn-view-inv').href = `/billing/${data.invoice_pk}/`;
+    document.getElementById('btn-print-inv').href = data.print_url;
+    document.getElementById('pos-success').classList.add('show');
+    if (print) window.open(data.print_url, '_blank');
+  } catch(err) {
+    alert(err.message);
+  } finally {
+    document.getElementById('btn-save').disabled = false;
+    document.getElementById('btn-print').disabled = false;
+  }
+}
+
+function resetPOS() {
+  cart = [];
+  selectedClient = null;
+  selectedPayment = 'cash';
+  document.getElementById('pos-success').classList.remove('show');
+  document.getElementById('discount-input').value = '0';
+  document.getElementById('pos-notes').value = '';
+  document.getElementById('client-input').value = '';
+  clearClient();
+  document.querySelector('[data-method="cash"]').click();
+  renderCart();
+  recalcTotals();
+}
+
+/* ── Helpers ── */
+function fmt(n) { return parseFloat(n).toLocaleString('ar', { minimumFractionDigits: 2 }); }
+function esc(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '\\"'); }
+
+/* ── Init ── */
+buildCatChips();
+renderItems();
+</script>
+{% endblock %}

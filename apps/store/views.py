@@ -114,8 +114,13 @@ def store_home(request, slug):
                 date_ok = False
 
         if name and phone and bdate and date_ok:
+            client, _ = Client.objects.get_or_create(
+                center=center, phone=phone,
+                defaults={'name': name, 'referral': 'website'},
+            )
             booking = OnlineBooking.objects.create(
                 center=center,
+                client=client,
                 client_name=name,
                 client_phone=phone,
                 client_email=request.POST.get('email', '').strip(),
@@ -152,8 +157,13 @@ def store_home(request, slug):
             cart = []
 
         if name and phone and cart:
+            client, _ = Client.objects.get_or_create(
+                center=center, phone=phone,
+                defaults={'name': name, 'referral': 'website'},
+            )
             order = StoreOrder.objects.create(
                 center=center,
+                client=client,
                 client_name=name,
                 client_phone=phone,
                 client_address=address,
