@@ -98,7 +98,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         Role, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='users', verbose_name='الدور'
     )
-    avatar    = models.ImageField('الصورة', upload_to='avatars/', blank=True, null=True)
+    avatar       = models.ImageField('الصورة', upload_to='avatars/', blank=True, null=True)
+    base_salary  = models.DecimalField('الراتب الأساسي', max_digits=10, decimal_places=2, default=0)
 
     is_active    = models.BooleanField('نشط', default=True)
     is_staff     = models.BooleanField('موظف إداري', default=False)

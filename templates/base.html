@@ -256,10 +256,16 @@
             <i class="fas fa-list"></i> كشف حساب عميل
           </a>
           <a href="{% url 'finance:advances' %}" class="nav-subitem {% block nav_finance_advances %}{% endblock %}">
-            <i class="fas fa-hand-holding-usd"></i> السلف
+            <i class="fas fa-hand-holding-usd"></i> سلف الفريق
           </a>
           <a href="{% url 'finance:salary_list' %}" class="nav-subitem {% block nav_finance_salaries %}{% endblock %}">
-            <i class="fas fa-file-invoice-dollar"></i> كشوف الرواتب
+            <i class="fas fa-file-invoice-dollar"></i> رواتب الفريق
+          </a>
+          <a href="{% url 'finance:user_advances' %}" class="nav-subitem {% block nav_finance_user_advances %}{% endblock %}">
+            <i class="fas fa-hand-holding-usd"></i> سلف الموظفين
+          </a>
+          <a href="{% url 'finance:user_salary_list' %}" class="nav-subitem {% block nav_finance_user_salaries %}{% endblock %}">
+            <i class="fas fa-id-badge"></i> رواتب الموظفين
           </a>
         </div>
       </div>

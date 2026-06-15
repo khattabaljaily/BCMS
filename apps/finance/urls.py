@@ -24,10 +24,22 @@ urlpatterns = [
     path('advances/new/', views.advance_create, name='advance_create'),
     path('advances/<int:pk>/cancel/', views.advance_cancel, name='advance_cancel'),
 
-    # الرواتب
+    # رواتب فريق الخدمة
     path('salaries/', views.salary_list, name='salary_list'),
     path('salaries/new/', views.salary_create, name='salary_create'),
     path('salaries/<int:pk>/', views.salary_detail, name='salary_detail'),
     path('salaries/<int:pk>/pay/', views.salary_pay, name='salary_pay'),
     path('salaries/<int:pk>/cancel/', views.salary_cancel, name='salary_cancel'),
+
+    # سلف الموظفين
+    path('user-advances/', views.user_advance_list, name='user_advances'),
+    path('user-advances/new/', views.user_advance_create, name='user_advance_create'),
+    path('user-advances/<int:pk>/cancel/', views.user_advance_cancel, name='user_advance_cancel'),
+
+    # رواتب الموظفين
+    path('user-salaries/', views.user_salary_list, name='user_salary_list'),
+    path('user-salaries/new/', views.user_salary_create, name='user_salary_create'),
+    path('user-salaries/<int:pk>/', views.user_salary_detail, name='user_salary_detail'),
+    path('user-salaries/<int:pk>/pay/', views.user_salary_pay, name='user_salary_pay'),
+    path('user-salaries/<int:pk>/cancel/', views.user_salary_cancel, name='user_salary_cancel'),
 ]

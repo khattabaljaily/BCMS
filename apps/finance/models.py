@@ -4,6 +4,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from apps.core.models import CenterMixin
 from apps.clients.models import Client
+from django.conf import settings
 
 
 class Treasury(CenterMixin):
@@ -317,6 +318,171 @@ class SalaryPayment(CenterMixin):
         with transaction.atomic():
             self._reverse_outflow()
             # restore advances to pending
+            self.advance_items.filter(status='deducted').update(
+                status='pending', salary_payment=None
+            )
+            self.status = 'cancelled'
+            self.save(update_fields=['status'])
+
+
+# ── رواتب وسلف الموظفين (مستخدمو النظام) ─────────────────────────────────────
+
+class UserAdvance(CenterMixin):
+    """سلفة لموظف (مستخدم النظام)"""
+    STATUS = [
+        ('pending',   'قائمة'),
+        ('deducted',  'مخصومة'),
+        ('cancelled', 'ملغاة'),
+    ]
+
+    user           = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='advances', verbose_name='الموظف'
+    )
+    amount         = models.DecimalField('المبلغ', max_digits=10, decimal_places=2)
+    date           = models.DateField('التاريخ', default=timezone.localdate)
+    treasury       = models.ForeignKey(
+        Treasury, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='الخزينة'
+    )
+    salary_payment = models.ForeignKey(
+        'UserSalaryPayment', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='advance_items', verbose_name='كشف الراتب'
+    )
+    status         = models.CharField('الحالة', max_length=20, choices=STATUS, default='pending')
+    notes          = models.TextField('ملاحظات', blank=True)
+    created_at     = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'user_advances'
+        ordering = ['-created_at']
+        verbose_name = 'سلفة موظف'
+        verbose_name_plural = 'سلف الموظفين'
+
+    def __str__(self):
+        return f"{self.user.full_name} — {self.amount}"
+
+    def _movement_ref(self):
+        return f'user_advance_{self.pk}'
+
+    def _record_outflow(self):
+        if not self.treasury:
+            return
+        TreasuryMovement.objects.get_or_create(
+            treasury=self.treasury,
+            reference=self._movement_ref(),
+            defaults=dict(
+                type='out',
+                amount=self.amount,
+                notes=f'سلفة {self.user.full_name}',
+            )
+        )
+
+    def _reverse_outflow(self):
+        for tm in TreasuryMovement.objects.filter(reference=self._movement_ref()):
+            TreasuryMovement.objects.create(
+                treasury=tm.treasury,
+                type='in',
+                amount=tm.amount,
+                reference=f'rev_{tm.reference}',
+                notes=f'إلغاء سلفة {self.user.full_name}',
+            )
+
+    def cancel(self):
+        if self.status == 'cancelled':
+            return
+        from django.db import transaction
+        with transaction.atomic():
+            self._reverse_outflow()
+            self.status = 'cancelled'
+            self.save(update_fields=['status'])
+
+
+class UserSalaryPayment(CenterMixin):
+    """كشف راتب شهري لموظف (مستخدم النظام)"""
+    STATUS = [
+        ('draft',     'مسودة'),
+        ('paid',      'مدفوع'),
+        ('cancelled', 'ملغى'),
+    ]
+
+    user              = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='salary_payments', verbose_name='الموظف'
+    )
+    period_start      = models.DateField('من')
+    period_end        = models.DateField('إلى')
+    base_salary       = models.DecimalField('الراتب الأساسي', max_digits=10, decimal_places=2, default=Decimal('0'))
+    bonus             = models.DecimalField('الحوافز', max_digits=10, decimal_places=2, default=Decimal('0'))
+    advances_deducted = models.DecimalField('السلف المخصومة', max_digits=10, decimal_places=2, default=Decimal('0'))
+    deductions        = models.DecimalField('خصومات أخرى', max_digits=10, decimal_places=2, default=Decimal('0'))
+    deductions_notes  = models.TextField('تفاصيل الخصومات', blank=True)
+    treasury          = models.ForeignKey(
+        Treasury, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='الخزينة'
+    )
+    status            = models.CharField('الحالة', max_length=20, choices=STATUS, default='draft')
+    notes             = models.TextField('ملاحظات', blank=True)
+    created_at        = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'user_salary_payments'
+        ordering = ['-period_start', '-created_at']
+        verbose_name = 'كشف راتب موظف'
+        verbose_name_plural = 'كشوف رواتب الموظفين'
+
+    def __str__(self):
+        return f"{self.user.full_name} — {self.period_start}"
+
+    @property
+    def total_due(self):
+        return (
+            self.base_salary
+            + self.bonus
+            - self.advances_deducted
+            - self.deductions
+        )
+
+    def _movement_ref(self):
+        return f'user_salary_{self.pk}'
+
+    def _record_outflow(self):
+        if not self.treasury or self.total_due <= 0:
+            return
+        TreasuryMovement.objects.get_or_create(
+            treasury=self.treasury,
+            reference=self._movement_ref(),
+            defaults=dict(
+                type='out',
+                amount=self.total_due,
+                notes=f'راتب {self.user.full_name} {self.period_start}',
+            )
+        )
+
+    def _reverse_outflow(self):
+        for tm in TreasuryMovement.objects.filter(reference=self._movement_ref()):
+            TreasuryMovement.objects.create(
+                treasury=tm.treasury,
+                type='in',
+                amount=tm.amount,
+                reference=f'rev_{tm.reference}',
+                notes=f'إلغاء راتب {self.user.full_name} {self.period_start}',
+            )
+
+    def pay(self):
+        if self.status != 'draft':
+            return
+        from django.db import transaction
+        with transaction.atomic():
+            self.status = 'paid'
+            self.save(update_fields=['status'])
+            self._record_outflow()
+            self.advance_items.filter(status='pending').update(status='deducted')
+
+    def cancel(self):
+        if self.status == 'cancelled':
+            return
+        from django.db import transaction
+        with transaction.atomic():
+            self._reverse_outflow()
             self.advance_items.filter(status='deducted').update(
                 status='pending', salary_payment=None
             )

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% block nav_finance_open %}open{% endblock %}
+{% block nav_finance_user_salaries %}active{% endblock %}
+{% block page_title %}رواتب الموظفين{% endblock %}
+{% block title %}رواتب الموظفين{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#6366f1,#818cf8);box-shadow:0 4px 14px rgba(99,102,241,.32);">
+          <i class="fas fa-id-badge"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">رواتب الموظفين</h1>
+          <p class="cx-hero-desc">{{ salaries.count }} كشف</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <a href="{% url 'finance:user_salary_create' %}" class="btn btn--primary">
+            <i class="fas fa-plus"></i> كشف جديد
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cx-panel">
+    <!-- فلاتر -->
+    <div style="padding:12px 16px;border-bottom:1px solid var(--slate-100);">
+      <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <div class="form-group" style="margin:0;min-width:160px;flex:1;">
+          <select name="user" class="form-control" onchange="this.form.submit()">
+            <option value="">كل الموظفين</option>
+            {% for u in users %}
+              <option value="{{ u.pk }}" {% if user_id == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:130px;flex:1;">
+          <select name="status" class="form-control" onchange="this.form.submit()">
+            <option value="">كل الحالات</option>
+            <option value="draft"     {% if status_filter == 'draft'     %}selected{% endif %}>مسودة</option>
+            <option value="paid"      {% if status_filter == 'paid'      %}selected{% endif %}>مدفوع</option>
+            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>ملغى</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>الموظف</th>
+            <th>الفترة</th>
+            <th>الصافي</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sp in salaries %}
+          <tr>
+            <td><strong>{{ sp.user.full_name }}</strong></td>
+            <td class="text-muted" style="white-space:nowrap;font-size:13px;">{{ sp.period_start }} — {{ sp.period_end }}</td>
+            <td><strong style="color:#6366f1;">{{ sp.total_due|format_number:2 }}</strong></td>
+            <td>
+              {% if sp.status == 'draft' %}
+                <span class="badge badge--warning">مسودة</span>
+              {% elif sp.status == 'paid' %}
+                <span class="badge badge--success">مدفوع</span>
+              {% else %}
+                <span class="badge badge--danger">ملغى</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="cx-row-actions">
+                <a href="{% url 'finance:user_salary_detail' sp.pk %}" class="cx-act" title="التفاصيل">
+                  <i class="fas fa-eye"></i>
+                </a>
+                {% if sp.status == 'draft' %}
+                <form method="post" action="{% url 'finance:user_salary_pay' sp.pk %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="cx-act" title="صرف" style="color:var(--green,#10b981);"
+                    onclick="return confirm('تأكيد صرف الراتب وخصمه من الخزينة؟')">
+                    <i class="fas fa-check-circle"></i>
+                  </button>
+                </form>
+                <form method="post" action="{% url 'finance:user_salary_cancel' sp.pk %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="cx-act cx-act--del" title="إلغاء"
+                    onclick="return confirm('إلغاء كشف الراتب؟')">
+                    <i class="fas fa-times-circle"></i>
+                  </button>
+                </form>
+                {% elif sp.status == 'paid' %}
+                <form method="post" action="{% url 'finance:user_salary_cancel' sp.pk %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="cx-act" title="عكس الصرف" style="color:var(--red);"
+                    onclick="return confirm('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.')">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-id-badge"></i>
+                <p>لا كشوف رواتب</p>
+                <a href="{% url 'finance:user_salary_create' %}" class="btn btn--primary" style="margin-top:12px;">
+                  <i class="fas fa-plus"></i> كشف جديد
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cx-mobile-cards">
+      {% for sp in salaries %}
+      <div class="cx-card">
+        <div class="cx-card-head">
+          <div>
+            <div class="cx-card-title">{{ sp.user.full_name }}</div>
+            <div class="cx-card-sub">{{ sp.period_start }} — {{ sp.period_end }}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            {% if sp.status == 'draft' %}<span class="badge badge--warning">مسودة</span>
+            {% elif sp.status == 'paid' %}<span class="badge badge--success">مدفوع</span>
+            {% else %}<span class="badge badge--danger">ملغى</span>{% endif %}
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">الصافي</span>
+            <span class="cx-card-meta-value" style="color:#6366f1;font-weight:800;">{{ sp.total_due|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الأساسي</span>
+            <span class="cx-card-meta-value">{{ sp.base_salary|format_number:2 }}</span>
+          </div>
+          {% if sp.advances_deducted %}
+          <div>
+            <span class="cx-card-meta-label">السلف</span>
+            <span class="cx-card-meta-value" style="color:#ef4444;">−{{ sp.advances_deducted|format_number:2 }}</span>
+          </div>
+          {% endif %}
+        </div>
+        <div style="display:flex;gap:8px;padding:4px 0 2px;justify-content:flex-end;">
+          <a href="{% url 'finance:user_salary_detail' sp.pk %}" class="cx-act"><i class="fas fa-eye"></i></a>
+          {% if sp.status == 'draft' %}
+          <form method="post" action="{% url 'finance:user_salary_pay' sp.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="cx-act" style="color:var(--green,#10b981);"
+              onclick="return confirm('تأكيد صرف الراتب؟')">
+              <i class="fas fa-check-circle"></i>
+            </button>
+          </form>
+          {% elif sp.status == 'paid' %}
+          <form method="post" action="{% url 'finance:user_salary_cancel' sp.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="cx-act" style="color:var(--red);"
+              onclick="return confirm('عكس الصرف؟')">
+              <i class="fas fa-undo"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty"><i class="fas fa-id-badge"></i><p>لا كشوف رواتب</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

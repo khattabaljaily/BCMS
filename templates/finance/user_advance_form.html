@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block nav_finance_open %}open{% endblock %}
+{% block nav_finance_user_advances %}active{% endblock %}
+{% block page_title %}سلفة موظف جديدة{% endblock %}
+{% block title %}سلفة موظف جديدة{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <div class="cx-hero" style="margin-bottom:24px;">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <a href="{% url 'finance:user_advances' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;">
+          <i class="fas fa-arrow-right"></i>
+        </a>
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);box-shadow:0 4px 14px rgba(245,158,11,.28);">
+          <i class="fas fa-hand-holding-usd"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">تسجيل سلفة موظف</h1>
+          <p class="cx-hero-desc">أدخل بيانات السلفة</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cx-panel">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
+      <i class="fas fa-hand-holding-usd" style="color:#f59e0b;font-size:13px;"></i>
+      <span style="font-size:13px;font-weight:800;color:var(--slate-700);">بيانات السلفة</span>
+    </div>
+    <div style="padding:20px;">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">الموظف <span style="color:var(--red)">*</span></label>
+            <select name="user" class="form-control" required>
+              <option value="">اختر الموظف</option>
+              {% for u in users %}
+                <option value="{{ u.pk }}">{{ u.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">المبلغ <span style="color:var(--red)">*</span></label>
+            <input name="amount" type="number" step="0.01" min="0.01" class="form-control" required placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">التاريخ <span style="color:var(--red)">*</span></label>
+            <input name="date" type="date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الخزينة</label>
+            <select name="treasury" class="form-control">
+              <option value="">بدون خزينة</option>
+              {% for t in treasuries %}
+                <option value="{{ t.pk }}" {% if forloop.first %}selected{% endif %}>{{ t.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="سبب السلفة أو أي ملاحظات..."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+          <a href="{% url 'finance:user_advances' %}" class="btn btn--ghost">إلغاء</a>
+          <button type="submit" class="btn btn--primary">
+            <i class="fas fa-save"></i> حفظ السلفة
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

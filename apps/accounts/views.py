@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
 from django.contrib.auth import login, logout
@@ -201,6 +202,10 @@ def user_save(request, pk=None):
         instance.full_name = data.get('full_name', '').strip()
         instance.phone = data.get('phone', '').strip()
         instance.email = data.get('email', '').strip()
+        try:
+            instance.base_salary = Decimal(data.get('base_salary') or '0')
+        except Exception:
+            instance.base_salary = Decimal('0')
         role_id = data.get('role') or None
         # validate role belongs to center
         if role_id:

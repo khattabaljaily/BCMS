@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Treasury, TreasuryMovement, Expense, ClientPayment, Advance, SalaryPayment
+from .models import Treasury, TreasuryMovement, Expense, ClientPayment, Advance, SalaryPayment, UserAdvance, UserSalaryPayment
+from apps.accounts.models import User
 from apps.billing.models import Invoice, InvoiceLine
 from apps.clients.models import Client
 from apps.staff.models import Specialist
@@ -695,3 +696,181 @@ def salary_detail(request, pk):
         ('الخزينة',           sp.treasury.short_name if sp.treasury else '—', None),
     ]
     return render(request, 'finance/salary_detail.html', {'sp': sp, 'advances': advances, 'rows': rows})
+
+
+# ── سلف الموظفين ──────────────────────────────────────────────────────────────
+
+@login_required
+def user_advance_list(request):
+    center = request.user.center
+    user_id = request.GET.get('user')
+    status_filter = request.GET.get('status', '')
+    advances = UserAdvance.objects.filter(center=center).select_related('user', 'treasury')
+    if user_id:
+        advances = advances.filter(user_id=user_id)
+    if status_filter:
+        advances = advances.filter(status=status_filter)
+    users = User.objects.filter(center=center, is_active=True, is_owner=False)
+    total = advances.aggregate(t=Sum('amount'))['t'] or Decimal('0')
+    return render(request, 'finance/user_advance_list.html', {
+        'advances': advances,
+        'users': users,
+        'user_id': user_id,
+        'status_filter': status_filter,
+        'total': total,
+    })
+
+
+@login_required
+def user_advance_create(request):
+    center = request.user.center
+    if request.method == 'POST':
+        user_id    = request.POST.get('user')
+        amount     = request.POST.get('amount', '0')
+        date_val   = request.POST.get('date') or datetime.date.today()
+        treasury_id = request.POST.get('treasury')
+        notes      = request.POST.get('notes', '')
+        try:
+            emp      = User.objects.get(pk=user_id, center=center)
+            treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
+            adv = UserAdvance.objects.create(
+                center=center, user=emp,
+                amount=Decimal(amount), date=date_val,
+                treasury=treasury, notes=notes,
+            )
+            adv._record_outflow()
+            messages.success(request, 'تم تسجيل السلفة.')
+            return redirect('finance:user_advances')
+        except Exception as e:
+            messages.error(request, str(e))
+    users      = User.objects.filter(center=center, is_active=True, is_owner=False)
+    treasuries = Treasury.objects.filter(center=center)
+    return render(request, 'finance/user_advance_form.html', {'users': users, 'treasuries': treasuries})
+
+
+@login_required
+def user_advance_cancel(request, pk):
+    center = request.user.center
+    adv = get_object_or_404(UserAdvance, pk=pk, center=center)
+    if request.method == 'POST':
+        adv.cancel()
+        messages.success(request, 'تم إلغاء السلفة وعكس حركة الخزينة.')
+    return redirect('finance:user_advances')
+
+
+# ── رواتب الموظفين ────────────────────────────────────────────────────────────
+
+@login_required
+def user_salary_list(request):
+    center = request.user.center
+    user_id = request.GET.get('user')
+    status_filter = request.GET.get('status', '')
+    salaries = UserSalaryPayment.objects.filter(center=center).select_related('user', 'treasury')
+    if user_id:
+        salaries = salaries.filter(user_id=user_id)
+    if status_filter:
+        salaries = salaries.filter(status=status_filter)
+    users = User.objects.filter(center=center, is_active=True, is_owner=False)
+    return render(request, 'finance/user_salary_list.html', {
+        'salaries': salaries,
+        'users': users,
+        'user_id': user_id,
+        'status_filter': status_filter,
+    })
+
+
+@login_required
+def user_salary_create(request):
+    center = request.user.center
+    if request.method == 'POST':
+        user_id       = request.POST.get('user')
+        period_start  = request.POST.get('period_start')
+        period_end    = request.POST.get('period_end')
+        base_salary   = Decimal(request.POST.get('base_salary') or '0')
+        bonus         = Decimal(request.POST.get('bonus') or '0')
+        deductions    = Decimal(request.POST.get('deductions') or '0')
+        ded_notes     = request.POST.get('deductions_notes', '')
+        treasury_id   = request.POST.get('treasury')
+        notes         = request.POST.get('notes', '')
+        advance_ids   = request.POST.getlist('advance_ids')
+        try:
+            emp      = User.objects.get(pk=user_id, center=center)
+            treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
+            adv_total = Decimal('0')
+            if advance_ids:
+                adv_total = UserAdvance.objects.filter(
+                    pk__in=advance_ids, user=emp, status='pending'
+                ).aggregate(t=Sum('amount'))['t'] or Decimal('0')
+            sp = UserSalaryPayment.objects.create(
+                center=center, user=emp,
+                period_start=period_start, period_end=period_end,
+                base_salary=base_salary, bonus=bonus,
+                advances_deducted=adv_total,
+                deductions=deductions, deductions_notes=ded_notes,
+                treasury=treasury, notes=notes,
+            )
+            if advance_ids:
+                UserAdvance.objects.filter(
+                    pk__in=advance_ids, user=emp, status='pending'
+                ).update(salary_payment=sp)
+            messages.success(request, 'تم إنشاء كشف الراتب (مسودة). اضغط "صرف" لتأكيده.')
+            return redirect('finance:user_salary_list')
+        except Exception as e:
+            messages.error(request, str(e))
+
+    users      = User.objects.filter(center=center, is_active=True, is_owner=False)
+    treasuries = Treasury.objects.filter(center=center)
+    selected_user_id  = request.GET.get('user')
+    pending_advances  = []
+    pre_base          = Decimal('0')
+    if selected_user_id:
+        try:
+            emp_obj = User.objects.get(pk=selected_user_id, center=center)
+            pending_advances = list(UserAdvance.objects.filter(
+                user=emp_obj, status='pending', center=center
+            ))
+            pre_base = emp_obj.base_salary
+        except User.DoesNotExist:
+            pass
+    return render(request, 'finance/user_salary_form.html', {
+        'users': users,
+        'treasuries': treasuries,
+        'selected_user_id': selected_user_id,
+        'pending_advances': pending_advances,
+        'pre_base': pre_base,
+    })
+
+
+@login_required
+def user_salary_pay(request, pk):
+    center = request.user.center
+    sp = get_object_or_404(UserSalaryPayment, pk=pk, center=center)
+    if request.method == 'POST':
+        sp.pay()
+        messages.success(request, 'تم صرف الراتب وخصمه من الخزينة.')
+    return redirect('finance:user_salary_list')
+
+
+@login_required
+def user_salary_cancel(request, pk):
+    center = request.user.center
+    sp = get_object_or_404(UserSalaryPayment, pk=pk, center=center)
+    if request.method == 'POST':
+        sp.cancel()
+        messages.success(request, 'تم إلغاء الراتب وعكس حركة الخزينة.')
+    return redirect('finance:user_salary_list')
+
+
+@login_required
+def user_salary_detail(request, pk):
+    center = request.user.center
+    sp = get_object_or_404(UserSalaryPayment, pk=pk, center=center)
+    advances = sp.advance_items.all()
+    rows = [
+        ('الراتب الأساسي',    f'{sp.base_salary:,.2f}',        None),
+        ('الحوافز',           f'+{sp.bonus:,.2f}',              '#10b981' if sp.bonus else None),
+        ('السلف المخصومة',    f'−{sp.advances_deducted:,.2f}',  '#ef4444' if sp.advances_deducted else None),
+        ('خصومات أخرى',      f'−{sp.deductions:,.2f}',         '#ef4444' if sp.deductions else None),
+        ('الخزينة',           sp.treasury.short_name if sp.treasury else '—', None),
+    ]
+    return render(request, 'finance/user_salary_detail.html', {'sp': sp, 'advances': advances, 'rows': rows})
