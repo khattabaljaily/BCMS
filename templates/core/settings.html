@@ -276,20 +276,58 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
 }
 
 /* Day row layout helper */
-.sp-day-row { display:grid; grid-template-columns:70px 170px 170px 90px; gap:10px; align-items:center; }
+.sp-day-row {
+  display:grid;
+  grid-template-columns: 100px minmax(220px, 1fr) minmax(220px, 1fr) 95px;
+  gap:10px; align-items:center; width:100%;
+}
 .sp-day-row .sp-time-input { width:100%; }
 
-@media (max-width: 600px) {
-  /* Keep day row on one line: day | start | end | switcher */
-  .sp-day-row { grid-template-columns: 65px 120px 120px 75px; grid-auto-rows: auto; align-items: center; }
-  .sp-day-row .sp-toggle { grid-column: auto; justify-self: end; }
-  .sp-day-row .sp-time-input { height: 34px; padding: 6px 8px; font-size: 13px; }
+@media (max-width: 900px) {
+  .sp-day-row {
+    grid-template-columns: 90px minmax(150px, 1fr) minmax(150px, 1fr) 85px;
+  }
+}
+
+@media (max-width: 700px) {
+  .sp-day-row {
+    grid-template-columns: 70px minmax(100px, 1fr) minmax(100px, 1fr) 70px;
+    gap: 8px;
+  }
+  .sp-day-row .sp-toggle { justify-self: end; }
+  .sp-day-row .sp-time-input { height: 34px; padding: 6px 8px; font-size: 12.8px; }
 }
 
 @media (max-width: 480px) {
-  /* Extra narrow: further compress timing fields */
-  .sp-day-row { grid-template-columns: 60px 95px 95px 65px; }
+  .sp-day-row {
+    grid-template-columns: 60px minmax(90px, 1fr) minmax(90px, 1fr) 65px;
+    gap: 6px;
+  }
+  .sp-day-row .sp-toggle { justify-self: end; }
   .sp-day-row .sp-time-input { height: 32px; padding: 5px 6px; font-size: 12px; }
+}
+
+@media (max-width: 700px) {
+  .sp-apply-all-row {
+    grid-template-columns: 1fr 85px 85px 75px;
+    gap: 8px;
+  }
+  .sp-apply-all-row .sp-input {
+    min-width: 0;
+  }
+  .sp-apply-all-row .sp-apply-all-btn {
+    font-size: 12px;
+    padding: 0 10px;
+  }
+  .sp-apply-all-row .sp-label { font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+  .sp-apply-all-row {
+    grid-template-columns: 1fr 78px 78px 70px;
+    gap: 6px;
+  }
+  .sp-apply-all-row .sp-label { font-size: 11px; }
 }
 
 /* ═══ Time Range ══════════════════════════════════════════════ */
