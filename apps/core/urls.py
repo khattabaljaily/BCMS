@@ -21,5 +21,6 @@ urlpatterns = [
 
     # Pricing & subscription
     path('pricing/',      views.pricing_view,      name='pricing'),
+    path('about/',        views.about_view,         name='about'),
     path('subscription/', views.subscription_view, name='subscription'),
 ]

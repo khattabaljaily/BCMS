@@ -1,0 +1,532 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>عن النظام — EnjazBCMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#db2777;--pink-light:#fce7f3;--pink-dark:#9d174d;
+  --purple:#8b5cf6;--blue:#3b82f6;--amber:#f59e0b;--green:#10b981;
+  --slate-50:#f8fafc;--slate-100:#f1f5f9;--slate-200:#e2e8f0;
+  --slate-400:#94a3b8;--slate-600:#475569;--slate-700:#334155;--slate-900:#0f172a;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Cairo',sans-serif;background:#fff;color:var(--slate-900);direction:rtl;text-align:right;line-height:1.6;overflow-x:hidden}
+
+/* ── Navbar ── */
+.navbar{
+  position:fixed;top:0;inset-inline:0;z-index:100;
+  background:rgba(255,255,255,.9);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--slate-200);
+  padding:0 5vw;height:64px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.navbar__brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.navbar__brand-logo{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--pink),var(--pink-dark));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;
+}
+.navbar__brand-name{font-weight:800;font-size:17px;color:var(--slate-900)}
+.navbar__links{display:flex;align-items:center;gap:6px}
+.navbar__link{
+  padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;
+  color:var(--slate-600);text-decoration:none;transition:all .15s;
+}
+.navbar__link:hover{background:var(--slate-100);color:var(--slate-900)}
+.navbar__link--active{color:var(--pink);background:var(--pink-light)}
+.navbar__cta{
+  background:linear-gradient(135deg,var(--pink),var(--pink-dark));
+  color:#fff !important;border-radius:10px;
+  box-shadow:0 4px 14px rgba(219,39,119,.3);
+}
+.navbar__cta:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(219,39,119,.4)}
+
+/* ── Hero ── */
+.hero{
+  padding:120px 5vw 72px;
+  background:linear-gradient(160deg,#fff9fb 0%,#fdf2f8 60%,#f5f3ff 100%);
+  position:relative;overflow:hidden;text-align:center;
+}
+.hero::before{
+  content:'';position:absolute;top:-100px;right:-80px;
+  width:480px;height:480px;border-radius:50%;
+  background:radial-gradient(circle,rgba(219,39,119,.07) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero::after{
+  content:'';position:absolute;bottom:-120px;left:-60px;
+  width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(circle,rgba(139,92,246,.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero__badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:linear-gradient(135deg,rgba(219,39,119,.1),rgba(139,92,246,.08));
+  border:1px solid rgba(219,39,119,.2);border-radius:100px;
+  padding:5px 16px;font-size:13px;font-weight:700;color:var(--pink-dark);
+  margin-bottom:22px;
+}
+.hero__title{
+  font-size:clamp(32px,6vw,54px);font-weight:900;
+  background:linear-gradient(135deg,var(--slate-900),var(--pink-dark));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1.15;margin-bottom:18px;
+}
+.hero__subtitle{
+  font-size:clamp(15px,2.5vw,18px);color:var(--slate-600);
+  max-width:600px;margin:0 auto 44px;font-weight:500;line-height:1.7;
+}
+.hero__stats{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:28px 48px;
+}
+.hero__stat{text-align:center}
+.hero__stat-num{
+  font-size:clamp(28px,5vw,44px);font-weight:900;
+  background:linear-gradient(135deg,var(--pink),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;
+}
+.hero__stat-lbl{font-size:13px;font-weight:700;color:var(--slate-600);margin-top:4px}
+
+/* ── Story section ── */
+.story{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;padding:88px 5vw;max-width:1100px;margin:0 auto}
+@media(max-width:760px){.story{grid-template-columns:1fr;gap:36px}}
+.story__visual{
+  background:linear-gradient(135deg,var(--pink-light),#ede9fe);
+  border-radius:28px;padding:48px 40px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.story__visual::before{
+  content:'';position:absolute;top:-40px;left:-40px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(219,39,119,.08);
+}
+.story__logo-big{
+  width:96px;height:96px;border-radius:28px;
+  background:linear-gradient(135deg,var(--pink),var(--pink-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;color:#fff;margin:0 auto 20px;
+  box-shadow:0 12px 36px rgba(219,39,119,.35);
+}
+.story__visual-title{font-size:26px;font-weight:900;color:var(--slate-900);margin-bottom:8px}
+.story__visual-sub{font-size:15px;color:var(--slate-600);font-weight:500}
+.story__text h2{font-size:clamp(22px,4vw,34px);font-weight:900;color:var(--slate-900);margin-bottom:16px;line-height:1.2}
+.story__text p{font-size:15px;color:var(--slate-600);font-weight:500;line-height:1.8;margin-bottom:14px}
+.story__text p:last-child{margin-bottom:0}
+
+/* ── Values ── */
+.values{background:var(--slate-50);padding:80px 5vw}
+.section__header{text-align:center;margin-bottom:52px}
+.section__label{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--pink);text-transform:uppercase;margin-bottom:10px}
+.section__title{font-size:clamp(22px,4vw,36px);font-weight:900;color:var(--slate-900);line-height:1.2}
+.section__desc{font-size:16px;color:var(--slate-600);margin-top:10px;font-weight:500}
+.values-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;max-width:1100px;margin:0 auto}
+.value-card{
+  background:#fff;border:1px solid var(--slate-200);border-radius:20px;
+  padding:28px 24px;transition:all .2s;
+}
+.value-card:hover{border-color:rgba(219,39,119,.3);box-shadow:0 10px 30px rgba(219,39,119,.09);transform:translateY(-3px)}
+.value-card__icon{
+  width:52px;height:52px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#fff;margin-bottom:16px;
+}
+.value-card__title{font-size:16px;font-weight:800;color:var(--slate-900);margin-bottom:8px}
+.value-card__desc{font-size:13px;color:var(--slate-600);font-weight:500;line-height:1.65}
+
+/* ── Features deep ── */
+.features{padding:80px 5vw}
+.features-deep{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:64px}
+.feature-row{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.feature-row--reverse{direction:ltr}
+.feature-row--reverse > *{direction:rtl}
+@media(max-width:760px){.feature-row,.feature-row--reverse{grid-template-columns:1fr;direction:rtl}}
+.feature-visual{
+  border-radius:20px;overflow:hidden;
+  background:linear-gradient(135deg,var(--pink-light),#ede9fe);
+  padding:40px;display:flex;align-items:center;justify-content:center;min-height:220px;
+}
+.feature-icon-big{
+  width:80px;height:80px;border-radius:22px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;color:#fff;
+  box-shadow:0 12px 36px rgba(0,0,0,.15);
+}
+.feature-text h3{font-size:clamp(18px,3vw,26px);font-weight:900;color:var(--slate-900);margin-bottom:14px;line-height:1.2}
+.feature-text p{font-size:15px;color:var(--slate-600);font-weight:500;line-height:1.8;margin-bottom:16px}
+.feature-bullets{list-style:none;display:flex;flex-direction:column;gap:8px}
+.feature-bullet{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--slate-700)}
+.feature-bullet i{color:var(--green);font-size:13px;flex-shrink:0}
+
+/* ── Team / tech ── */
+.tech-section{background:var(--slate-50);padding:80px 5vw}
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;max-width:900px;margin:0 auto}
+.tech-card{
+  background:#fff;border:1px solid var(--slate-200);border-radius:14px;
+  padding:20px;text-align:center;transition:all .2s;
+}
+.tech-card:hover{border-color:rgba(219,39,119,.25);box-shadow:0 6px 20px rgba(219,39,119,.08)}
+.tech-card i{font-size:28px;margin-bottom:10px;display:block}
+.tech-card__name{font-size:14px;font-weight:800;color:var(--slate-900)}
+.tech-card__desc{font-size:12px;color:var(--slate-400);font-weight:600;margin-top:3px}
+
+/* ── Timeline ── */
+.timeline{padding:80px 5vw}
+.timeline-wrap{max-width:680px;margin:0 auto;position:relative}
+.timeline-wrap::before{
+  content:'';position:absolute;top:0;bottom:0;right:24px;width:2px;
+  background:linear-gradient(180deg,var(--pink),var(--purple));
+  border-radius:2px;
+}
+.tl-item{display:flex;gap:24px;margin-bottom:36px;position:relative}
+.tl-dot{
+  width:50px;height:50px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.15);z-index:1;
+}
+.tl-body{padding-top:10px;flex:1;min-width:0}
+.tl-body__year{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--pink);margin-bottom:4px}
+.tl-body__title{font-size:16px;font-weight:800;color:var(--slate-900);margin-bottom:6px}
+.tl-body__desc{font-size:14px;color:var(--slate-600);font-weight:500;line-height:1.65}
+
+/* ── CTA ── */
+.cta-section{
+  padding:80px 5vw;text-align:center;
+  background:linear-gradient(135deg,var(--pink-dark),var(--purple));
+  position:relative;overflow:hidden;
+}
+.cta-section::before{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none}
+.cta-section::after{content:'';position:absolute;bottom:-80px;left:-80px;width:350px;height:350px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none}
+.cta-section h2{font-size:clamp(22px,4vw,38px);font-weight:900;color:#fff;margin-bottom:12px}
+.cta-section p{font-size:17px;color:rgba(255,255,255,.8);margin-bottom:36px;font-weight:500}
+.cta-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+.cta-btn{
+  padding:14px 32px;border-radius:14px;border:none;font-family:inherit;
+  font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;
+  transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+}
+.cta-btn--white{background:#fff;color:var(--pink-dark);box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.cta-btn--white:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.cta-btn--outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.4)}
+.cta-btn--outline:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.7)}
+
+/* ── Footer ── */
+.footer{
+  background:var(--slate-900);color:rgba(255,255,255,.5);
+  padding:32px 5vw;text-align:center;font-size:13px;font-weight:600;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;
+}
+.footer a{color:rgba(255,255,255,.6);text-decoration:none}
+.footer a:hover{color:#fff}
+
+@media(max-width:600px){
+  .navbar__links .navbar__link:not(.navbar__cta){display:none}
+  .hero__stats{gap:20px 32px}
+  .cta-btns{flex-direction:column;align-items:center}
+  .footer{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<header class="navbar">
+  <a href="/" class="navbar__brand">
+    <div class="navbar__brand-logo"><i class="fas fa-spa"></i></div>
+    <span class="navbar__brand-name">EnjazBCMS</span>
+  </a>
+  <nav class="navbar__links">
+    <a href="{% url 'core:about' %}" class="navbar__link navbar__link--active">عن النظام</a>
+    <a href="{% url 'core:pricing' %}" class="navbar__link">الأسعار</a>
+    <a href="{% url 'accounts:login' %}" class="navbar__link">تسجيل الدخول</a>
+    <a href="{% url 'accounts:register' %}" class="navbar__link navbar__cta">ابدأ مجاناً</a>
+  </nav>
+</header>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero__badge"><i class="fas fa-heart"></i> صُنع بشغف لأصحاب الأعمال التجميلية</div>
+  <h1 class="hero__title">نحن إنجاز —<br>نُبسِّط إدارة أعمالك</h1>
+  <p class="hero__subtitle">
+    منصة متكاملة تجمع كل ما تحتاجه لإدارة حسابك التجميلي في مكان واحد،
+    من المواعيد والعملاء حتى الحسابات والتقارير — بواجهة عربية سهلة وجميلة.
+  </p>
+  <div class="hero__stats">
+    <div class="hero__stat">
+      <div class="hero__stat-num">+500</div>
+      <div class="hero__stat-lbl">حساب مُدار</div>
+    </div>
+    <div class="hero__stat">
+      <div class="hero__stat-num">12</div>
+      <div class="hero__stat-lbl">وحدة متكاملة</div>
+    </div>
+    <div class="hero__stat">
+      <div class="hero__stat-num">+20</div>
+      <div class="hero__stat-lbl">دولة عربية</div>
+    </div>
+    <div class="hero__stat">
+      <div class="hero__stat-num">99.9%</div>
+      <div class="hero__stat-lbl">وقت تشغيل</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Story ── -->
+<section>
+  <div class="story">
+    <div class="story__visual">
+      <div class="story__logo-big"><i class="fas fa-spa"></i></div>
+      <div class="story__visual-title">EnjazBCMS</div>
+    </div>
+    <div class="story__text">
+      <h2>لماذا صٌمِم إنجاز؟</h2>
+      <p>
+        رأينا أصحاب الصالونات والمراكز التجميلية يعانون يومياً من إدارة المواعيد على الورق،
+        تتبع الفواتير في إكسل، وضياع بيانات العملاء — بينما طاقتهم ووقتهم أثمن من ذلك بكثير.
+      </p>
+      <p>
+        بُنيت إنجاز خصيصاً لهذا القطاع، بواجهة عربية RTL كاملة، تدعم جميع العملات والتوقيتات في الدول العربية،
+        وتغطي كل دورة العمل من لحظة حجز الموعد حتى قفل الخزينة في نهاية اليوم.
+      </p>
+      <p>
+        هدفنا بسيط: <strong>أن تركز أنت على عملك — وتترك إنجاز تدير الباقي.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Values ── -->
+<section class="values">
+  <div class="section__header">
+    <div class="section__label">قيمنا</div>
+    <h2 class="section__title">ما الذي يميز إنجاز؟</h2>
+    <p class="section__desc">مبادئ نؤمن بها في كل قرار نتخذه</p>
+  </div>
+  <div class="values-grid">
+    <div class="value-card">
+      <div class="value-card__icon" style="background:linear-gradient(135deg,var(--pink),var(--pink-dark))"><i class="fas fa-heart"></i></div>
+      <div class="value-card__title">مصمم لك أنت</div>
+      <div class="value-card__desc">كل زر وكل شاشة بُنيت بناءً على احتياجات حقيقية لأصحاب الأعمال التجميلية، لا تخمينات.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-card__icon" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><i class="fas fa-bolt"></i></div>
+      <div class="value-card__title">سرعة وسهولة</div>
+      <div class="value-card__desc">واجهة خفيفة وسريعة تعمل بكفاءة على أي جهاز، موبايل أو تابلت أو حاسوب.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-card__icon" style="background:linear-gradient(135deg,var(--green),#059669)"><i class="fas fa-shield-alt"></i></div>
+      <div class="value-card__title">أمان البيانات</div>
+      <div class="value-card__desc">بيانات كل حساب معزولة تماماً. نسخ احتياطية منتظمة. لا تشارك، لا تسرب.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-card__icon" style="background:linear-gradient(135deg,var(--purple),#6d28d9)"><i class="fas fa-comments"></i></div>
+      <div class="value-card__title">دعم حقيقي</div>
+      <div class="value-card__desc">فريق دعم عربي يفهم عملك ويستجيب بسرعة، لا ردود آلية ولا انتظار طويل.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-card__icon" style="background:linear-gradient(135deg,var(--amber),#d97706)"><i class="fas fa-sync-alt"></i></div>
+      <div class="value-card__title">تطوير مستمر</div>
+      <div class="value-card__desc">ميزات جديدة كل شهر بناءً على اقتراحاتكم. النظام يتطور معك لا يتجمد.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-card__icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-globe"></i></div>
+      <div class="value-card__title">عربي بالكامل</div>
+      <div class="value-card__desc">RTL أصيل، عملات ومناطق زمنية لـ 22 دولة عربية، وتجربة محلية حقيقية.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features deep ── -->
+<section class="features">
+  <div class="section__header">
+    <div class="section__label">ما يقدمه النظام</div>
+    <h2 class="section__title">كل ما تحتاجه في مكان واحد</h2>
+  </div>
+  <div class="features-deep">
+
+    <div class="feature-row">
+      <div class="feature-visual">
+        <div class="feature-icon-big" style="background:linear-gradient(135deg,var(--pink),var(--pink-dark))">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+      </div>
+      <div class="feature-text">
+        <h3>إدارة المواعيد والتقويم</h3>
+        <p>تقويم تفاعلي يمنحك رؤية واضحة لكل يومك. جدوِل المواعيد، عيِّن المتخصصين، وتابع الحالة لحظة بلحظة.</p>
+        <ul class="feature-bullets">
+          <li class="feature-bullet"><i class="fas fa-check"></i> عرض يومي وأسبوعي وشهري</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> تعيين تلقائي للمتخصص المتاح</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> تذكير تلقائي للعملاء</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> ربط مباشر بالفاتورة</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="feature-row feature-row--reverse">
+      <div class="feature-visual" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe)">
+        <div class="feature-icon-big" style="background:linear-gradient(135deg,var(--purple),#6d28d9)">
+          <i class="fas fa-users"></i>
+        </div>
+      </div>
+      <div class="feature-text">
+        <h3>ملفات العملاء الذكية</h3>
+        <p>سجل كامل لكل عميل — تاريخ الزيارات، الخدمات المفضلة، رصيد النقاط، والفواتير. كل شيء في بضع نقرات.</p>
+        <ul class="feature-bullets">
+          <li class="feature-bullet"><i class="fas fa-check"></i> ملف شامل لكل عميل</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> نظام نقاط الولاء</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> كشف حساب وتاريخ المدفوعات</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> حجز ذاتي عبر المتجر الإلكتروني</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="feature-row">
+      <div class="feature-visual" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5)">
+        <div class="feature-icon-big" style="background:linear-gradient(135deg,var(--green),#059669)">
+          <i class="fas fa-wallet"></i>
+        </div>
+      </div>
+      <div class="feature-text">
+        <h3>الحسابات والمالية الكاملة</h3>
+        <p>إدارة مالية شاملة — الخزينة، المصروفات، الرواتب، السلف، وكشوف العملاء. كل ريال في مكانه الصحيح.</p>
+        <ul class="feature-bullets">
+          <li class="feature-bullet"><i class="fas fa-check"></i> خزينة وحركة الأموال</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> رواتب الموظفين والعمولات</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> فواتير احترافية مع ضريبة</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> تقارير ربحية تفصيلية</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="feature-row feature-row--reverse">
+      <div class="feature-visual" style="background:linear-gradient(135deg,#fef3c7,#fde68a)">
+        <div class="feature-icon-big" style="background:linear-gradient(135deg,var(--amber),#d97706)">
+          <i class="fas fa-store"></i>
+        </div>
+      </div>
+      <div class="feature-text">
+        <h3>المتجر الإلكتروني والحجز الذاتي</h3>
+        <p>رابط خاص بحسابك يتيح لعملائك حجز مواعيدهم وطلب منتجاتهم مباشرة — 24 ساعة، بدون مكالمات.</p>
+        <ul class="feature-bullets">
+          <li class="feature-bullet"><i class="fas fa-check"></i> رابط حجز ذاتي خاص بك</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> طلبات منتجات أونلاين</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> إدارة الحجوزات الواردة</li>
+          <li class="feature-bullet"><i class="fas fa-check"></i> تخصيص الواجهة بشعارك</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Tech ── -->
+<section class="tech-section">
+  <div class="section__header">
+    <div class="section__label">التقنية</div>
+    <h2 class="section__title">مبني على أفضل التقنيات</h2>
+    <p class="section__desc">بنية تقنية قوية تضمن الأمان والسرعة والاستمرارية</p>
+  </div>
+  <div class="tech-grid">
+    <div class="tech-card">
+      <i class="fab fa-python" style="color:#3b82f6"></i>
+      <div class="tech-card__name">Python / Django</div>
+      <div class="tech-card__desc">خلفية سريعة وآمنة</div>
+    </div>
+    <div class="tech-card">
+      <i class="fas fa-database" style="color:#10b981"></i>
+      <div class="tech-card__name">PostgreSQL</div>
+      <div class="tech-card__desc">قاعدة بيانات موثوقة</div>
+    </div>
+    <div class="tech-card">
+      <i class="fas fa-mobile-alt" style="color:#8b5cf6"></i>
+      <div class="tech-card__name">PWA</div>
+      <div class="tech-card__desc">تطبيق على هاتفك</div>
+    </div>
+    <div class="tech-card">
+      <i class="fas fa-shield-alt" style="color:#db2777"></i>
+      <div class="tech-card__name">SSL / HTTPS</div>
+      <div class="tech-card__desc">تشفير كامل للبيانات</div>
+    </div>
+    <div class="tech-card">
+      <i class="fas fa-server" style="color:#f59e0b"></i>
+      <div class="tech-card__name">نسخ احتياطية</div>
+      <div class="tech-card__desc">حماية يومية للبيانات</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Timeline ── -->
+<section class="timeline">
+  <div class="section__header">
+    <div class="section__label">رحلتنا</div>
+    <h2 class="section__title">كيف وصلنا إلى هنا</h2>
+  </div>
+  <div class="timeline-wrap">
+    <div class="tl-item">
+      <div class="tl-dot" style="background:linear-gradient(135deg,var(--pink),var(--pink-dark))"><i class="fas fa-lightbulb"></i></div>
+      <div class="tl-body">
+        <div class="tl-body__year">البداية</div>
+        <div class="tl-body__title">فكرة وُلدت من مشكلة حقيقية</div>
+        <div class="tl-body__desc">بدأت إنجاز من ملاحظة يومية — أصحاب صالونات يضيعون ساعات في إدارة ورقية يمكن أتمتتها خلال ثوانٍ.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:linear-gradient(135deg,var(--blue),#2563eb)"><i class="fas fa-code"></i></div>
+      <div class="tl-body">
+        <div class="tl-body__year">التطوير</div>
+        <div class="tl-body__title">بناء نظام متكامل من الصفر</div>
+        <div class="tl-body__desc">بُني النظام بمشاركة فعلية من أصحاب الأعمال — كل ميزة اختُبرت في بيئة حقيقية قبل إطلاقها.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:linear-gradient(135deg,var(--green),#059669)"><i class="fas fa-rocket"></i></div>
+      <div class="tl-body">
+        <div class="tl-body__year">الإطلاق</div>
+        <div class="tl-body__title">أول حساب — أول نجاح</div>
+        <div class="tl-body__desc">مع أول عميل جاء التحقق: ساعات العمل الإداري تناقصت بشكل ملحوظ، والتركيز انتقل للعمل الفعلي.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:linear-gradient(135deg,var(--purple),#6d28d9)"><i class="fas fa-chart-line"></i></div>
+      <div class="tl-body">
+        <div class="tl-body__year">اليوم</div>
+        <div class="tl-body__title">نمو مستمر، تطوير لا يتوقف</div>
+        <div class="tl-body__desc">مئات الحسابات تثق بإنجاز يومياً. ميزات جديدة تُطلق باستمرار بناءً على احتياجات مجتمعنا.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <h2>انضم إلى مجتمع إنجاز</h2>
+  <p>ابدأ تجربتك المجانية اليوم — 30 يوماً بدون بطاقة</p>
+  <div class="cta-btns">
+    <a href="{% url 'accounts:register' %}" class="cta-btn cta-btn--white">
+      <i class="fas fa-rocket"></i> ابدأ مجاناً الآن
+    </a>
+    <a href="{% url 'core:pricing' %}" class="cta-btn cta-btn--outline">
+      <i class="fas fa-tag"></i> عرض الأسعار
+    </a>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <span>© 2025 EnjazBCMS — نظام إدارة الأعمال</span>
+  <div style="display:flex;gap:20px;">
+    <a href="{% url 'core:about' %}">عن النظام</a>
+    <a href="{% url 'core:pricing' %}">الأسعار</a>
+    <a href="{% url 'accounts:login' %}">تسجيل الدخول</a>
+    <a href="{% url 'accounts:register' %}">إنشاء حساب</a>
+  </div>
+</footer>
+
+</body>
+</html>

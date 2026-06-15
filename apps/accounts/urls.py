@@ -15,6 +15,7 @@ urlpatterns = [
     path('users/<int:pk>/delete/',views.user_delete, name='user_delete'),
     # Roles
     path('roles/',            views.role_list,   name='roles'),
-    path('roles/add/',        views.role_save,   name='role_add'),
-    path('roles/<int:pk>/edit/',  views.role_save,   name='role_edit'),
+    path('roles/add/',               views.role_save,   name='role_add'),
+    path('roles/<int:pk>/edit/',     views.role_save,   name='role_edit'),
+    path('roles/<int:pk>/delete/',   views.role_delete, name='role_delete'),
 ]

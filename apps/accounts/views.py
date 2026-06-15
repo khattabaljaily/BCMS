@@ -6,8 +6,60 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from .forms import LoginForm, RegisterForm
-from .models import User, Role
-from .permissions import PERMISSIONS
+from .models import User, Role, PERMISSIONS
+
+SECTION_LABELS = {
+    'appointments': ('المواعيد',      'fas fa-calendar-check', '#6366f1'),
+    'clients':      ('العملاء',       'fas fa-users',          '#0ea5e9'),
+    'services':     ('الخدمات',       'fas fa-spa',            '#ec4899'),
+    'billing':      ('الفواتير',      'fas fa-file-invoice',   '#10b981'),
+    'products':     ('المنتجات والمخزون', 'fas fa-boxes',     '#f59e0b'),
+    'staff':        ('الفريق',        'fas fa-user-tie',       '#8b5cf6'),
+    'store':        ('المتجر',        'fas fa-store',          '#14b8a6'),
+    'reports':      ('التقارير',      'fas fa-chart-bar',      '#f97316'),
+    'settings':     ('الإعدادات',     'fas fa-sliders',        '#64748b'),
+}
+
+
+def _build_permissions_meta(instance=None):
+    """Return list of section dicts for the role form template."""
+    instance_perms = set()
+    if instance and instance.permissions:
+        instance_perms = {k for k, v in instance.permissions.items() if v}
+
+    sections = []
+    for section, actions in PERMISSIONS.items():
+        lbl, icon, color = SECTION_LABELS.get(section, (section, 'fas fa-circle', '#64748b'))
+        section_actions = []
+        for action, label in actions.items():
+            key = f'{section}.{action}'
+            section_actions.append({
+                'key':   key,
+                'field': 'perm_' + key.replace('.', '__'),
+                'label': label,
+                'checked': key in instance_perms,
+            })
+        sections.append({
+            'section':       section,
+            'section_label': lbl,
+            'icon':          icon,
+            'color':         color,
+            'actions':       section_actions,
+            'all_count':     len(section_actions),
+            'checked_count': sum(1 for a in section_actions if a['checked']),
+        })
+    return sections
+
+
+def _collect_permissions(post_data):
+    """Extract permission dict from POST data."""
+    perms = {}
+    for section, actions in PERMISSIONS.items():
+        for action in actions:
+            key   = f'{section}.{action}'
+            field = 'perm_' + key.replace('.', '__')
+            perms[key] = field in post_data
+    return perms
 
 
 def _is_ajax(request):
@@ -190,7 +242,7 @@ def user_delete(request, pk):
 @login_required
 def role_list(request):
     center = request.center
-    roles = Role.objects.filter(center=center)
+    roles = Role.objects.filter(center=center).annotate(user_count=models.Count('users'))
     return render(request, 'accounts/roles.html', {'roles': roles})
 
 
@@ -199,35 +251,18 @@ def role_save(request, pk=None):
     center = request.center
     instance = get_object_or_404(Role, pk=pk, center=center) if pk else None
 
-    # build permission metadata for template
-    permissions_meta = [
-        {
-            'key': p,
-            'field': 'perm_' + p.replace('.', '__'),
-            'label': p,
-        }
-        for p in PERMISSIONS
-    ]
-
-    # existing permissions for the instance (list of keys where value is truthy)
-    instance_perms = []
-    if instance and instance.permissions:
-        try:
-            instance_perms = [k for k, v in instance.permissions.items() if v]
-        except Exception:
-            instance_perms = []
-
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
-        perms = {}
-        for p in PERMISSIONS:
-            field = 'perm_' + p.replace('.', '__')
-            perms[p] = field in request.POST
-
+        if not name:
+            messages.error(request, 'اسم الدور مطلوب.')
+            return render(request, 'accounts/role_form.html', {
+                'instance': instance,
+                'permissions_meta': _build_permissions_meta(instance),
+            })
         if instance is None:
             instance = Role(center=center)
         instance.name = name
-        instance.permissions = perms
+        instance.permissions = _collect_permissions(request.POST)
         instance.is_default = 'is_default' in request.POST
         instance.save()
         if _is_ajax(request):
@@ -235,8 +270,21 @@ def role_save(request, pk=None):
         messages.success(request, 'تم حفظ الدور.')
         return redirect('accounts:roles')
 
+    total_perms = sum(len(actions) for actions in PERMISSIONS.values())
     return render(request, 'accounts/role_form.html', {
         'instance': instance,
-        'permissions_meta': permissions_meta,
-        'instance_perms': instance_perms,
+        'permissions_meta': _build_permissions_meta(instance),
+        'total_perms': total_perms,
     })
+
+
+@login_required
+def role_delete(request, pk):
+    center = request.center
+    role = get_object_or_404(Role, pk=pk, center=center)
+    if request.method == 'POST':
+        role.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'تم حذف الدور.'})
+        messages.success(request, 'تم حذف الدور.')
+    return redirect('accounts:roles')

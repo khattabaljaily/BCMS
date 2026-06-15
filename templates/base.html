@@ -346,6 +346,25 @@
         التقارير
       </a>
 
+      <!-- المستخدمون والأدوار -->
+      {% if user.is_owner or user.is_superuser %}
+      <div class="nav-group {% block nav_team_open %}{% endblock %}">
+        <div class="nav-item nav-item--parent">
+          <span class="nav-icon"><i class="fas fa-users-cog"></i></span>
+          الفريق والصلاحيات
+          <i class="fas fa-chevron-left nav-arrow"></i>
+        </div>
+        <div class="nav-submenu">
+          <a href="{% url 'accounts:users' %}" class="nav-subitem {% block nav_users %}{% endblock %}">
+            <i class="fas fa-user-plus"></i> المستخدمون
+          </a>
+          <a href="{% url 'accounts:roles' %}" class="nav-subitem {% block nav_roles %}{% endblock %}">
+            <i class="fas fa-shield-halved"></i> الأدوار والصلاحيات
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
       <!-- الدعم الفني -->
       <a href="{% url 'core:support' %}" class="nav-item {% block nav_support %}{% endblock %}">
         <span class="nav-icon"><i class="fas fa-headset"></i></span>

@@ -48,46 +48,126 @@ body{font-family:'Cairo',sans-serif;background:#fff;color:var(--slate-900);direc
 
 /* ── Hero ── */
 .hero{
-  padding:120px 5vw 80px;text-align:center;
-  background:linear-gradient(160deg,#fff9fb 0%,#fdf2f8 50%,#fef3c7 100%);
-  position:relative;overflow:hidden;
+  padding:100px 5vw 0;
+  background:linear-gradient(150deg,#0f172a 0%,#1e1035 45%,#2d0a1e 100%);
+  position:relative;overflow:hidden;min-height:580px;
+  display:flex;flex-direction:column;align-items:center;
 }
+/* mesh glow blobs */
 .hero::before{
-  content:'';position:absolute;top:-120px;right:-80px;
-  width:500px;height:500px;border-radius:50%;
-  background:radial-gradient(circle,rgba(219,39,119,.08) 0%,transparent 70%);
-  pointer-events:none;
+  content:'';position:absolute;top:-80px;right:-60px;
+  width:560px;height:560px;border-radius:50%;
+  background:radial-gradient(circle,rgba(219,39,119,.22) 0%,transparent 65%);
+  pointer-events:none;animation:heroBlob1 8s ease-in-out infinite alternate;
 }
 .hero::after{
-  content:'';position:absolute;bottom:-100px;left:-60px;
-  width:400px;height:400px;border-radius:50%;
-  background:radial-gradient(circle,rgba(139,92,246,.07) 0%,transparent 70%);
-  pointer-events:none;
+  content:'';position:absolute;bottom:-120px;left:-80px;
+  width:480px;height:480px;border-radius:50%;
+  background:radial-gradient(circle,rgba(139,92,246,.18) 0%,transparent 65%);
+  pointer-events:none;animation:heroBlob2 10s ease-in-out infinite alternate;
 }
+@keyframes heroBlob1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-30px,40px) scale(1.1)}}
+@keyframes heroBlob2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,-30px) scale(1.08)}}
+
+.hero__inner{position:relative;z-index:2;text-align:center;max-width:780px;width:100%;padding-bottom:60px}
+
 .hero__badge{
-  display:inline-flex;align-items:center;gap:7px;
-  background:linear-gradient(135deg,rgba(219,39,119,.1),rgba(139,92,246,.08));
-  border:1px solid rgba(219,39,119,.2);border-radius:100px;
-  padding:5px 16px;font-size:13px;font-weight:700;color:var(--pink-dark);
-  margin-bottom:24px;
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.15);
+  backdrop-filter:blur(8px);
+  border-radius:100px;padding:6px 18px;
+  font-size:13px;font-weight:700;color:rgba(255,255,255,.85);
+  margin-bottom:28px;letter-spacing:.01em;
 }
+.hero__badge i{color:#fb7185}
+
 .hero__title{
-  font-size:clamp(32px,6vw,56px);font-weight:900;
-  background:linear-gradient(135deg,var(--slate-900),var(--pink-dark));
+  font-size:clamp(36px,7vw,68px);font-weight:900;
+  color:#fff;line-height:1.1;margin-bottom:8px;
+  letter-spacing:-.02em;
+}
+.hero__title-accent{
+  display:inline-block;position:relative;
+  background:linear-gradient(135deg,#f472b6,#a78bfa,#60a5fa);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  line-height:1.15;margin-bottom:20px;
+}
+.hero__title-accent::after{
+  content:'';position:absolute;bottom:-4px;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#f472b6,#a78bfa,#60a5fa);
+  border-radius:2px;opacity:.6;
 }
 .hero__subtitle{
-  font-size:clamp(15px,2.5vw,19px);color:var(--slate-600);
-  max-width:580px;margin:0 auto 40px;font-weight:500;
+  font-size:clamp(15px,2.2vw,18px);
+  color:rgba(255,255,255,.6);
+  max-width:520px;margin:20px auto 36px;font-weight:500;line-height:1.7;
 }
-.hero__trial-note{
-  display:inline-flex;align-items:center;gap:8px;
-  background:#fff;border:1px solid var(--slate-200);border-radius:12px;
-  padding:10px 20px;font-size:14px;font-weight:600;color:var(--slate-700);
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
+
+/* CTA row */
+.hero__ctas{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:36px}
+.hero__cta-main{
+  display:inline-flex;align-items:center;gap:9px;
+  background:linear-gradient(135deg,var(--pink),var(--pink-dark));
+  color:#fff;font-family:inherit;font-size:15px;font-weight:800;
+  padding:14px 30px;border-radius:14px;border:none;cursor:pointer;
+  text-decoration:none;
+  box-shadow:0 8px 28px rgba(219,39,119,.45);
+  transition:all .2s;
 }
-.hero__trial-note i{color:var(--pink)}
+.hero__cta-main:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(219,39,119,.55)}
+.hero__cta-sec{
+  display:inline-flex;align-items:center;gap:9px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(8px);
+  color:rgba(255,255,255,.85);font-family:inherit;font-size:15px;font-weight:700;
+  padding:14px 28px;border-radius:14px;cursor:pointer;
+  text-decoration:none;transition:all .2s;
+}
+.hero__cta-sec:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+
+/* Trust pills */
+.hero__trust{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 20px;margin-bottom:52px}
+.trust-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:700;color:rgba(255,255,255,.55);
+}
+.trust-pill i{color:#34d399;font-size:12px}
+
+/* Stats bar — floats over the dark bg */
+.hero__stats{
+  display:flex;flex-wrap:wrap;justify-content:center;
+  gap:0;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(12px);
+  border-radius:20px 20px 0 0;
+  padding:22px 10px 22px;
+  width:100%;max-width:760px;
+  margin:0 auto;
+  position:relative;z-index:2;
+}
+.hero__stat{
+  flex:1;min-width:130px;text-align:center;
+  padding:0 20px;
+  border-left:1px solid rgba(255,255,255,.08);
+}
+.hero__stat:last-child{border-left:none}
+.hero__stat-num{
+  font-size:clamp(26px,4vw,38px);font-weight:900;color:#fff;
+  line-height:1;
+  background:linear-gradient(135deg,#f9a8d4,#c084fc);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero__stat-lbl{font-size:12px;font-weight:700;color:rgba(255,255,255,.45);margin-top:5px}
+
+@media(max-width:600px){
+  .hero{padding-top:88px}
+  .hero__stats{border-radius:16px 16px 0 0;padding:18px 4px}
+  .hero__stat{min-width:90px;padding:0 10px}
+  .hero__stat-num{font-size:24px}
+  .hero__trust{gap:8px 14px}
+}
 
 /* ── Features strip ── */
 .features-strip{
@@ -219,11 +299,14 @@ body{font-family:'Cairo',sans-serif;background:#fff;color:var(--slate-900);direc
 .sys-card__title{font-size:15px;font-weight:800;color:var(--slate-900);margin-bottom:6px}
 .sys-card__desc{font-size:13px;color:var(--slate-600);font-weight:500;line-height:1.55}
 
-/* ── Compare table ── */
+/* ── Compare ── */
 .compare-section{padding:80px 5vw;background:#fff}
-.compare-wrap{max-width:900px;margin:0 auto;overflow-x:auto}
+.compare-wrap{max-width:1100px;margin:0 auto}
+/* Desktop table – hidden on small screens */
+.compare-table-wrap{overflow-x:auto}
+@media(max-width:699px){.compare-table-wrap{display:none}}
 .compare-table{width:100%;border-collapse:collapse;font-size:14px}
-.compare-table th,.compare-table td{padding:14px 18px;text-align:center}
+.compare-table th,.compare-table td{padding:13px 16px;text-align:center}
 .compare-table th{font-weight:800;font-size:13px;letter-spacing:.04em}
 .compare-table th:first-child,.compare-table td:first-child{text-align:right;font-weight:600}
 .compare-table thead tr{border-bottom:2px solid var(--slate-200)}
@@ -235,6 +318,30 @@ body{font-family:'Cairo',sans-serif;background:#fff;color:var(--slate-900);direc
 .check-yes{color:#10b981;font-size:16px}
 .check-no{color:var(--slate-300);font-size:15px}
 .check-partial{font-size:12px;font-weight:700;color:var(--slate-600)}
+/* Mobile cards – shown only on small screens */
+.compare-mobile{display:none;flex-direction:column;gap:16px}
+@media(max-width:699px){.compare-mobile{display:flex}}
+.cmp-card{border:2px solid var(--slate-200);border-radius:20px;overflow:hidden}
+.cmp-card--pro{border-color:var(--purple)}
+.cmp-card__head{padding:16px 18px;display:flex;align-items:center;gap:10px}
+.cmp-card__head--starter{background:linear-gradient(135deg,rgba(59,130,246,.07),rgba(59,130,246,.03))}
+.cmp-card__head--pro{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(139,92,246,.05))}
+.cmp-card__head--enterprise{background:linear-gradient(135deg,rgba(245,158,11,.09),rgba(245,158,11,.04))}
+.cmp-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;flex-shrink:0}
+.cmp-meta{flex:1;min-width:0}
+.cmp-meta__name{font-size:16px;font-weight:900;color:var(--slate-900)}
+.cmp-meta__price{font-size:12px;font-weight:700;color:var(--slate-400)}
+.cmp-badge{font-size:10px;font-weight:800;background:linear-gradient(135deg,var(--purple),#6d28d9);color:#fff;border-radius:5px;padding:2px 7px;margin-right:auto}
+.cmp-rows{border-top:1px solid var(--slate-100)}
+.cmp-row{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--slate-100);font-size:13px}
+.cmp-row:last-child{border-bottom:none}
+.cmp-row__lbl{font-weight:600;color:var(--slate-700)}
+.cmp-row__val{font-weight:700;color:var(--slate-900);font-size:12px}
+.cmp-card__cta{display:block;margin:14px 16px 16px;padding:11px;border-radius:12px;border:none;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;transition:all .2s}
+.cmp-card__cta--starter{background:var(--slate-100);color:var(--slate-700)}
+.cmp-card__cta--starter:hover{background:var(--blue);color:#fff}
+.cmp-card__cta--pro{background:linear-gradient(135deg,var(--purple),#6d28d9);color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.3)}
+.cmp-card__cta--enterprise{background:linear-gradient(135deg,var(--amber),#d97706);color:#fff}
 
 /* ── FAQ ── */
 .faq-section{background:var(--slate-50);padding:80px 5vw}
@@ -307,6 +414,7 @@ details[open] .faq-q i{transform:rotate(90deg)}
     <span class="navbar__brand-name">EnjazBCMS</span>
   </a>
   <nav class="navbar__links">
+    <a href="{% url 'core:about' %}" class="navbar__link">عن النظام</a>
     <a href="#features" class="navbar__link">المميزات</a>
     <a href="#compare" class="navbar__link">المقارنة</a>
     <a href="#faq" class="navbar__link">الأسئلة الشائعة</a>
@@ -317,12 +425,64 @@ details[open] .faq-q i{transform:rotate(90deg)}
 
 <!-- ── Hero ── -->
 <section class="hero">
-  <div class="hero__badge"><i class="fas fa-gift"></i> 30 يوم مجاناً — بدون بطاقة ائتمان</div>
-  <h1 class="hero__title">إدارة حسابك<br>بأسعار تناسبك</h1>
-  <p class="hero__subtitle">إنجاز — نظام متكامل لإدارة الأعمال بكل احترافية وسهولة</p>
-  <div class="hero__trial-note">
-    <i class="fas fa-shield-check"></i>
-    جميع الباقات تبدأ بتجربة مجانية لمدة 30 يوماً كاملة
+  <div class="hero__inner">
+    <!-- Badge -->
+    <div class="hero__badge">
+      <i class="fas fa-gift"></i>
+      30 يوم مجاناً — بدون بطاقة ائتمان
+    </div>
+
+    <!-- Title -->
+    <h1 class="hero__title">
+      إدارة حسابك<br>
+      <span class="hero__title-accent">بأسعار تناسبك</span>
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="hero__subtitle">
+      إنجاز — نظام متكامل لإدارة الأعمال بكل احترافية وسهولة.<br>
+      ابدأ مجاناً واختر الباقة التي تناسب حجم عملك.
+    </p>
+
+    <!-- CTA buttons -->
+    <div class="hero__ctas">
+      <a href="{% url 'accounts:register' %}?plan=pro" class="hero__cta-main">
+        <i class="fas fa-rocket"></i>
+        ابدأ تجربتك المجانية
+      </a>
+      <a href="#compare" class="hero__cta-sec">
+        <i class="fas fa-table-list"></i>
+        قارن الباقات
+      </a>
+    </div>
+
+    <!-- Trust pills -->
+    <div class="hero__trust">
+      <span class="trust-pill"><i class="fas fa-check-circle"></i> بدون دفع مسبق</span>
+      <span class="trust-pill"><i class="fas fa-check-circle"></i> 30 يوماً مجاناً</span>
+      <span class="trust-pill"><i class="fas fa-check-circle"></i> إلغاء في أي وقت</span>
+      <span class="trust-pill"><i class="fas fa-check-circle"></i> دعم فني مستمر</span>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="hero__stats">
+      <div class="hero__stat">
+        <div class="hero__stat-num">+500</div>
+        <div class="hero__stat-lbl">حساب نشط</div>
+      </div>
+      <div class="hero__stat">
+        <div class="hero__stat-num">12+</div>
+        <div class="hero__stat-lbl">وحدة متكاملة</div>
+      </div>
+      <div class="hero__stat">
+        <div class="hero__stat-num">99.9%</div>
+        <div class="hero__stat-lbl">وقت التشغيل</div>
+      </div>
+      <div class="hero__stat">
+        <div class="hero__stat-num">24/7</div>
+        <div class="hero__stat-lbl">دعم فني</div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -510,42 +670,120 @@ details[open] .faq-q i{transform:rotate(90deg)}
   </div>
 </section>
 
-<!-- ── Compare Table ── -->
+<!-- ── Compare ── -->
 <section class="compare-section" id="compare">
   <div class="section__header">
     <div class="section__label">مقارنة الباقات</div>
-    <h2 class="section__title">ماذا يشمل كل باقة؟</h2>
+    <h2 class="section__title">ماذا تشمل كل باقة؟</h2>
   </div>
   <div class="compare-wrap">
-    <table class="compare-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th class="col-starter">مبتدئ<br><small>$49/شهر</small></th>
-          <th class="col-pro">احترافي<br><small>$99/شهر</small></th>
-          <th class="col-enterprise">مؤسسات<br><small>$199/شهر</small></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td><b>الموظفون</b></td><td class="check-partial">3</td><td class="check-partial">10</td><td class="check-partial">∞ غير محدود</td></tr>
-        <tr><td><b>المستخدمون</b></td><td class="check-partial">2</td><td class="check-partial">5</td><td class="check-partial">∞ غير محدود</td></tr>
-        <tr><td>إدارة المواعيد</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>ملفات العملاء</td><td class="check-partial">500 عميل</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>الخدمات والباقات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>الفواتير</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>التقارير الأساسية</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>الأدوار والصلاحيات</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>إدارة المخزون</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>الحسابات والمالية</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>إدارة الرواتب</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>المتجر الإلكتروني</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>نقاط الولاء</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>التقارير المتقدمة</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>النسخ الاحتياطي</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>مدير حساب مخصص</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-        <tr><td>دعم 24/7</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
-      </tbody>
-    </table>
+
+    <!-- Desktop table -->
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="col-starter">مبتدئ<br><small>$49/شهر</small></th>
+            <th class="col-pro">احترافي<br><small>$99/شهر</small></th>
+            <th class="col-enterprise">مؤسسات<br><small>$199/شهر</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><b>الموظفون</b></td><td class="check-partial">3</td><td class="check-partial">10</td><td class="check-partial">∞ غير محدود</td></tr>
+          <tr><td><b>المستخدمون</b></td><td class="check-partial">2</td><td class="check-partial">5</td><td class="check-partial">∞ غير محدود</td></tr>
+          <tr><td>إدارة المواعيد</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>ملفات العملاء</td><td class="check-partial">500 عميل</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الخدمات والباقات</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الفواتير</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>التقارير الأساسية</td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الأدوار والصلاحيات</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>إدارة المخزون</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>الحسابات والمالية</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>إدارة الرواتب</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>المتجر الإلكتروني</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>نقاط الولاء</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>التقارير المتقدمة</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>النسخ الاحتياطي</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>مدير حساب مخصص</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+          <tr><td>دعم 24/7</td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-xmark check-no"></i></td><td><i class="fas fa-check check-yes"></i></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="compare-mobile">
+
+      <!-- Starter -->
+      <div class="cmp-card">
+        <div class="cmp-card__head cmp-card__head--starter">
+          <div class="cmp-icon" style="background:linear-gradient(135deg,var(--blue),#2563eb)"><i class="fas fa-seedling"></i></div>
+          <div class="cmp-meta">
+            <div class="cmp-meta__name">مبتدئ</div>
+            <div class="cmp-meta__price">$49 / شهرياً</div>
+          </div>
+        </div>
+        <div class="cmp-rows">
+          <div class="cmp-row"><span class="cmp-row__lbl">الموظفون</span><span class="cmp-row__val">3</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">2</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">إدارة المواعيد</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">500 عميل</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">الخدمات والباقات</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">الفواتير</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">التقارير الأساسية</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">المخزون والمالية</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">المتجر الإلكتروني</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
+        </div>
+        <a href="{% url 'accounts:register' %}?plan=starter" class="cmp-card__cta cmp-card__cta--starter">ابدأ مجاناً</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="cmp-card cmp-card--pro">
+        <div class="cmp-card__head cmp-card__head--pro">
+          <div class="cmp-icon" style="background:linear-gradient(135deg,var(--purple),#6d28d9)"><i class="fas fa-star"></i></div>
+          <div class="cmp-meta">
+            <div class="cmp-meta__name">احترافي</div>
+            <div class="cmp-meta__price">$99 / شهرياً</div>
+          </div>
+          <span class="cmp-badge">الأكثر طلباً</span>
+        </div>
+        <div class="cmp-rows">
+          <div class="cmp-row"><span class="cmp-row__lbl">الموظفون</span><span class="cmp-row__val">10</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">5</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">إدارة المواعيد</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">ملفات العملاء</span><span class="cmp-row__val">غير محدود</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">الخدمات والباقات</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">الفواتير</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">المخزون والمالية</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">المتجر الإلكتروني</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">نقاط الولاء</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">التقارير المتقدمة</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">النسخ الاحتياطي</span><span class="cmp-row__val"><i class="fas fa-xmark check-no"></i></span></div>
+        </div>
+        <a href="{% url 'accounts:register' %}?plan=pro" class="cmp-card__cta cmp-card__cta--pro">ابدأ مجاناً</a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="cmp-card">
+        <div class="cmp-card__head cmp-card__head--enterprise">
+          <div class="cmp-icon" style="background:linear-gradient(135deg,var(--amber),#d97706)"><i class="fas fa-building"></i></div>
+          <div class="cmp-meta">
+            <div class="cmp-meta__name">مؤسسات</div>
+            <div class="cmp-meta__price">$199 / شهرياً</div>
+          </div>
+        </div>
+        <div class="cmp-rows">
+          <div class="cmp-row"><span class="cmp-row__lbl">الموظفون</span><span class="cmp-row__val">∞ غير محدود</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">المستخدمون</span><span class="cmp-row__val">∞ غير محدود</span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">كل ميزات الاحترافي</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">النسخ الاحتياطي</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">مدير حساب مخصص</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+          <div class="cmp-row"><span class="cmp-row__lbl">دعم 24/7</span><span class="cmp-row__val"><i class="fas fa-check check-yes"></i></span></div>
+        </div>
+        <a href="{% url 'accounts:register' %}?plan=enterprise" class="cmp-card__cta cmp-card__cta--enterprise">ابدأ مجاناً</a>
+      </div>
+
+    </div>
   </div>
 </section>
 

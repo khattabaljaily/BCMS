@@ -564,6 +564,11 @@ def pricing_view(request):
     return render(request, 'core/pricing.html', {'today': date.today()})
 
 
+def about_view(request):
+    """Public about page — no login required."""
+    return render(request, 'core/about.html')
+
+
 @login_required
 def subscription_view(request):
     """Tenant subscription info page."""

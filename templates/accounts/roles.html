@@ -1,100 +1,137 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}الأدوار{% endblock %}
-{% block page_title %}الأدوار{% endblock %}
-{% block nav_settings %}active{% endblock %}
+{% block title %}الأدوار والصلاحيات{% endblock %}
+{% block page_title %}الأدوار والصلاحيات{% endblock %}
+{% block nav_team_open %}open{% endblock %}
+{% block nav_roles %}active{% endblock %}
 
 {% block content %}
 <div class="cx-scene">
 
-  <!-- Page Header -->
+  <!-- Hero -->
   <div class="cx-hero">
     <div class="cx-hero-inner">
       <div class="cx-hero-left">
-        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#6366f1,#818cf8);box-shadow:0 4px 14px rgba(99,102,241,.32);">
-          <i class="fas fa-shield-alt"></i>
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 4px 14px rgba(139,92,246,.32);">
+          <i class="fas fa-shield-halved"></i>
         </div>
         <div>
           <h1 class="cx-hero-title">الأدوار والصلاحيات</h1>
-          <p class="cx-hero-desc">{{ roles.count }} دور مسجل</p>
+          <p class="cx-hero-desc">{{ roles.count }} دور — تحكم في ما يستطيع كل مستخدم رؤيته وتعديله</p>
         </div>
       </div>
       <div class="cx-hero-right">
-        <div class="cx-hero-actions">
-          <a href="{% url 'accounts:role_add' %}" class="btn btn--primary">
-            <i class="fas fa-plus"></i> دور جديد
-          </a>
-        </div>
+        <a href="{% url 'accounts:role_add' %}" class="btn btn--primary">
+          <i class="fas fa-plus"></i> دور جديد
+        </a>
       </div>
     </div>
   </div>
 
-  <!-- Main Panel -->
-  <div class="cx-panel">
-    <div class="cx-table-wrap">
-      <table class="cx-table">
-        <thead>
-          <tr>
-            <th>الاسم</th>
-            <th>افتراضي</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in roles %}
-          <tr>
-            <td><strong>{{ r.name }}</strong></td>
-            <td>
-              {% if r.is_default %}
-              <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>نعم</span>
-              {% else %}—{% endif %}
-            </td>
-            <td>
-              <div class="cx-row-actions">
-                <a href="{% url 'accounts:role_edit' r.pk %}" class="cx-act" title="تعديل"><i class="fas fa-edit"></i></a>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="3">
-              <div class="cx-empty" style="padding:48px 24px;">
-                <i class="fas fa-shield-alt"></i>
-                <p>لا أدوار مسجلة بعد</p>
-                <a href="{% url 'accounts:role_add' %}" class="btn btn--primary" style="margin-top:12px;">
-                  <i class="fas fa-plus"></i> إضافة دور
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <!-- Roles Grid -->
+  <div class="roles-grid">
+    {% for role in roles %}
+    <div class="role-card" id="role-card-{{ role.pk }}">
 
-    <!-- Mobile Cards -->
-    <div class="cx-mobile-cards">
-      {% for r in roles %}
-      <div class="cx-card">
-        <div class="cx-card-head">
-          <div>
-            <div class="cx-card-title">{{ r.name }}</div>
-            {% if r.is_default %}<div class="cx-card-sub">الدور الافتراضي</div>{% endif %}
+      <div class="role-card__head">
+        <div class="role-card__icon">
+          <i class="fas fa-shield-halved"></i>
+        </div>
+        <div class="role-card__meta">
+          <div class="role-card__name">
+            {{ role.name }}
+            {% if role.is_default %}
+            <span class="badge badge--purple" style="font-size:10px;padding:2px 8px;">افتراضي</span>
+            {% endif %}
           </div>
-          <div class="cx-card-actions">
-            <a href="{% url 'accounts:role_edit' r.pk %}" class="cx-act"><i class="fas fa-edit"></i></a>
+          <div class="role-card__stats">
+            <span><i class="fas fa-users"></i> {{ role.user_count }} مستخدم</span>
+            <span><i class="fas fa-key"></i>
+              {% with count=role.permissions.values|dictsortreversed:""|length %}
+              {{ role.permissions|length }} صلاحية
+              {% endwith %}
+            </span>
           </div>
         </div>
+        <div class="role-card__actions">
+          <a href="{% url 'accounts:role_edit' role.pk %}" class="cx-act" title="تعديل">
+            <i class="fas fa-edit"></i>
+          </a>
+          {% if role.user_count == 0 %}
+          <button type="button" class="cx-act cx-act--del" title="حذف"
+                  onclick="BCMS.ajaxDelete('{% url 'accounts:role_delete' role.pk %}', 'حذف الدور «{{ role.name|escapejs }}»؟', 'role-card-{{ role.pk }}')">
+            <i class="fas fa-trash"></i>
+          </button>
+          {% else %}
+          <button type="button" class="cx-act" title="لا يمكن حذف دور مرتبط بمستخدمين" disabled style="opacity:.35;cursor:not-allowed;">
+            <i class="fas fa-trash"></i>
+          </button>
+          {% endif %}
+        </div>
       </div>
-      {% empty %}
-      <div class="cx-empty">
-        <i class="fas fa-shield-alt"></i>
-        <p>لا أدوار مسجلة</p>
-      </div>
-      {% endfor %}
-    </div>
 
+      <!-- Permissions chips -->
+      <div class="role-card__perms">
+        {% for key, val in role.permissions.items %}
+          {% if val %}
+          <span class="perm-chip">{{ key }}</span>
+          {% endif %}
+        {% empty %}
+          <span style="font-size:12px;color:#94a3b8;">لا صلاحيات محددة</span>
+        {% endfor %}
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="cx-empty" style="grid-column:1/-1;padding:64px 24px;">
+      <i class="fas fa-shield-halved" style="font-size:40px;color:#cbd5e1;margin-bottom:12px;display:block;"></i>
+      <p>لا أدوار مسجلة بعد</p>
+      <a href="{% url 'accounts:role_add' %}" class="btn btn--primary" style="margin-top:16px;">
+        <i class="fas fa-plus"></i> إنشاء أول دور
+      </a>
+    </div>
+    {% endfor %}
   </div>
 
 </div>
+
+<style>
+.roles-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+  gap:16px;padding:0 24px 32px;
+}
+@media(max-width:600px){.roles-grid{padding:0 12px 24px;grid-template-columns:1fr;}}
+
+.role-card{
+  background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;
+  padding:20px;transition:all .2s;
+}
+.role-card:hover{border-color:#a78bfa;box-shadow:0 6px 24px rgba(139,92,246,.1);}
+
+.role-card__head{display:flex;align-items:flex-start;gap:12px;}
+.role-card__icon{
+  width:42px;height:42px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,#ede9fe,#ddd6fe);
+  display:flex;align-items:center;justify-content:center;
+  color:#7c3aed;font-size:18px;
+}
+.role-card__meta{flex:1;min-width:0;}
+.role-card__name{font-size:15px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.role-card__stats{display:flex;gap:12px;margin-top:4px;}
+.role-card__stats span{font-size:12px;color:#64748b;font-weight:600;display:flex;align-items:center;gap:4px;}
+.role-card__stats i{color:#a78bfa;font-size:11px;}
+.role-card__actions{display:flex;gap:4px;flex-shrink:0;}
+
+.role-card__perms{
+  display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;
+  padding-top:14px;border-top:1px solid #f1f5f9;
+}
+.perm-chip{
+  font-size:10px;font-weight:700;
+  background:#f1f5f9;color:#475569;
+  border-radius:6px;padding:3px 8px;
+  font-family:monospace;letter-spacing:.01em;
+}
+</style>
 {% endblock %}

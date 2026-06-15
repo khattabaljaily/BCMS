@@ -2,68 +2,280 @@
 {% load static %}
 {% block title %}{% if instance %}تعديل مستخدم{% else %}مستخدم جديد{% endif %}{% endblock %}
 {% block page_title %}{% if instance %}تعديل: {{ instance.full_name }}{% else %}مستخدم جديد{% endif %}{% endblock %}
+{% block nav_team_open %}open{% endblock %}
+{% block nav_users %}active{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width:720px;margin:auto;">
-  <div class="card__header"><span class="card__title">بيانات المستخدم</span></div>
-  <div class="card__body">
-    <form method="post">
-      {% csrf_token %}
-      {% if instance %}<input type="hidden" name="pk" value="{{ instance.pk }}">{% endif %}
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label class="form-label">الاسم الكامل</label>
-          <input class="form-control" type="text" name="full_name" value="{{ instance.full_name|default:'' }}" required>
+<div class="cx-scene">
+<form method="post" id="userForm">
+{% csrf_token %}
+
+<div class="uf-layout">
+
+  <!-- Aside -->
+  <aside class="uf-aside">
+    <div class="uf-aside__card">
+
+      <!-- Avatar -->
+      <div class="uf-avatar">
+        <div class="uf-avatar__circle" id="avatarCircle">
+          {{ instance.full_name|first|default:"م" }}
         </div>
-        <div class="form-group">
-          <label class="form-label">اسم المستخدم</label>
-          <input class="form-control" type="text" name="username" value="{{ instance.username|default:'' }}" {% if instance %}disabled{% endif %} required>
+        <div class="uf-avatar__name" id="avatarName">
+          {{ instance.full_name|default:"مستخدم جديد" }}
+        </div>
+        <div class="uf-avatar__username">
+          {% if instance %}@{{ instance.username }}{% else %}اسم المستخدم{% endif %}
         </div>
       </div>
 
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label class="form-label">الهاتف</label>
-          <input class="form-control" type="tel" name="phone" value="{{ instance.phone|default:'' }}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">البريد الإلكتروني</label>
-          <input class="form-control" type="email" name="email" value="{{ instance.email|default:'' }}">
-        </div>
+      <!-- Status + is_staff toggles -->
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">
+        <label class="uf-toggle">
+          <input type="checkbox" name="is_active" id="id_is_active"
+                 {% if not instance or instance.is_active %}checked{% endif %}>
+          <span class="uf-toggle__track"></span>
+          <span class="uf-toggle__label">حساب نشط</span>
+        </label>
       </div>
 
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label class="form-label">الدور</label>
-          <select class="form-control" name="role">
-            <option value="">— لا دور —</option>
-            {% for r in roles %}
-            <option value="{{ r.pk }}" {% if instance and instance.role_id == r.pk %}selected{% endif %}>{{ r.name }}</option>
-            {% endfor %}
-          </select>
+      <div class="uf-aside__actions">
+        <button type="submit" class="btn btn--primary" style="width:100%;">
+          <i class="fas fa-save"></i> حفظ المستخدم
+        </button>
+        <a href="{% url 'accounts:users' %}" class="btn btn--ghost" style="width:100%;margin-top:8px;">
+          إلغاء
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main form -->
+  <main class="uf-main">
+
+    <!-- Basic Info -->
+    <div class="uf-section">
+      <div class="uf-section__head">
+        <i class="fas fa-id-card" style="color:#6366f1;"></i>
+        البيانات الأساسية
+      </div>
+      <div class="uf-section__body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">الاسم الكامل <span style="color:#ef4444;">*</span></label>
+            <div class="field-wrap">
+              <i class="fas fa-user fi"></i>
+              <input class="form-control" type="text" name="full_name"
+                     id="id_full_name"
+                     value="{{ instance.full_name|default:'' }}"
+                     placeholder="الاسم الكامل" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              اسم المستخدم <span style="color:#ef4444;">*</span>
+              {% if instance %}<span class="form-optional">(لا يمكن تغييره)</span>{% endif %}
+            </label>
+            <div class="field-wrap">
+              <i class="fas fa-at fi"></i>
+              <input class="form-control" type="text" name="username"
+                     value="{{ instance.username|default:'' }}"
+                     placeholder="اسم_المستخدم"
+                     {% if instance %}readonly style="background:#f8fafc;color:#94a3b8;"{% endif %}
+                     required>
+            </div>
+          </div>
         </div>
-        <div>
-          <div style="display:flex;gap:12px;align-items:center;margin-top:26px;">
-            <label style="display:flex;align-items:center;gap:8px;">
-              <input type="checkbox" name="is_active" {% if not instance or instance.is_active %}checked{% endif %}> نشط
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;">
-              <input type="checkbox" name="is_staff" {% if instance and instance.is_staff %}checked{% endif %}> موظف إداري
-            </label>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف</label>
+            <div class="field-wrap">
+              <i class="fas fa-phone fi"></i>
+              <input class="form-control" type="tel" name="phone"
+                     value="{{ instance.phone|default:'' }}"
+                     placeholder="05xxxxxxxx">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">البريد الإلكتروني</label>
+            <div class="field-wrap">
+              <i class="fas fa-envelope fi"></i>
+              <input class="form-control" type="email" name="email"
+                     value="{{ instance.email|default:'' }}"
+                     placeholder="user@example.com">
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">كلمة المرور {% if instance %}<span class="form-optional">(اتركها فارغة إذا لا تغيير)</span>{% endif %}</label>
-        <input class="form-control" type="password" name="password">
+    <!-- Role -->
+    <div class="uf-section">
+      <div class="uf-section__head">
+        <i class="fas fa-shield-halved" style="color:#8b5cf6;"></i>
+        الدور والصلاحيات
       </div>
+      <div class="uf-section__body">
+        <div class="form-group">
+          <label class="form-label">الدور</label>
+          <select class="form-control" name="role" id="id_role">
+            <option value="">— بدون دور (لا صلاحيات) —</option>
+            {% for r in roles %}
+            <option value="{{ r.pk }}" {% if instance and instance.role_id == r.pk %}selected{% endif %}>
+              {{ r.name }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-hint">
+            <a href="{% url 'accounts:roles' %}" target="_blank" style="color:#7c3aed;font-weight:700;">
+              <i class="fas fa-external-link-alt" style="font-size:10px;"></i>
+              إدارة الأدوار
+            </a>
+            &nbsp;—&nbsp; حدد دوراً لمنح المستخدم صلاحياته تلقائياً
+          </div>
+        </div>
 
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <a href="{% url 'accounts:users' %}" class="btn btn--ghost">إلغاء</a>
-        <button class="btn btn--primary">حفظ المستخدم</button>
+        {% if not roles %}
+        <div style="background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:12px 16px;font-size:13px;color:#713f12;font-weight:600;">
+          <i class="fas fa-triangle-exclamation" style="color:#ca8a04;margin-left:6px;"></i>
+          لا توجد أدوار بعد.
+          <a href="{% url 'accounts:role_add' %}" style="color:#92400e;text-decoration:underline;">أنشئ دوراً أولاً</a>
+        </div>
+        {% endif %}
       </div>
-    </form>
-  </div>
+    </div>
+
+    <!-- Password -->
+    <div class="uf-section">
+      <div class="uf-section__head">
+        <i class="fas fa-lock" style="color:#10b981;"></i>
+        كلمة المرور
+      </div>
+      <div class="uf-section__body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">
+              كلمة المرور
+              {% if instance %}<span class="form-optional">(اتركها فارغة إذا لا تغيير)</span>{% endif %}
+            </label>
+            <div class="field-wrap">
+              <i class="fas fa-lock fi"></i>
+              <input class="form-control" type="password" name="password" id="id_password"
+                     placeholder="{% if instance %}اتركها فارغة للإبقاء على الحالية{% else %}كلمة مرور قوية{% endif %}"
+                     {% if not instance %}required{% endif %}>
+              <button type="button" class="toggle-pass" onclick="togglePass('id_password',this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          {% if not instance %}
+          <div class="form-group">
+            <label class="form-label">تأكيد كلمة المرور</label>
+            <div class="field-wrap">
+              <i class="fas fa-lock fi"></i>
+              <input class="form-control" type="password" name="password2" id="id_password2"
+                     placeholder="أعد كتابة كلمة المرور" required>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </main>
 </div>
+</form>
+</div>
+
+<style>
+.uf-layout{
+  display:grid;grid-template-columns:260px 1fr;
+  grid-template-areas:"aside main";
+  gap:20px;padding:0 24px 40px;align-items:start;
+}
+@media(max-width:860px){
+  .uf-layout{grid-template-columns:1fr;grid-template-areas:"aside""main";padding:0 12px 32px;}
+}
+.uf-aside{grid-area:aside;}
+.uf-main{grid-area:main;display:flex;flex-direction:column;gap:16px;}
+
+.uf-aside__card{background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px;}
+
+.uf-avatar{text-align:center;padding-bottom:16px;border-bottom:1px solid #f1f5f9;}
+.uf-avatar__circle{
+  width:72px;height:72px;border-radius:50%;margin:0 auto 10px;
+  background:linear-gradient(135deg,#ede9fe,#ddd6fe);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:900;color:#7c3aed;
+}
+.uf-avatar__name{font-size:16px;font-weight:800;color:#1e293b;}
+.uf-avatar__username{font-size:12px;color:#94a3b8;margin-top:2px;}
+
+.uf-toggle{
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  padding:10px 12px;background:#f8fafc;border-radius:10px;
+}
+.uf-toggle input{display:none;}
+.uf-toggle__track{
+  width:36px;height:20px;border-radius:100px;background:#cbd5e1;
+  position:relative;transition:background .15s;flex-shrink:0;
+}
+.uf-toggle__track::after{
+  content:'';position:absolute;top:3px;right:3px;
+  width:14px;height:14px;border-radius:50%;background:#fff;
+  transition:transform .15s;
+}
+.uf-toggle input:checked ~ .uf-toggle__track{background:#10b981;}
+.uf-toggle input:checked ~ .uf-toggle__track::after{transform:translateX(-16px);}
+.uf-toggle__label{font-size:13px;font-weight:700;color:#334155;}
+
+.uf-aside__actions{margin-top:20px;}
+
+.uf-section{background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;overflow:hidden;}
+.uf-section__head{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 20px;font-size:14px;font-weight:800;color:#1e293b;
+  border-bottom:1px solid #f1f5f9;background:#fafafa;
+}
+.uf-section__body{padding:20px;}
+
+.fi{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;pointer-events:none;}
+.field-wrap{position:relative;}
+.field-wrap .form-control{padding-right:36px;}
+.toggle-pass{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;
+}
+.toggle-pass:hover{color:#475569;}
+</style>
+
+<script>
+// Update avatar preview
+document.getElementById('id_full_name').addEventListener('input', function() {
+  const name = this.value || 'مستخدم جديد';
+  document.getElementById('avatarName').textContent = name;
+  document.getElementById('avatarCircle').textContent = name[0] || 'م';
+});
+
+function togglePass(id, btn) {
+  const inp = document.getElementById(id);
+  const icon = btn.querySelector('i');
+  if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+  else { inp.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+
+{% if not instance %}
+document.getElementById('userForm').addEventListener('submit', function(e) {
+  const p1 = document.getElementById('id_password').value;
+  const p2El = document.getElementById('id_password2');
+  if (p2El && p1 !== p2El.value) {
+    e.preventDefault();
+    p2El.style.borderColor = '#ef4444';
+    p2El.focus();
+    alert('كلمتا المرور غير متطابقتين.');
+  }
+});
+{% endif %}
+</script>
 {% endblock %}

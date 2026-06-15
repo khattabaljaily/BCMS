@@ -2,40 +2,342 @@
 {% load static %}
 {% block title %}{% if instance %}تعديل دور{% else %}دور جديد{% endif %}{% endblock %}
 {% block page_title %}{% if instance %}تعديل: {{ instance.name }}{% else %}دور جديد{% endif %}{% endblock %}
+{% block nav_team_open %}open{% endblock %}
+{% block nav_roles %}active{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width:720px;margin:auto;">
-  <div class="card__header"><span class="card__title">بيانات الدور</span></div>
-  <div class="card__body">
-    <form method="post">
-      {% csrf_token %}
-      {% if instance %}<input type="hidden" name="pk" value="{{ instance.pk }}">{% endif %}
-      <div class="form-group">
-        <label class="form-label">اسم الدور</label>
-        <input class="form-control" type="text" name="name" value="{{ instance.name|default:'' }}" required>
+<div class="cx-scene">
+<form method="post" id="roleForm">
+{% csrf_token %}
+
+<div class="rf-layout">
+
+  <!-- Right: name + default + save -->
+  <aside class="rf-aside">
+    <div class="rf-aside__card">
+      <div class="rf-aside__icon">
+        <i class="fas fa-shield-halved"></i>
       </div>
-      <div class="form-group">
-        <label class="form-label">الصلاحيات</label>
-        <div class="form-hint">اختر الصلاحيات الممنوحة لهذا الدور.</div>
-        <div style="margin-top:0.5rem">
-          {% for perm in permissions_meta %}
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="{{ perm.field }}" name="{{ perm.field }}" {% if perm.key in instance_perms %}checked{% endif %}>
-              <label class="form-check-label" for="{{ perm.field }}">{{ perm.label }}</label>
+      <h3 class="rf-aside__title">{% if instance %}تعديل الدور{% else %}دور جديد{% endif %}</h3>
+
+      <div class="form-group" style="margin-top:20px;">
+        <label class="form-label">اسم الدور <span style="color:#ef4444;">*</span></label>
+        <input class="form-control" type="text" name="name"
+               value="{{ instance.name|default:'' }}"
+               placeholder="مثال: استقبال، محاسب، مشرف..."
+               required autofocus>
+        <div class="form-hint">اسم يصف طبيعة العمل</div>
+      </div>
+
+      <label class="rf-default-toggle">
+        <input type="checkbox" name="is_default" {% if instance and instance.is_default %}checked{% endif %}>
+        <span class="rf-default-toggle__box"></span>
+        <div>
+          <strong>دور افتراضي</strong>
+          <div style="font-size:11px;color:#64748b;margin-top:2px;">يُطبَّق تلقائياً على المستخدمين الجدد</div>
+        </div>
+      </label>
+
+      <div class="rf-aside__actions">
+        <button type="submit" class="btn btn--primary" style="width:100%;">
+          <i class="fas fa-save"></i> حفظ الدور
+        </button>
+        <a href="{% url 'accounts:roles' %}" class="btn btn--ghost" style="width:100%;margin-top:8px;">
+          إلغاء
+        </a>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="rf-aside__card" style="margin-top:12px;">
+      <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;">الصلاحيات المحددة</div>
+      <div id="selectedCount" style="font-size:28px;font-weight:900;color:#7c3aed;line-height:1;">0</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:2px;">من أصل {{ total_perms }} صلاحية</div>
+    </div>
+  </aside>
+
+  <!-- Left: permissions sections -->
+  <main class="rf-main">
+
+    <!-- Quick presets -->
+    <div class="rf-presets">
+      <div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;">قوالب جاهزة</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button type="button" class="preset-btn" onclick="applyPreset('receptionist')">
+          <i class="fas fa-headset"></i> استقبال
+        </button>
+        <button type="button" class="preset-btn" onclick="applyPreset('accountant')">
+          <i class="fas fa-calculator"></i> محاسب
+        </button>
+        <button type="button" class="preset-btn" onclick="applyPreset('supervisor')">
+          <i class="fas fa-user-tie"></i> مشرف
+        </button>
+        <button type="button" class="preset-btn" onclick="applyPreset('all')">
+          <i class="fas fa-check-double"></i> كل الصلاحيات
+        </button>
+        <button type="button" class="preset-btn preset-btn--clear" onclick="applyPreset('none')">
+          <i class="fas fa-xmark"></i> مسح الكل
+        </button>
+      </div>
+    </div>
+
+    <!-- Permission sections -->
+    {% for section in permissions_meta %}
+    <div class="perm-section">
+      <div class="perm-section__head" onclick="toggleSection(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="perm-section__icon" style="background:{{ section.color }}20;color:{{ section.color }};">
+            <i class="{{ section.icon }}"></i>
+          </div>
+          <div>
+            <div class="perm-section__name">{{ section.section_label }}</div>
+            <div class="perm-section__sub">
+              <span class="sec-checked-count" data-section="{{ section.section }}">{{ section.checked_count }}</span>
+              / {{ section.all_count }} صلاحية
             </div>
-          {% endfor %}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button type="button" class="select-all-btn" onclick="event.stopPropagation();selectAllSection('{{ section.section }}', this)">
+            تحديد الكل
+          </button>
+          <i class="fas fa-chevron-down perm-section__arrow"></i>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <label style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" name="is_default" {% if instance and instance.is_default %}checked{% endif %}> اجعل الدور افتراضياً
+
+      <div class="perm-section__body" data-section-body="{{ section.section }}">
+        {% for action in section.actions %}
+        <label class="perm-check" data-section="{{ section.section }}">
+          <input type="checkbox"
+                 name="{{ action.field }}"
+                 id="{{ action.field }}"
+                 data-section="{{ section.section }}"
+                 {% if action.checked %}checked{% endif %}
+                 onchange="onPermChange()">
+          <span class="perm-check__box"></span>
+          <span class="perm-check__label">{{ action.label }}</span>
         </label>
+        {% endfor %}
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
-        <a href="{% url 'accounts:roles' %}" class="btn btn--ghost">إلغاء</a>
-        <button class="btn btn--primary">حفظ الدور</button>
-      </div>
-    </form>
-  </div>
+    </div>
+    {% endfor %}
+
+  </main>
 </div>
+</form>
+</div>
+
+<style>
+.rf-layout{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  grid-template-areas:"aside main";
+  gap:20px;padding:0 24px 40px;
+  align-items:start;
+}
+@media(max-width:860px){
+  .rf-layout{grid-template-columns:1fr;grid-template-areas:"aside""main";padding:0 12px 32px;}
+}
+.rf-aside{grid-area:aside;}
+.rf-main{grid-area:main;display:flex;flex-direction:column;gap:12px;}
+
+.rf-aside__card{
+  background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px;
+}
+.rf-aside__icon{
+  width:48px;height:48px;border-radius:14px;margin-bottom:12px;
+  background:linear-gradient(135deg,#ede9fe,#ddd6fe);
+  display:flex;align-items:center;justify-content:center;
+  color:#7c3aed;font-size:22px;
+}
+.rf-aside__title{font-size:16px;font-weight:900;color:#1e293b;}
+.rf-aside__actions{margin-top:20px;}
+
+.rf-default-toggle{
+  display:flex;align-items:flex-start;gap:10px;margin-top:14px;
+  cursor:pointer;padding:12px;background:#f8fafc;border-radius:12px;
+}
+.rf-default-toggle input{display:none;}
+.rf-default-toggle__box{
+  width:20px;height:20px;border-radius:6px;border:2px solid #cbd5e1;
+  flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.rf-default-toggle input:checked ~ .rf-default-toggle__box{
+  background:#7c3aed;border-color:#7c3aed;
+}
+.rf-default-toggle input:checked ~ .rf-default-toggle__box::after{
+  content:'✓';color:#fff;font-size:12px;font-weight:900;
+}
+
+/* Presets */
+.rf-presets{
+  background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:16px 20px;
+}
+.preset-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#f1f5f9;color:#475569;border:none;
+  border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.preset-btn:hover{background:#ede9fe;color:#7c3aed;}
+.preset-btn--clear{color:#ef4444;}
+.preset-btn--clear:hover{background:#fef2f2;color:#dc2626;}
+
+/* Permission sections */
+.perm-section{
+  background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;overflow:hidden;
+}
+.perm-section__head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;cursor:pointer;user-select:none;
+  transition:background .15s;
+}
+.perm-section__head:hover{background:#fafafa;}
+.perm-section__icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;
+}
+.perm-section__name{font-size:14px;font-weight:800;color:#1e293b;}
+.perm-section__sub{font-size:12px;color:#94a3b8;margin-top:2px;font-weight:600;}
+.perm-section__arrow{color:#94a3b8;transition:transform .2s;font-size:12px;}
+.perm-section.open .perm-section__arrow{transform:rotate(180deg);}
+
+.select-all-btn{
+  font-size:11px;font-weight:700;color:#7c3aed;
+  background:#ede9fe;border:none;border-radius:7px;padding:5px 10px;
+  cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;
+}
+.select-all-btn:hover{background:#ddd6fe;}
+
+.perm-section__body{
+  display:none;padding:8px 20px 16px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;
+}
+.perm-section.open .perm-section__body{display:grid;}
+/* Start all open if has checked items, else closed */
+
+.perm-check{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;cursor:pointer;
+  transition:background .12s;
+}
+.perm-check:hover{background:#f8fafc;}
+.perm-check input{display:none;}
+.perm-check__box{
+  width:18px;height:18px;border-radius:5px;border:2px solid #cbd5e1;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.perm-check input:checked ~ .perm-check__box{
+  background:#7c3aed;border-color:#7c3aed;
+}
+.perm-check input:checked ~ .perm-check__box::after{
+  content:'✓';color:#fff;font-size:11px;font-weight:900;
+}
+.perm-check__label{font-size:13px;font-weight:600;color:#334155;}
+.perm-check input:checked ~ .perm-check__label{color:#1e293b;font-weight:700;}
+</style>
+
+<script>
+// ── Toggle section open/close ─────────────────────────────
+function toggleSection(head) {
+  head.closest('.perm-section').classList.toggle('open');
+}
+
+// Open sections that have checked items
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.perm-section').forEach(function(sec) {
+    const hasChecked = sec.querySelector('input[type=checkbox]:checked');
+    if (hasChecked) sec.classList.add('open');
+  });
+  updateSelectedCount();
+});
+
+// ── Select all in a section ───────────────────────────────
+function selectAllSection(sectionKey, btn) {
+  const boxes = document.querySelectorAll(`input[data-section="${sectionKey}"]`);
+  const allChecked = [...boxes].every(b => b.checked);
+  boxes.forEach(b => b.checked = !allChecked);
+  btn.textContent = allChecked ? 'تحديد الكل' : 'إلغاء التحديد';
+  updateSectionCount(sectionKey);
+  updateSelectedCount();
+}
+
+// ── On individual perm change ─────────────────────────────
+function onPermChange() {
+  updateSelectedCount();
+  // Update per-section counts
+  document.querySelectorAll('.perm-section').forEach(function(sec) {
+    const body = sec.querySelector('[data-section-body]');
+    if (!body) return;
+    const sKey = body.dataset.sectionBody;
+    updateSectionCount(sKey);
+  });
+}
+
+function updateSectionCount(sectionKey) {
+  const boxes  = document.querySelectorAll(`input[data-section="${sectionKey}"]`);
+  const count  = [...boxes].filter(b => b.checked).length;
+  const el     = document.querySelector(`.sec-checked-count[data-section="${sectionKey}"]`);
+  if (el) el.textContent = count;
+}
+
+function updateSelectedCount() {
+  const total = document.querySelectorAll('.perm-check input:checked').length;
+  const el    = document.getElementById('selectedCount');
+  if (el) el.textContent = total;
+}
+
+// ── Presets ───────────────────────────────────────────────
+const PRESETS = {
+  receptionist: [
+    'appointments.view','appointments.add','appointments.edit',
+    'clients.view','clients.add','clients.edit',
+    'billing.view','billing.create',
+    'services.view',
+  ],
+  accountant: [
+    'billing.view','billing.create','billing.void',
+    'reports.view',
+    'clients.view',
+  ],
+  supervisor: [
+    'appointments.view','appointments.add','appointments.edit','appointments.delete',
+    'clients.view','clients.add','clients.edit',
+    'services.view','services.manage',
+    'billing.view','billing.create',
+    'products.view','products.manage',
+    'staff.view',
+    'store.view',
+    'reports.view',
+  ],
+  all:  '__all__',
+  none: '__none__',
+};
+
+function applyPreset(name) {
+  const preset = PRESETS[name];
+  const allBoxes = document.querySelectorAll('.perm-check input');
+  if (preset === '__all__') {
+    allBoxes.forEach(b => b.checked = true);
+  } else if (preset === '__none__') {
+    allBoxes.forEach(b => b.checked = false);
+  } else {
+    allBoxes.forEach(b => b.checked = false);
+    preset.forEach(function(key) {
+      // field name format: perm_section__action
+      const field = 'perm_' + key.replace('.', '__');
+      const box = document.querySelector(`input[name="${field}"]`);
+      if (box) box.checked = true;
+    });
+  }
+  // Update all section counts
+  document.querySelectorAll('[data-section-body]').forEach(function(body) {
+    updateSectionCount(body.dataset.sectionBody);
+  });
+  updateSelectedCount();
+}
+</script>
 {% endblock %}
