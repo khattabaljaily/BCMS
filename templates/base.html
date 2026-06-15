@@ -341,11 +341,9 @@
           <a href="{% url 'store:bookings' %}" class="nav-subitem {% block nav_bookings %}{% endblock %}">
             <i class="fas fa-calendar-check"></i>
             الحجوزات
-            {% if pending_bookings %}<span class="nav-badge">{{ pending_bookings }}</span>{% endif %}
           </a>
           <a href="{% url 'store:orders' %}" class="nav-subitem {% block nav_orders %}{% endblock %}">
             <i class="fas fa-shopping-cart"></i> الطلبات
-            {% if pending_orders %}<span class="nav-badge">{{ pending_orders }}</span>{% endif %}
           </a>
           <a href="{% url 'core:settings' %}" class="nav-subitem {% block nav_store_settings %}{% endblock %}">
             <i class="fas fa-sliders"></i> إعدادات المتجر
