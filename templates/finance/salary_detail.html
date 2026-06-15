@@ -1,108 +1,250 @@
 {% extends "base.html" %}
 {% load number_format %}
 {% block nav_finance_open %}open{% endblock %}
+{% block nav_finance_salaries %}active{% endblock %}
 {% block page_title %}كشف راتب — {{ sp.specialist.name }}{% endblock %}
 {% block title %}كشف راتب{% endblock %}
 
 {% block content %}
-<div style="max-width:580px;">
+<div class="cx-scene">
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 4px 14px rgba(139,92,246,.28);">
-        <i class="fas fa-file-invoice-dollar"></i>
+  <!-- ── Hero ─────────────────────────────────────────────────── -->
+  <div class="cx-hero" style="margin-bottom:24px;">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <a href="{% url 'finance:salary_list' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;">
+          <i class="fas fa-arrow-right"></i>
+        </a>
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 4px 14px rgba(139,92,246,.28);">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">{{ sp.specialist.name }}</h1>
+          <p class="cx-hero-desc">
+            {{ sp.period_start }} — {{ sp.period_end }}
+            &nbsp;·&nbsp;
+            {% if sp.status == 'draft' %}
+              <span style="color:#d97706;font-weight:700;">مسودة</span>
+            {% elif sp.status == 'paid' %}
+              <span style="color:#059669;font-weight:700;">مدفوع</span>
+            {% else %}
+              <span style="color:#dc2626;font-weight:700;">ملغى</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          {% if sp.status == 'draft' %}
+            <button class="btn btn--primary btn--sm"
+              onclick="BCMS.confirmDelete('تأكيد صرف الراتب وخصمه من الخزينة؟').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
+              <i class="fas fa-check-circle"></i> صرف الراتب
+            </button>
+            <button class="btn btn--ghost btn--sm"
+              onclick="BCMS.confirmDelete('إلغاء كشف الراتب؟').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','warning');setTimeout(()=>location.reload(),400);}}); })">
+              <i class="fas fa-times"></i> إلغاء
+            </button>
+          {% elif sp.status == 'paid' %}
+            <button class="btn btn--ghost btn--sm"
+              onclick="BCMS.confirmDelete('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','warning');setTimeout(()=>location.reload(),400);}}); })">
+              <i class="fas fa-undo"></i> عكس الصرف
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Summary cards ────────────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
+
+    <!-- Net due — highlighted -->
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;border:2px solid #ede9fe;">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(139,92,246,.3);">
+        <i class="fas fa-wallet" style="color:#fff;font-size:16px;"></i>
       </div>
       <div>
-        <h2 style="margin:0;font-size:1.05rem;font-weight:800;">{{ sp.specialist.name }}</h2>
-        <p style="margin:0;font-size:12px;color:var(--muted);">{{ sp.period_start }} — {{ sp.period_end }}</p>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">الصافي المستحق</div>
+        <div style="font-size:22px;font-weight:900;color:#7c3aed;font-feature-settings:'tnum';font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;letter-spacing:-0.5px;">{{ sp.total_due|format_number:2 }}</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      {% if sp.status == 'draft' %}
-        <button class="btn btn--primary btn--sm"
-          onclick="BCMS.confirmDelete('تأكيد صرف الراتب وخصمه من الخزينة؟').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
-          <i class="fas fa-check-circle"></i> صرف الراتب
-        </button>
-        <button class="btn btn--ghost btn--sm"
-          onclick="BCMS.confirmDelete('إلغاء كشف الراتب؟').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','warning');setTimeout(()=>location.reload(),400);}}); })">
-          <i class="fas fa-times"></i> إلغاء
-        </button>
-      {% elif sp.status == 'paid' %}
-        <button class="btn btn--ghost btn--sm"
-          onclick="BCMS.confirmDelete('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','warning');setTimeout(()=>location.reload(),400);}}); })">
-          <i class="fas fa-undo"></i> عكس الصرف
-        </button>
-      {% endif %}
-      <a href="{% url 'finance:salary_list' %}" class="btn btn--ghost btn--sm"><i class="fas fa-arrow-right"></i> رجوع</a>
-    </div>
-  </div>
 
-  <div class="card">
-    <div class="card__body" style="padding:0;">
-
-      <!-- حالة -->
-      <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:13px;color:var(--muted);">الحالة</span>
-        {% if sp.status == 'draft' %}
-          <span class="badge badge--warning">مسودة</span>
-        {% elif sp.status == 'paid' %}
-          <span class="badge badge--success">مدفوع</span>
-        {% else %}
-          <span class="badge badge--danger">ملغى</span>
-        {% endif %}
+    <!-- Base salary -->
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-money-bill-wave" style="color:#475569;font-size:15px;"></i>
       </div>
-
-      <!-- بنود -->
-      {% for label, value, color in rows %}
-      <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:13px;color:var(--muted);">{{ label }}</span>
-        <span style="font-weight:700;{% if color %}color:{{ color }};{% endif %}">{{ value }}</span>
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">الراتب الأساسي</div>
+        <div style="font-size:17px;font-weight:800;color:var(--slate-700);font-feature-settings:'tnum';direction:ltr;unicode-bidi:isolate;">{{ sp.base_salary|format_number:2 }}</div>
       </div>
-      {% endfor %}
+    </div>
 
-      <!-- صافي -->
-      <div style="padding:18px 20px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:15px;font-weight:700;color:#6b21a8;">الصافي المستحق</span>
-        <span style="font-size:1.4rem;font-weight:800;color:#8b5cf6;">{{ sp.total_due|format_number:2 }}</span>
+    <!-- Commission -->
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-chart-line" style="color:#059669;font-size:15px;"></i>
       </div>
-
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">العمولة</div>
+        <div style="font-size:17px;font-weight:800;color:#059669;font-feature-settings:'tnum';direction:ltr;unicode-bidi:isolate;">{{ sp.commission_amount|format_number:2 }}</div>
+      </div>
     </div>
+
+    {% if sp.bonus %}
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-gift" style="color:#10b981;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">الحوافز</div>
+        <div style="font-size:17px;font-weight:800;color:#10b981;font-feature-settings:'tnum';direction:ltr;unicode-bidi:isolate;">+{{ sp.bonus|format_number:2 }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sp.advances_deducted %}
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-minus-circle" style="color:#ef4444;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">السلف المخصومة</div>
+        <div style="font-size:17px;font-weight:800;color:#ef4444;font-feature-settings:'tnum';direction:ltr;unicode-bidi:isolate;">−{{ sp.advances_deducted|format_number:2 }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sp.deductions %}
+    <div class="cx-panel" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:#fff7ed;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas fa-scissors" style="color:#f59e0b;font-size:15px;"></i>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--slate-400);font-weight:700;margin-bottom:4px;">خصومات أخرى</div>
+        <div style="font-size:17px;font-weight:800;color:#f59e0b;font-feature-settings:'tnum';direction:ltr;unicode-bidi:isolate;">−{{ sp.deductions|format_number:2 }}</div>
+      </div>
+    </div>
+    {% endif %}
+
   </div>
 
-  {% if sp.deductions_notes %}
-  <div class="card" style="margin-top:12px;">
-    <div class="card__body">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">تفاصيل الخصومات</p>
-      <p style="margin:0;">{{ sp.deductions_notes }}</p>
-    </div>
-  </div>
-  {% endif %}
+  <!-- ── Details ───────────────────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:1fr {% if advances %}1fr{% endif %};gap:16px;align-items:start;">
 
-  {% if sp.notes %}
-  <div class="card" style="margin-top:12px;">
-    <div class="card__body">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">ملاحظات</p>
-      <p style="margin:0;">{{ sp.notes }}</p>
-    </div>
-  </div>
-  {% endif %}
+    <!-- Details card -->
+    <div class="cx-panel">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-info-circle" style="color:#8b5cf6;font-size:13px;"></i>
+        <span style="font-size:13px;font-weight:800;color:var(--slate-700);">تفاصيل الكشف</span>
+      </div>
+      <div style="padding:0;">
 
-  {% if advances %}
-  <div class="card" style="margin-top:12px;">
-    <div class="card__header"><span class="card__title">السلف المخصومة</span></div>
-    <div class="card__body" style="padding:0;">
-      {% for adv in advances %}
-      <div style="padding:12px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-size:13px;font-weight:600;">{{ adv.date }}</div>
-          {% if adv.notes %}<div style="font-size:12px;color:var(--muted);">{{ adv.notes }}</div>{% endif %}
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">الحالة</span>
+          {% if sp.status == 'draft' %}
+            <span class="badge badge--warning">مسودة</span>
+          {% elif sp.status == 'paid' %}
+            <span class="badge badge--success">مدفوع</span>
+          {% else %}
+            <span class="badge badge--danger">ملغى</span>
+          {% endif %}
         </div>
-        <strong style="color:#f59e0b;">{{ adv.amount|format_number:2 }}</strong>
+
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">الفترة</span>
+          <span style="font-weight:700;font-size:13px;">{{ sp.period_start }} — {{ sp.period_end }}</span>
+        </div>
+
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">الراتب الأساسي</span>
+          <span style="font-weight:700;font-size:13px;color:var(--slate-700);direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">{{ sp.base_salary|format_number:2 }}</span>
+        </div>
+
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">العمولة</span>
+          <span style="font-weight:700;font-size:13px;color:#059669;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">+{{ sp.commission_amount|format_number:2 }}</span>
+        </div>
+
+        {% if sp.bonus %}
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">الحوافز</span>
+          <span style="font-weight:700;font-size:13px;color:#10b981;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">+{{ sp.bonus|format_number:2 }}</span>
+        </div>
+        {% endif %}
+
+        {% if sp.advances_deducted %}
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">السلف المخصومة</span>
+          <span style="font-weight:700;font-size:13px;color:#ef4444;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">−{{ sp.advances_deducted|format_number:2 }}</span>
+        </div>
+        {% endif %}
+
+        {% if sp.deductions %}
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">خصومات أخرى</span>
+          <span style="font-weight:700;font-size:13px;color:#f59e0b;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">−{{ sp.deductions|format_number:2 }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Net total row -->
+        <div style="padding:16px 20px;background:linear-gradient(135deg,#f5f3ff 0%,#faf5ff 100%);display:flex;justify-content:space-between;align-items:center;{% if sp.deductions_notes or sp.notes or sp.treasury %}border-bottom:1px solid var(--slate-100);{% endif %}">
+          <span style="font-size:14px;font-weight:800;color:#6d28d9;">الصافي المستحق</span>
+          <span style="font-size:18px;font-weight:900;color:#7c3aed;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">{{ sp.total_due|format_number:2 }}</span>
+        </div>
+
+        {% if sp.treasury %}
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">الخزينة</span>
+          <span style="font-weight:700;font-size:13px;">
+            <i class="fas fa-university" style="color:#8b5cf6;margin-left:5px;font-size:11px;"></i>
+            {{ sp.treasury.short_name }}
+          </span>
+        </div>
+        {% endif %}
+
+        {% if sp.deductions_notes %}
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">تفاصيل الخصومات</div>
+          <div style="font-size:13px;color:var(--slate-700);">{{ sp.deductions_notes }}</div>
+        </div>
+        {% endif %}
+
+        {% if sp.notes %}
+        <div style="padding:13px 20px;">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ملاحظات</div>
+          <div style="font-size:13px;color:var(--slate-700);">{{ sp.notes }}</div>
+        </div>
+        {% endif %}
+
       </div>
-      {% endfor %}
     </div>
+
+    <!-- Advances card -->
+    {% if advances %}
+    <div class="cx-panel">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-minus-circle" style="color:#ef4444;font-size:13px;"></i>
+          <span style="font-size:13px;font-weight:800;color:var(--slate-700);">السلف المخصومة</span>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:#ef4444;background:#fee2e2;padding:3px 10px;border-radius:20px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">−{{ sp.advances_deducted|format_number:2 }}</span>
+      </div>
+      <div style="padding:0;">
+        {% for adv in advances %}
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--slate-700);">{{ adv.date }}</div>
+            {% if adv.notes %}<div style="font-size:12px;color:var(--muted);margin-top:2px;">{{ adv.notes }}</div>{% endif %}
+          </div>
+          <span style="font-weight:800;color:#ef4444;font-size:14px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">{{ adv.amount|format_number:2 }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
   </div>
-  {% endif %}
 
 </div>
 {% csrf_token %}
