@@ -23,7 +23,7 @@
     </div>
     {% endif %}
 
-    <form method="post" novalidate id="loginForm">
+    <form method="post" novalidate id="loginForm" autocomplete="off">
       {% csrf_token %}
 
       <div class="field">
@@ -32,7 +32,7 @@
           <i class="fas fa-at fi"></i>
           <input type="text" name="username" id="id_username"
                  placeholder="أدخل اسم المستخدم أو بريدك الإلكتروني"
-                 autofocus autocomplete="username"
+                 autocomplete="off" readonly
                  {% if form.username.errors %}class="is-invalid"{% endif %}>
         </div>
         {% if form.username.errors %}
@@ -46,7 +46,7 @@
           <i class="fas fa-lock fi"></i>
           <input type="password" name="password" id="id_password"
                  placeholder="أدخل كلمة المرور"
-                 autocomplete="current-password"
+                 autocomplete="off" readonly
                  {% if form.password.errors %}class="is-invalid"{% endif %}>
           <button type="button" class="toggle-pass"
                   onclick="togglePass('id_password',this)" title="إظهار/إخفاء">
@@ -86,6 +86,15 @@ function togglePass(id, btn) {
   if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
   else { inp.type = 'password'; icon.className = 'fas fa-eye'; }
 }
+document.addEventListener('DOMContentLoaded', function() {
+  ['id_username', 'id_password'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.value = '';
+    el.addEventListener('focus', function() { this.removeAttribute('readonly'); }, { once: true });
+  });
+  setTimeout(function() { document.getElementById('id_username').focus(); }, 50);
+});
 document.getElementById('loginForm').addEventListener('submit', function(e) {
   var u = document.getElementById('id_username');
   var p = document.getElementById('id_password');

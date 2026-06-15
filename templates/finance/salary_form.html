@@ -1,165 +1,201 @@
 {% extends "base.html" %}
 {% load number_format %}
 {% block nav_finance_open %}open{% endblock %}
+{% block nav_finance_salaries %}active{% endblock %}
 {% block page_title %}كشف راتب جديد{% endblock %}
 {% block title %}كشف راتب جديد{% endblock %}
 
 {% block content %}
-<div style="max-width:680px;">
+<div class="cx-scene">
 
-  <!-- رأس الصفحة -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 4px 14px rgba(139,92,246,.28);">
-        <i class="fas fa-file-invoice-dollar"></i>
-      </div>
-      <div>
-        <h2 style="margin:0;font-size:1.1rem;font-weight:800;">كشف راتب جديد</h2>
-        <p style="margin:0;font-size:13px;color:var(--muted);">أدخل بيانات الراتب للفنية</p>
+  <!-- ── Hero ───────────────────────────────────────────────────── -->
+  <div class="cx-hero" style="margin-bottom:24px;">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <a href="{% url 'finance:salary_list' %}" class="btn btn--ghost btn--icon" style="flex-shrink:0;">
+          <i class="fas fa-arrow-right"></i>
+        </a>
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 4px 14px rgba(139,92,246,.28);">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">كشف راتب جديد</h1>
+          <p class="cx-hero-desc">أدخل بيانات الراتب للفنية</p>
+        </div>
       </div>
     </div>
-    <a href="{% url 'finance:salary_list' %}" class="btn btn--ghost btn--sm"><i class="fas fa-arrow-right"></i> رجوع</a>
   </div>
 
-  <!-- خطوة 1: اختيار الفنية والفترة -->
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card__header"><span class="card__title">الفنية والفترة</span></div>
-    <div class="card__body">
-      <form method="get" id="calc-form">
-        <div class="form-grid-3">
+    <!-- ── خطوة 1: الفنية والفترة ─────────────────────────────── -->
+    <div class="cx-panel" style="margin-bottom:16px;">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-user-circle" style="color:#8b5cf6;font-size:13px;"></i>
+        <span style="font-size:13px;font-weight:800;color:var(--slate-700);">الفنية والفترة</span>
+      </div>
+      <div style="padding:18px 20px;">
+        <form method="get" id="calc-form">
+          <div class="form-grid-3">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">الفنية <span style="color:var(--red)">*</span></label>
+              <select name="specialist" class="form-control" onchange="this.form.submit()">
+                <option value="">اختر فنية</option>
+                {% for s in specialists %}
+                  <option value="{{ s.pk }}" {% if selected_specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">من</label>
+              <input type="date" name="period_start" class="form-control" value="{{ request.GET.period_start }}" onchange="this.form.submit()">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">إلى</label>
+              <input type="date" name="period_end" class="form-control" value="{{ request.GET.period_end }}" onchange="this.form.submit()">
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if not selected_specialist_id %}
+    <div class="cx-panel">
+      <div class="cx-empty" style="padding:48px 24px;">
+        <i class="fas fa-user-circle"></i>
+        <p>اختر الفنية أولاً لتعبئة كشف الراتب</p>
+      </div>
+    </div>
+
+    {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="specialist" value="{{ selected_specialist_id }}">
+      <input type="hidden" name="period_start" value="{{ request.GET.period_start }}">
+      <input type="hidden" name="period_end" value="{{ request.GET.period_end }}">
+
+      <!-- ── بنود الراتب ───────────────────────────────────────── -->
+      <div class="cx-panel" style="margin-bottom:16px;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-list-ul" style="color:#8b5cf6;font-size:13px;"></i>
+          <span style="font-size:13px;font-weight:800;color:var(--slate-700);">بنود الراتب</span>
+        </div>
+        <div style="padding:18px 20px;">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">الراتب الأساسي</label>
+              <input name="base_salary" type="number" step="0.01" min="0" class="form-control"
+                     id="f-base" value="{{ pre_base }}" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">العمولة
+                {% if commission_calc %}
+                  <span class="form-optional" style="color:#8b5cf6;">(محسوبة: {{ commission_calc|format_number:2 }})</span>
+                {% endif %}
+              </label>
+              <input name="commission_amount" type="number" step="0.01" min="0" class="form-control"
+                     id="f-comm" value="{{ commission_calc }}" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">الحوافز</label>
+              <input name="bonus" type="number" step="0.01" min="0" class="form-control"
+                     id="f-bonus" value="0" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">خصومات أخرى</label>
+              <input name="deductions" type="number" step="0.01" min="0" class="form-control"
+                     id="f-ded" value="0" oninput="calcTotal()">
+            </div>
+          </div>
           <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">الفنية <span style="color:var(--red)">*</span></label>
-            <select name="specialist" class="form-control" onchange="this.form.submit()">
-              <option value="">اختر فنية</option>
-              {% for s in specialists %}
-                <option value="{{ s.pk }}" {% if selected_specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+            <label class="form-label">تفاصيل الخصومات <span class="form-optional">اختياري</span></label>
+            <input name="deductions_notes" type="text" class="form-control"
+                   placeholder="وصف الخصومات إن وجدت">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── السلف القائمة ─────────────────────────────────────── -->
+      {% if pending_advances %}
+      <div class="cx-panel" style="margin-bottom:16px;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-minus-circle" style="color:#ef4444;font-size:13px;"></i>
+          <span style="font-size:13px;font-weight:800;color:var(--slate-700);">السلف القائمة</span>
+        </div>
+        <div style="padding:14px 20px;">
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">اختر السلف التي تريد خصمها من هذا الراتب</p>
+          {% for adv in pending_advances %}
+          <label style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--slate-200);border-radius:10px;cursor:pointer;margin-bottom:8px;transition:background .15s;"
+                 onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background=''">
+            <input type="checkbox" name="advance_ids" value="{{ adv.pk }}" checked
+                   style="flex-shrink:0;accent-color:#ef4444;" onchange="calcTotal()">
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;color:var(--slate-700);">{{ adv.date }}</div>
+              {% if adv.notes %}<div style="font-size:12px;color:var(--muted);margin-top:2px;">{{ adv.notes }}</div>{% endif %}
+            </div>
+            <strong style="color:#ef4444;font-size:14px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';" data-adv-amount>{{ adv.amount|format_number:2 }}</strong>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── الصرف ─────────────────────────────────────────────── -->
+      <div class="cx-panel" style="margin-bottom:16px;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-university" style="color:#8b5cf6;font-size:13px;"></i>
+          <span style="font-size:13px;font-weight:800;color:var(--slate-700);">الصرف</span>
+        </div>
+        <div style="padding:18px 20px;">
+          <div class="form-group">
+            <label class="form-label">الخزينة</label>
+            <select name="treasury" class="form-control">
+              <option value="">بدون خزينة</option>
+              {% for t in treasuries %}
+                <option value="{{ t.pk }}" {% if forloop.first %}selected{% endif %}>{{ t.name }}</option>
               {% endfor %}
             </select>
           </div>
-          <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">من</label>
-            <input type="date" name="period_start" class="form-control" value="{{ request.GET.period_start }}" onchange="this.form.submit()">
+          <div class="form-group">
+            <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
+            <textarea name="notes" class="form-control" rows="2"></textarea>
           </div>
-          <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">إلى</label>
-            <input type="date" name="period_end" class="form-control" value="{{ request.GET.period_end }}" onchange="this.form.submit()">
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
 
-  {% if not selected_specialist_id %}
-  <div class="card">
-    <div class="card__body">
-      <div class="cx-empty" style="padding:40px;"><i class="fas fa-user-circle"></i><p style="margin-top:12px;">اختر الفنية أولاً لتعبئة كشف الراتب</p></div>
-    </div>
-  </div>
-  {% else %}
-
-  <!-- خطوة 2: بنود الراتب -->
-  <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="specialist" value="{{ selected_specialist_id }}">
-    <input type="hidden" name="period_start" value="{{ request.GET.period_start }}">
-    <input type="hidden" name="period_end" value="{{ request.GET.period_end }}">
-
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card__header"><span class="card__title">بنود الراتب</span></div>
-      <div class="card__body">
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label class="form-label">الراتب الأساسي</label>
-            <input name="base_salary" type="number" step="0.01" min="0" class="form-control" id="f-base" value="{{ pre_base }}" oninput="calcTotal()">
+          <!-- الصافي المستحق -->
+          <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+            <span style="font-size:14px;font-weight:700;color:#6d28d9;">الصافي المستحق</span>
+            <span style="font-size:22px;font-weight:900;color:#7c3aed;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';letter-spacing:-0.5px;" id="total-preview">—</span>
           </div>
-          <div class="form-group">
-            <label class="form-label">العمولة
-              {% if commission_calc %}<span class="form-optional" style="color:#8b5cf6;">(محسوبة: {{ commission_calc|format_number:2 }})</span>{% endif %}
-            </label>
-            <input name="commission_amount" type="number" step="0.01" min="0" class="form-control" id="f-comm" value="{{ commission_calc }}" oninput="calcTotal()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">الحوافز</label>
-            <input name="bonus" type="number" step="0.01" min="0" class="form-control" id="f-bonus" value="0" oninput="calcTotal()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">خصومات أخرى</label>
-            <input name="deductions" type="number" step="0.01" min="0" class="form-control" id="f-ded" value="0" oninput="calcTotal()">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">تفاصيل الخصومات <span class="form-optional">اختياري</span></label>
-          <input name="deductions_notes" type="text" class="form-control" placeholder="وصف الخصومات إن وجدت">
         </div>
       </div>
-    </div>
 
-    {% if pending_advances %}
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card__header"><span class="card__title">السلف القائمة</span></div>
-      <div class="card__body" style="padding-top:8px;">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">اختر السلف التي تريد خصمها من هذا الراتب</p>
-        {% for adv in pending_advances %}
-        <label style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--slate-200);border-radius:8px;cursor:pointer;margin-bottom:6px;transition:background .15s;" onmouseover="this.style.background='var(--rose-50,#fff1f2)'" onmouseout="this.style.background=''">
-          <input type="checkbox" name="advance_ids" value="{{ adv.pk }}" checked style="flex-shrink:0;" onchange="calcTotal()">
-          <div style="flex:1;">
-            <div style="font-size:13px;font-weight:600;">{{ adv.date }}</div>
-            {% if adv.notes %}<div style="font-size:12px;color:var(--muted);">{{ adv.notes }}</div>{% endif %}
-          </div>
-          <strong style="color:#f59e0b;font-size:14px;">{{ adv.amount|format_number:2 }}</strong>
-        </label>
-        {% endfor %}
+      <!-- ── أزرار ─────────────────────────────────────────────── -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:24px;">
+        <a href="{% url 'finance:salary_list' %}" class="btn btn--ghost">إلغاء</a>
+        <button type="submit" class="btn btn--primary">
+          <i class="fas fa-save"></i> إنشاء مسودة
+        </button>
       </div>
-    </div>
+
+    </form>
     {% endif %}
 
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card__header"><span class="card__title">الصرف</span></div>
-      <div class="card__body">
-        <div class="form-group">
-          <label class="form-label">الخزينة</label>
-          <select name="treasury" class="form-control">
-            <option value="">بدون خزينة</option>
-            {% for t in treasuries %}
-              <option value="{{ t.pk }}" {% if forloop.first %}selected{% endif %}>{{ t.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
-          <textarea name="notes" class="form-control" rows="2"></textarea>
-        </div>
-
-        <!-- ملخص الإجمالي -->
-        <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:14px;font-weight:600;color:#6b21a8;">الصافي المستحق</span>
-          <span style="font-size:1.3rem;font-weight:800;color:#8b5cf6;" id="total-preview">—</span>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <a href="{% url 'finance:salary_list' %}" class="btn btn--ghost">إلغاء</a>
-      <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> إنشاء مسودة</button>
-    </div>
-  </form>
-  {% endif %}
 </div>
 
 <script>
 function calcTotal() {
-  var base  = parseFloat(document.getElementById('f-base')?.value  || 0) || 0;
-  var comm  = parseFloat(document.getElementById('f-comm')?.value  || 0) || 0;
-  var bonus = parseFloat(document.getElementById('f-bonus')?.value || 0) || 0;
-  var ded   = parseFloat(document.getElementById('f-ded')?.value   || 0) || 0;
+  var base  = parseFloat(document.getElementById('f-base')?.value)  || 0;
+  var comm  = parseFloat(document.getElementById('f-comm')?.value)  || 0;
+  var bonus = parseFloat(document.getElementById('f-bonus')?.value) || 0;
+  var ded   = parseFloat(document.getElementById('f-ded')?.value)   || 0;
   var adv   = 0;
   document.querySelectorAll('[name=advance_ids]:checked').forEach(function(cb) {
-    var amtEl = cb.closest('label').querySelector('strong');
-    if (amtEl) adv += parseFloat(amtEl.textContent.replace(/,/g,'')) || 0;
+    var amtEl = cb.closest('label').querySelector('[data-adv-amount]');
+    if (amtEl) adv += parseFloat(amtEl.textContent.replace(/,/g, '')) || 0;
   });
   var total = base + comm + bonus - ded - adv;
   var el = document.getElementById('total-preview');
-  if (el) el.textContent = total.toLocaleString('ar-SA', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (el) {
+    el.textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
 }
 document.addEventListener('DOMContentLoaded', calcTotal);
 </script>

@@ -29,31 +29,28 @@
     </div>
   </div>
 
-  <!-- فلاتر -->
-  <div class="cx-panel" style="padding:14px 20px;margin-bottom:0;border-bottom:1px solid var(--border,#f1f5f9);">
-    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
-      <div class="form-group" style="margin:0;min-width:180px;flex:1;">
-        <label class="form-label">الفنية</label>
-        <select name="specialist" class="form-control" onchange="this.form.submit()">
-          <option value="">الكل</option>
-          {% for s in specialists %}
-            <option value="{{ s.pk }}" {% if specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group" style="margin:0;min-width:150px;flex:1;">
-        <label class="form-label">الحالة</label>
-        <select name="status" class="form-control" onchange="this.form.submit()">
-          <option value="">الكل</option>
-          <option value="pending"   {% if status_filter == 'pending'   %}selected{% endif %}>قائمة</option>
-          <option value="deducted"  {% if status_filter == 'deducted'  %}selected{% endif %}>مخصومة</option>
-          <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>ملغاة</option>
-        </select>
-      </div>
-    </form>
-  </div>
-
   <div class="cx-panel">
+    <!-- فلاتر -->
+    <div style="padding:12px 16px;border-bottom:1px solid var(--slate-100);">
+      <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <div class="form-group" style="margin:0;min-width:160px;flex:1;">
+          <select name="specialist" class="form-control" onchange="this.form.submit()">
+            <option value="">كل الفنيات</option>
+            {% for s in specialists %}
+              <option value="{{ s.pk }}" {% if specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:130px;flex:1;">
+          <select name="status" class="form-control" onchange="this.form.submit()">
+            <option value="">كل الحالات</option>
+            <option value="pending"   {% if status_filter == 'pending'   %}selected{% endif %}>قائمة</option>
+            <option value="deducted"  {% if status_filter == 'deducted'  %}selected{% endif %}>مخصومة</option>
+            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>ملغاة</option>
+          </select>
+        </div>
+      </form>
+    </div>
     <div class="cx-table-wrap">
       <table class="cx-table">
         <thead>

@@ -276,7 +276,10 @@ const BCMS = {
     openModal: function (id) {
         var m = document.getElementById(id);
         if (!m) return;
-        // ensure overlay is moved to the end of document.body so it stacks above any existing modals
+        // Cancel any pending close timer so a quick reopen doesn't get hidden mid-transition
+        var timer = parseInt(m.dataset._closeTimer || 0);
+        if (timer) { clearTimeout(timer); delete m.dataset._closeTimer; }
+        // Move to end of body so it stacks above everything else
         try { document.body.appendChild(m); } catch (err) {}
         try { m.style.display = 'flex'; } catch (err) {}
         m.classList.add('open');
@@ -284,12 +287,18 @@ const BCMS = {
     },
 
     closeModal: function (id) {
-        var m = document.getElementById(id);
-        if (!m) return;
-        m.classList.remove('open');
+        // Query all elements with this id (duplicates can exist after multiple loadRemoteModal calls)
+        var all = document.querySelectorAll('#' + CSS.escape(id));
+        all.forEach(function (m) {
+            m.classList.remove('open');
+            var timer = parseInt(m.dataset._closeTimer || 0);
+            if (timer) clearTimeout(timer);
+            var t = setTimeout(function () {
+                try { m.style.display = 'none'; } catch (err) {}
+            }, 220);
+            m.dataset._closeTimer = t;
+        });
         document.body.style.overflow = '';
-        // hide after transition so inline display:none doesn't block future opens
-        setTimeout(function () { try { m.style.display = 'none'; } catch (err) {} }, 220);
     },
 
     // ── Get CSRF token from page ───────────────────────────────────────────────
@@ -442,18 +451,33 @@ const BCMS = {
             .then(function (r) { return r.text(); })
             .then(function (html) {
                 GSpinner.hide();
-                // insert into body
                 var div = document.createElement('div');
                 div.innerHTML = html;
                 var overlay = div.querySelector('.modal-overlay');
-                // move children to body after we have a reference to the modal overlay
+
+                // Remove ALL existing overlays with the same id before inserting the fresh one.
+                // Without this, duplicate ids accumulate and getElementById always returns the
+                // first (stale) one, making the close button on the new modal unresponsive.
+                if (overlay && overlay.id) {
+                    document.querySelectorAll('#' + CSS.escape(overlay.id)).forEach(function (old) {
+                        old.remove();
+                    });
+                }
+
+                // Move children to body; overlay reference remains valid after reparenting
                 Array.from(div.children).forEach(function (ch) { document.body.appendChild(ch); });
+
                 if (overlay) {
-                    var id = overlay.id;
-                    BCMS.openModal(id);
-                    // attach AJAX submit handler for forms inside modal
+                    BCMS.openModal(overlay.id);
                     var form = overlay.querySelector('form');
                     if (form) BCMS._attachModalFormHandler(form, overlay);
+                    // Direct listeners on close buttons — fallback if event delegation misses
+                    overlay.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+                        btn.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            BCMS.closeModal(btn.dataset.closeModal);
+                        });
+                    });
                 }
             }).catch(function (err) { GSpinner.hide(); BCMS.toast('تعذر تحميل النموذج','error'); });
     },
@@ -562,11 +586,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Close modals when overlay clicked or [data-close-modal] clicked
 document.addEventListener('click', function (e) {
-    if (e.target.classList.contains('modal-overlay')) {
-        e.target.classList.remove('open');
-        document.body.style.overflow = '';
-        // hide after transition so inline display:none doesn't block future opens
-        setTimeout(function () { try { e.target.style.display = 'none'; } catch (err) {} }, 220);
+    if (e.target.classList.contains('modal-overlay') && e.target.id) {
+        BCMS.closeModal(e.target.id);
+        return;
     }
     var closer = e.target.closest('[data-close-modal]');
     if (closer) BCMS.closeModal(closer.dataset.closeModal);

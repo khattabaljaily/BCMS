@@ -110,7 +110,7 @@
 
 /* ── Table helpers ────────────────────────────────── */
 .tc { text-align: center !important; }
-.form-control--sm { padding: 5px 8px; font-size: 12.5px; }
+.form-control--sm { height: 28px; padding: 0 8px; font-size: 12px; box-sizing: border-box; }
 
 /* ── Client picker ───────────────────────────────── */
 .client-picker { position: relative; overflow: visible; z-index: 1; }

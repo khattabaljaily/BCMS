@@ -179,9 +179,10 @@ html,body {
 .field-wrap input,
 .field-wrap select {
   width:100%;
-  padding:8px 38px 8px 12px;
+  height:36px; padding:0 38px 0 12px;
+  box-sizing:border-box;
   border:1.5px solid var(--border); border-radius:12px;
-  font-size:13.5px; font-family:'Cairo',sans-serif;
+  font-size:13px; font-family:'Cairo',sans-serif;
   color:var(--text); background:#f8fafc;
   transition:var(--t); outline:none;
   direction:rtl; -webkit-appearance:none; appearance:none;
@@ -364,4 +365,24 @@ html,body {
   .card-hero-icon { width:52px; height:52px; font-size:22px; margin-bottom:12px; }
   .card-hero h1 { font-size:18px; }
   .deco { display:none !important; }
+}
+
+/* ── LTR fields: icon on left, text right-aligned ───────── */
+.field-wrap:has(input[type="email"]) .fi,
+.field-wrap:has(input[type="tel"]) .fi {
+  left: 14px;
+  right: auto;
+}
+.field-wrap:has(input[type="email"]) input,
+.field-wrap:has(input[type="tel"]) input {
+  padding-left: 38px;
+  padding-right: 12px;
+  direction: ltr;
+  text-align: right;
+  height: 36px;
+  box-sizing: border-box;
+}
+.field-wrap:has(input[type="email"]) input::placeholder,
+.field-wrap:has(input[type="tel"]) input::placeholder {
+  text-align: right;
 }
