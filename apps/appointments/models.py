@@ -27,7 +27,7 @@ class Appointment(CenterMixin):
     specialist = models.ForeignKey(
         Specialist, on_delete=models.SET_NULL,
         null=True, blank=True,
-        related_name='appointments', verbose_name='الفنية/الفني'
+        related_name='appointments', verbose_name='مقدم الخدمة'
     )
     package    = models.ForeignKey(
         Package, on_delete=models.SET_NULL,

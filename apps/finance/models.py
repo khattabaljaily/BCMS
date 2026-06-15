@@ -163,7 +163,7 @@ class ClientPayment(CenterMixin):
 # ── الرواتب والسلف ────────────────────────────────────────────────────────────
 
 class Advance(CenterMixin):
-    """سلفة للفنية"""
+    """سلفة لمقدم الخدمة"""
     STATUS = [
         ('pending',   'قائمة'),
         ('deducted',  'مخصومة'),
@@ -171,7 +171,7 @@ class Advance(CenterMixin):
     ]
 
     specialist     = models.ForeignKey('staff.Specialist', on_delete=models.CASCADE,
-                                       related_name='advances', verbose_name='الفنية')
+                                       related_name='advances', verbose_name='مقدم الخدمة')
     amount         = models.DecimalField('المبلغ', max_digits=10, decimal_places=2)
     date           = models.DateField('التاريخ', default=timezone.localdate)
     treasury       = models.ForeignKey(Treasury, on_delete=models.SET_NULL,
@@ -229,7 +229,7 @@ class Advance(CenterMixin):
 
 
 class SalaryPayment(CenterMixin):
-    """كشف راتب شهري للفنية"""
+    """كشف راتب شهري لمقدم الخدمة"""
     STATUS = [
         ('draft',     'مسودة'),
         ('paid',      'مدفوع'),
@@ -237,7 +237,7 @@ class SalaryPayment(CenterMixin):
     ]
 
     specialist        = models.ForeignKey('staff.Specialist', on_delete=models.CASCADE,
-                                          related_name='salary_payments', verbose_name='الفنية')
+                                          related_name='salary_payments', verbose_name='مقدم الخدمة')
     period_start      = models.DateField('من')
     period_end        = models.DateField('إلى')
 

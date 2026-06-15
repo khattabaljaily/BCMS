@@ -54,7 +54,7 @@
             <th>الوقت</th>
             <th>العميل</th>
             <th>الخدمات</th>
-            <th>الفنية</th>
+            <th>مقدم الخدمة</th>
             <th>الإجمالي</th>
             <th>الحالة</th>
             <th></th>
@@ -141,7 +141,7 @@
             </span>
           </div>
           <div>
-            <span class="cx-card-meta-label">الفنية</span>
+            <span class="cx-card-meta-label">مقدم الخدمة</span>
             <span class="cx-card-meta-value">{{ appt.specialist.name|default:"—" }}</span>
           </div>
           <div>
@@ -196,7 +196,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">الفنية / الفني</label>
+            <label class="form-label">مقدم الخدمة</label>
             <select class="form-control" name="specialist_id">
               <option value="">— أي شخص —</option>
               {% for sp in specialists %}

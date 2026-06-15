@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     nowIndicator: true,
     eventClick(info) {
       const p = info.event.extendedProps;
-      BCMS.alertModal(`${info.event.title}<br>الحالة: ${p.status}<br>الفنية: ${p.specialist}<br>الهاتف: ${p.phone}`, 'معلومات الموعد');
+      BCMS.alertModal(`${info.event.title}<br>الحالة: ${p.status}<br>مقدم الخدمة: ${p.specialist}<br>الهاتف: ${p.phone}`, 'معلومات الموعد');
     },
     windowResize() {
       if (mobile()) {

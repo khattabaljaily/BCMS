@@ -35,7 +35,7 @@
       <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <div class="form-group" style="margin:0;min-width:160px;flex:1;">
           <select name="specialist" class="form-control" onchange="this.form.submit()">
-            <option value="">كل الفنيات</option>
+            <option value="">كل مقدمي الخدمة</option>
             {% for s in specialists %}
               <option value="{{ s.pk }}" {% if specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
             {% endfor %}
@@ -56,7 +56,7 @@
         <thead>
           <tr>
             <th>التاريخ</th>
-            <th>الفنية</th>
+            <th>مقدم الخدمة</th>
             <th>المبلغ</th>
             <th>الخزينة</th>
             <th>الحالة</th>

@@ -254,7 +254,7 @@ p{margin:0;}
     <!-- Step 1: Services (multi-select) -->
     <div class="booking-step" id="step-service">
       <div class="step-header">
-        <div class="step-num">1</div> اختاري الخدمات
+        <div class="step-num">1</div> اختر الخدمات
         <span id="svc-count-badge" style="display:none;margin-right:auto;font-size:12px;font-weight:700;background:var(--rose);color:#fff;border-radius:20px;padding:2px 10px;"></span>
       </div>
       <div class="svc-grid">
@@ -281,7 +281,7 @@ p{margin:0;}
         <span id="svc-total-val"></span>
       </div>
       <button type="button" id="svc-next-btn" onclick="goToDate()" style="display:none;width:100%;margin-top:10px;padding:12px;background:var(--rose);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;">
-        التالي — اختاري التاريخ <i class="fas fa-arrow-left"></i>
+        التالي — اختيار التاريخ <i class="fas fa-arrow-left"></i>
       </button>
       <div class="svc-skip" onclick="goToDate()">تجاوز — لم أحدد الخدمة بعد</div>
     </div>
@@ -290,7 +290,7 @@ p{margin:0;}
     <!-- Step 2: Date -->
     <div class="booking-step" id="step-date" {% if services %}style="display:none;"{% endif %}>
       <div class="step-header">
-        <div class="step-num">{% if services %}2{% else %}1{% endif %}</div> اختاري التاريخ
+        <div class="step-num">{% if services %}2{% else %}1{% endif %}</div> اختر التاريخ
       </div>
       <input type="date" name="date" id="booking-date" class="date-input"
              min="{{ today }}" max="{{ max_date }}" required
@@ -312,10 +312,10 @@ p{margin:0;}
     <!-- Step 3: Time slots -->
     <div class="booking-step" id="step-time" style="display:none;">
       <div class="step-header">
-        <div class="step-num">{% if services %}3{% else %}2{% endif %}</div> اختاري الوقت
+        <div class="step-num">{% if services %}3{% else %}2{% endif %}</div> اختر الوقت
       </div>
       <div class="slots-grid" id="slots-grid">
-        <div class="slot-empty">اختاري تاريخاً أولاً</div>
+        <div class="slot-empty">يرجى اختيار تاريخ أولاً</div>
       </div>
     </div>
 

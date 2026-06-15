@@ -20,25 +20,25 @@
         </div>
         <div>
           <h1 class="cx-hero-title">كشف راتب جديد</h1>
-          <p class="cx-hero-desc">أدخل بيانات الراتب للفنية</p>
+          <p class="cx-hero-desc">أدخل بيانات الراتب لمقدم الخدمة</p>
         </div>
       </div>
     </div>
   </div>
 
-    <!-- ── خطوة 1: الفنية والفترة ─────────────────────────────── -->
+    <!-- ── خطوة 1: مقدم الخدمة والفترة ─────────────────────────────── -->
     <div class="cx-panel" style="margin-bottom:16px;">
       <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
         <i class="fas fa-user-circle" style="color:#8b5cf6;font-size:13px;"></i>
-        <span style="font-size:13px;font-weight:800;color:var(--slate-700);">الفنية والفترة</span>
+        <span style="font-size:13px;font-weight:800;color:var(--slate-700);">مقدم الخدمة والفترة</span>
       </div>
       <div style="padding:18px 20px;">
         <form method="get" id="calc-form">
           <div class="form-grid-3">
             <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label">الفنية <span style="color:var(--red)">*</span></label>
+              <label class="form-label">مقدم الخدمة <span style="color:var(--red)">*</span></label>
               <select name="specialist" class="form-control" onchange="this.form.submit()">
-                <option value="">اختر فنية</option>
+                <option value="">اختر مقدم الخدمة</option>
                 {% for s in specialists %}
                   <option value="{{ s.pk }}" {% if selected_specialist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
                 {% endfor %}
@@ -61,7 +61,7 @@
     <div class="cx-panel">
       <div class="cx-empty" style="padding:48px 24px;">
         <i class="fas fa-user-circle"></i>
-        <p>اختر الفنية أولاً لتعبئة كشف الراتب</p>
+        <p>اختر مقدم الخدمة أولاً لتعبئة كشف الراتب</p>
       </div>
     </div>
 

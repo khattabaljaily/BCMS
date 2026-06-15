@@ -9,9 +9,9 @@
       {% csrf_token %}
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">الفنية <span style="color:var(--red)">*</span></label>
+          <label class="form-label">مقدم الخدمة <span style="color:var(--red)">*</span></label>
           <select name="specialist" class="form-control" required>
-            <option value="">اختر فنية</option>
+            <option value="">اختر مقدم الخدمة</option>
             {% for s in specialists %}
               <option value="{{ s.pk }}">{{ s.name }}</option>
             {% endfor %}

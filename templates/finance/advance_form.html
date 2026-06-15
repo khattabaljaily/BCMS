@@ -7,9 +7,9 @@
     <form method="post">
       {% csrf_token %}
       <div class="form-group">
-        <label>الفنية</label>
+        <label>مقدم الخدمة</label>
         <select name="specialist" class="form-control" required>
-          <option value="">اختر فنية</option>
+          <option value="">اختر مقدم الخدمة</option>
           {% for s in specialists %}
             <option value="{{ s.pk }}">{{ s.name }}</option>
           {% endfor %}

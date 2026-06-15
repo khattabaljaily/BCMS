@@ -8,7 +8,7 @@ from apps.services.models import Service
 
 
 class Specialist(CenterMixin):
-    """فنية/فني تجميل"""
+    """مقدم خدمة"""
 
     SALARY_TYPE = [
         ('fixed',      'راتب ثابت'),
