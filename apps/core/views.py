@@ -558,6 +558,107 @@ def center_support_create(request):
     return JsonResponse({'ok': True, 'redirect': reverse('core:support_detail', args=[ticket.pk])})
 
 
+def pricing_view(request):
+    """Public pricing page — no login required."""
+    from datetime import date
+    return render(request, 'core/pricing.html', {'today': date.today()})
+
+
+@login_required
+def subscription_view(request):
+    """Tenant subscription info page."""
+    from datetime import date
+    center = request.center
+    today  = date.today()
+
+    PLAN_META = {
+        'trial': {
+            'label': 'تجريبي',
+            'color': '#64748b',
+            'badge_class': 'badge-trial',
+            'icon': 'fas fa-flask',
+        },
+        'starter': {
+            'label': 'مبتدئ',
+            'color': '#3b82f6',
+            'badge_class': 'badge-starter',
+            'icon': 'fas fa-seedling',
+        },
+        'pro': {
+            'label': 'احترافي',
+            'color': '#8b5cf6',
+            'badge_class': 'badge-pro',
+            'icon': 'fas fa-star',
+        },
+        'enterprise': {
+            'label': 'مؤسسات',
+            'color': '#f59e0b',
+            'badge_class': 'badge-enterprise',
+            'icon': 'fas fa-building',
+        },
+    }
+
+    plan_info = PLAN_META.get(center.plan, PLAN_META['trial'])
+    days_left = None
+    if center.plan_expires:
+        delta = (center.plan_expires - today).days
+        days_left = max(0, delta)
+
+    PLAN_FEATURES = {
+        'trial': [
+            'إدارة المواعيد والتقويم',
+            'إدارة العملاء',
+            'إدارة الخدمات والباقات',
+            'الفواتير والمدفوعات',
+            'إدارة المخزون والمنتجات',
+            'إدارة الفريق',
+            'الحسابات والمالية',
+            'المتجر الإلكتروني والحجز الذاتي',
+            'نظام نقاط الولاء',
+            'التقارير والإحصائيات',
+            'الدعم الفني',
+        ],
+        'starter': [
+            'إدارة المواعيد والتقويم',
+            'إدارة العملاء (حتى 500 عميل)',
+            'إدارة الخدمات والباقات',
+            'الفواتير والمدفوعات',
+            'التقارير الأساسية',
+            'الدعم الفني',
+        ],
+        'pro': [
+            'كل ميزات الباقة الأساسية',
+            'عملاء غير محدود',
+            'إدارة المخزون والمنتجات',
+            'إدارة الفريق والرواتب',
+            'الحسابات والمالية الكاملة',
+            'المتجر الإلكتروني والحجز الذاتي',
+            'نظام نقاط الولاء',
+            'التقارير المتقدمة',
+            'أدوار وصلاحيات متعددة',
+            'الدعم الفني ذو الأولوية',
+        ],
+        'enterprise': [
+            'كل ميزات الباقة الاحترافية',
+            'موظفون ومستخدمون غير محدودين',
+            'النسخ الاحتياطي واستعادة البيانات',
+            'تخصيص كامل للفواتير والعلامة التجارية',
+            'دعم فني على مدار الساعة',
+            'مدير حساب مخصص',
+        ],
+    }
+
+    features = PLAN_FEATURES.get(center.plan, PLAN_FEATURES['starter'])
+
+    return render(request, 'core/subscription.html', {
+        'center': center,
+        'plan_info': plan_info,
+        'days_left': days_left,
+        'features': features,
+        'today': today,
+    })
+
+
 @login_required
 def center_support_detail(request, pk):
     from apps.core.models import SupportTicket, SupportMessage

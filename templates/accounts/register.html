@@ -13,11 +13,18 @@
       <span>EnjazBCMS</span>
     </div>
     <h1>إنشاء حساب جديد</h1>
+    {% if selected_plan_label %}
+    <p style="margin-bottom:10px;">باقة <strong>{{ selected_plan_label }}</strong> — 30 يوم مجاناً بدون بطاقة</p>
+    {% else %}
     <p>أدخل بياناتك وابدأ مجاناً — منصة متكاملة لإدارة مركزك</p>
+    {% endif %}
     <div class="reg-feats">
       <div class="reg-feat"><i class="fas fa-calendar-check"></i><span>إدارة المواعيد</span></div>
       <div class="reg-feat"><i class="fas fa-users"></i><span>ملفات العملاء</span></div>
       <div class="reg-feat"><i class="fas fa-chart-bar"></i><span>تقارير وأرباح</span></div>
+    </div>
+    <div style="margin-top:14px;display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;">
+      <i class="fas fa-shield-check"></i> تجربة مجانية 30 يوماً · بدون بطاقة بنكية
     </div>
   </div>
 
@@ -36,6 +43,7 @@
 
     <form method="post" novalidate id="registerForm" autocomplete="off">
       {% csrf_token %}
+      <input type="hidden" name="selected_plan" value="{{ selected_plan|default:'pro' }}">
 
       <div class="grid-2">
 
@@ -184,6 +192,8 @@
     <div class="card-footer">
       لديك حساب؟
       <a href="{% url 'accounts:login' %}"><i class="fas fa-sign-in-alt"></i> سجّل الدخول</a>
+      &nbsp;·&nbsp;
+      <a href="{% url 'core:pricing' %}"><i class="fas fa-tag"></i> الأسعار والباقات</a>
     </div>
 
   </div><!-- /card-body -->

@@ -35,13 +35,24 @@ def register_view(request):
     if request.user.is_authenticated:
         return redirect('core:dashboard')
 
-    form = RegisterForm(request.POST or None)
+    initial = {}
+    plan_param = request.GET.get('plan', '').strip()
+    if plan_param in {'starter', 'pro', 'enterprise'}:
+        initial['selected_plan'] = plan_param
+
+    form = RegisterForm(request.POST or None, initial=initial)
     if request.method == 'POST' and form.is_valid():
         user = form.save()
         login(request, user)
         return redirect('core:dashboard')
 
-    return render(request, 'accounts/register.html', {'form': form})
+    PLAN_LABELS = {'starter': 'الأساسية', 'pro': 'الاحترافية', 'enterprise': 'المؤسسات'}
+    selected_plan = request.POST.get('selected_plan') or plan_param or 'pro'
+    return render(request, 'accounts/register.html', {
+        'form': form,
+        'selected_plan': selected_plan,
+        'selected_plan_label': PLAN_LABELS.get(selected_plan, 'الاحترافية'),
+    })
 
 
 def logout_view(request):

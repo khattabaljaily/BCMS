@@ -352,6 +352,17 @@
         الدعم الفني
       </a>
 
+      <!-- الاشتراك والباقة -->
+      <a href="{% url 'core:subscription' %}" class="nav-item {% block nav_subscription %}{% endblock %}" style="margin-top:8px;">
+        <span class="nav-icon">
+          <i class="fas fa-crown" style="color:{% if center and center.plan == 'enterprise' %}#f59e0b{% elif center and center.plan == 'pro' %}#a78bfa{% elif center and center.plan == 'trial' %}#fb7185{% else %}#60a5fa{% endif %};"></i>
+        </span>
+        الاشتراك
+        {% if center and center.plan == 'trial' %}
+        <span style="font-size:9px;font-weight:800;background:linear-gradient(135deg,#db2777,#9d174d);color:#fff;border-radius:5px;padding:2px 6px;margin-right:auto;">تجريبي</span>
+        {% endif %}
+      </a>
+
     </nav>
 
   </nav>

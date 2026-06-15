@@ -24,12 +24,16 @@ class LoginForm(forms.Form):
         return data
 
 
+VALID_PLANS = {'starter', 'pro', 'enterprise'}
+
+
 class RegisterForm(forms.Form):
     # بيانات المركز
-    center_name = forms.CharField(label='اسم المركز', max_length=200)
-    phone       = forms.CharField(label='رقم الهاتف', max_length=20)
-    country     = forms.ChoiceField(label='الدولة', choices=COUNTRY_CHOICES)
-    city        = forms.CharField(label='المدينة', max_length=100, required=False)
+    center_name   = forms.CharField(label='اسم المركز', max_length=200)
+    phone         = forms.CharField(label='رقم الهاتف', max_length=20)
+    country       = forms.ChoiceField(label='الدولة', choices=COUNTRY_CHOICES)
+    city          = forms.CharField(label='المدينة', max_length=100, required=False)
+    selected_plan = forms.CharField(max_length=20, required=False, widget=forms.HiddenInput)
 
     # بيانات المالك
     full_name = forms.CharField(label='اسمك الكامل', max_length=200)
@@ -56,9 +60,27 @@ class RegisterForm(forms.Form):
         return data
 
     def save(self):
+        from datetime import date, timedelta
         data = self.cleaned_data
         country_code = data['country']
         country_info = ARAB_COUNTRIES[country_code]
+
+        # Determine intended plan (stored for sysadmin visibility)
+        intended_plan = data.get('selected_plan', '').strip()
+        if intended_plan not in VALID_PLANS:
+            intended_plan = 'pro'
+
+        # All new registrations start with a 30-day trial
+        trial_start   = date.today()
+        trial_expires = trial_start + timedelta(days=30)
+
+        # Set limits based on intended plan
+        PLAN_LIMITS = {
+            'starter':    {'max_staff': 3,  'max_users': 2},
+            'pro':        {'max_staff': 10, 'max_users': 5},
+            'enterprise': {'max_staff': 50, 'max_users': 20},
+        }
+        limits = PLAN_LIMITS.get(intended_plan, PLAN_LIMITS['pro'])
 
         # Build unique slug
         base_slug = slugify(data['center_name']) or 'center'
@@ -83,6 +105,11 @@ class RegisterForm(forms.Form):
             country=country_code,
             timezone=country_info['timezone'],
             currency=country_info['currency'],
+            plan='trial',
+            plan_start=trial_start,
+            plan_expires=trial_expires,
+            max_staff=limits['max_staff'],
+            max_users=limits['max_users'],
         )
 
         user = User.objects.create_user(

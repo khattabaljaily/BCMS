@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}الاشتراك{% endblock %}
+{% block nav_subscription %}active{% endblock %}
+
+{% block body %}
+<div class="page-header">
+  <h1 class="page-title"><i class="fas fa-crown" style="color:#f59e0b;"></i> الاشتراك والباقة</h1>
+</div>
+
+<style>
+/* ── Subscription page styles ── */
+.sub-layout{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+@media(max-width:900px){.sub-layout{grid-template-columns:1fr}}
+
+/* Status card */
+.sub-status-card{
+  background:#fff;border-radius:20px;border:1px solid #e2e8f0;
+  overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);
+}
+.sub-status-hero{
+  padding:36px 32px;
+  display:flex;align-items:center;gap:20px;
+  position:relative;overflow:hidden;
+}
+.sub-status-hero::before{
+  content:'';position:absolute;top:-40px;left:-40px;
+  width:220px;height:220px;border-radius:50%;
+  background:rgba(255,255,255,.08);pointer-events:none;
+}
+.sub-status-hero--trial{background:linear-gradient(135deg,#64748b,#475569)}
+.sub-status-hero--starter{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+.sub-status-hero--pro{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+.sub-status-hero--enterprise{background:linear-gradient(135deg,#f59e0b,#d97706)}
+
+.sub-plan-icon{
+  width:64px;height:64px;border-radius:18px;
+  background:rgba(255,255,255,.2);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;color:#fff;flex-shrink:0;
+  border:1px solid rgba(255,255,255,.25);
+}
+.sub-plan-meta{flex:1;min-width:0;color:#fff}
+.sub-plan-meta .plan-tag{
+  font-size:10px;font-weight:800;letter-spacing:.12em;
+  background:rgba(255,255,255,.2);border-radius:6px;
+  padding:3px 10px;display:inline-block;margin-bottom:8px;
+}
+.sub-plan-meta h2{font-size:26px;font-weight:900;margin-bottom:4px}
+.sub-plan-meta p{font-size:14px;font-weight:600;opacity:.85}
+
+.sub-status-body{padding:28px 32px}
+.sub-info-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;
+}
+.sub-info-item{
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;
+  padding:16px;
+}
+.sub-info-item__label{font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:.06em;margin-bottom:5px}
+.sub-info-item__value{font-size:16px;font-weight:800;color:#0f172a}
+.sub-info-item__value--green{color:#10b981}
+.sub-info-item__value--red{color:#ef4444}
+.sub-info-item__value--orange{color:#f59e0b}
+
+/* Progress bar */
+.sub-progress{margin-bottom:28px}
+.sub-progress__label{
+  display:flex;justify-content:space-between;
+  font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;
+}
+.sub-progress__bar{
+  height:8px;border-radius:100px;background:#e2e8f0;overflow:hidden;
+}
+.sub-progress__fill{
+  height:100%;border-radius:100px;
+  background:linear-gradient(90deg,#8b5cf6,#db2777);
+  transition:width .6s ease;
+}
+.sub-progress__fill--danger{background:linear-gradient(90deg,#ef4444,#f97316)}
+
+/* Features list */
+.sub-features-card{
+  background:#fff;border:1px solid #e2e8f0;border-radius:20px;
+  padding:28px 32px;box-shadow:0 4px 20px rgba(0,0,0,.06);
+}
+.sub-features-card h3{font-size:16px;font-weight:800;color:#0f172a;margin-bottom:20px;
+  display:flex;align-items:center;gap:8px;}
+.sub-features-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.sub-feature{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;font-weight:600;color:#334155;
+  padding:10px 14px;border-radius:10px;
+  background:#f8fafc;border:1px solid #f1f5f9;
+}
+.sub-feature i{color:#10b981;font-size:13px;flex-shrink:0}
+
+/* Sidebar cards */
+.sub-side-card{
+  background:#fff;border:1px solid #e2e8f0;border-radius:20px;
+  padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);
+  margin-bottom:20px;
+}
+.sub-side-card h4{font-size:14px;font-weight:800;color:#0f172a;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;}
+.upgrade-btn{
+  display:block;width:100%;padding:13px;border-radius:12px;border:none;
+  background:linear-gradient(135deg,#db2777,#9d174d);color:#fff;
+  font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;
+  text-align:center;text-decoration:none;
+  box-shadow:0 4px 14px rgba(219,39,119,.35);
+  transition:all .2s;
+}
+.upgrade-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(219,39,119,.45)}
+.upgrade-btn i{margin-left:6px}
+
+.compare-mini{display:flex;flex-direction:column;gap:10px}
+.compare-mini-item{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:13px;font-weight:600;padding:10px 12px;
+  border-radius:10px;border:1px solid #e2e8f0;
+  background:#f8fafc;cursor:pointer;text-decoration:none;color:inherit;
+  transition:all .15s;
+}
+.compare-mini-item:hover{border-color:#db2777;background:#fdf2f8}
+.compare-mini-item .plan-name{font-weight:800;color:#334155}
+.compare-mini-item .plan-price{font-size:12px;color:#94a3b8}
+.compare-mini-item .plan-check{color:#10b981;font-size:13px}
+.compare-mini-item.current-plan{border-color:#8b5cf6;background:linear-gradient(135deg,#faf5ff,#ede9fe)}
+.compare-mini-item.current-plan .plan-name{color:#6d28d9}
+
+/* Trial expiry warning */
+.trial-warning{
+  background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(239,68,68,.08));
+  border:1px solid rgba(245,158,11,.3);border-radius:14px;
+  padding:18px 20px;margin-bottom:24px;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.trial-warning i{color:#f59e0b;font-size:20px;flex-shrink:0;margin-top:2px}
+.trial-warning__title{font-size:14px;font-weight:800;color:#92400e;margin-bottom:4px}
+.trial-warning__desc{font-size:13px;color:#78350f;font-weight:500}
+
+.expired-badge{
+  background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(239,68,68,.05));
+  border:1px solid rgba(239,68,68,.3);border-radius:14px;
+  padding:18px 20px;margin-bottom:24px;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.expired-badge i{color:#ef4444;font-size:20px;flex-shrink:0;margin-top:2px}
+.expired-badge__title{font-size:14px;font-weight:800;color:#991b1b;margin-bottom:4px}
+.expired-badge__desc{font-size:13px;color:#7f1d1d;font-weight:500}
+
+/* Limits grid */
+.limits-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.limit-item{
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;
+  padding:14px;text-align:center;
+}
+.limit-item__num{font-size:28px;font-weight:900;color:#0f172a;line-height:1}
+.limit-item__label{font-size:11px;font-weight:700;color:#94a3b8;margin-top:4px}
+</style>
+
+<div class="sub-layout">
+
+  <!-- ── Main column ── -->
+  <div>
+
+    <!-- Status hero card -->
+    <div class="sub-status-card" style="margin-bottom:24px;">
+      <div class="sub-status-hero sub-status-hero--{{ center.plan }}">
+        <div class="sub-plan-icon">
+          <i class="{{ plan_info.icon }}"></i>
+        </div>
+        <div class="sub-plan-meta">
+          <div class="plan-tag">{{ center.get_plan_display|upper }}</div>
+          <h2>الباقة {{ plan_info.label }}</h2>
+          <p>
+            {% if center.plan == 'trial' %}
+              تجربة مجانية — اكتشف كل ميزات المنصة
+            {% elif center.plan == 'starter' %}
+              الباقة الأساسية — مثالية للمراكز الصغيرة
+            {% elif center.plan == 'pro' %}
+              الباقة الاحترافية — الأكثر شمولاً للمراكز النشطة
+            {% elif center.plan == 'enterprise' %}
+              باقة المؤسسات — لا حدود لنمو مركزك
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <div class="sub-status-body">
+
+        <!-- Expiry warning / expired -->
+        {% if center.is_expired %}
+        <div class="expired-badge">
+          <i class="fas fa-ban"></i>
+          <div>
+            <div class="expired-badge__title">انتهى الاشتراك</div>
+            <div class="expired-badge__desc">انتهت صلاحية اشتراكك. تواصل مع فريق إنجاز لتجديد الاشتراك والحفاظ على بياناتك.</div>
+          </div>
+        </div>
+        {% elif days_left is not None and days_left <= 7 %}
+        <div class="trial-warning">
+          <i class="fas fa-clock"></i>
+          <div>
+            <div class="trial-warning__title">
+              {% if center.plan == 'trial' %}ينتهي وقت تجربتك المجانية قريباً{% else %}ينتهي اشتراكك قريباً{% endif %}
+            </div>
+            <div class="trial-warning__desc">
+              لديك <strong>{{ days_left }} يوم</strong> متبقية.
+              تواصل مع فريق إنجاز لتجديد أو ترقية اشتراكك والاستمرار بدون انقطاع.
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Info grid -->
+        <div class="sub-info-grid">
+          <div class="sub-info-item">
+            <div class="sub-info-item__label">بداية الاشتراك</div>
+            <div class="sub-info-item__value">{{ center.plan_start|date:"d/m/Y" }}</div>
+          </div>
+          <div class="sub-info-item">
+            <div class="sub-info-item__label">تاريخ الانتهاء</div>
+            <div class="sub-info-item__value {% if center.is_expired %}sub-info-item__value--red{% elif days_left is not None and days_left <= 7 %}sub-info-item__value--orange{% endif %}">
+              {% if center.plan_expires %}
+                {{ center.plan_expires|date:"d/m/Y" }}
+              {% else %}
+                غير محدد
+              {% endif %}
+            </div>
+          </div>
+          <div class="sub-info-item">
+            <div class="sub-info-item__label">الأيام المتبقية</div>
+            <div class="sub-info-item__value
+              {% if center.is_expired %}sub-info-item__value--red
+              {% elif days_left is not None and days_left <= 7 %}sub-info-item__value--orange
+              {% elif days_left is not None %}sub-info-item__value--green
+              {% endif %}">
+              {% if center.is_expired %}
+                منتهي
+              {% elif days_left is not None %}
+                {{ days_left }} يوم
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+          <div class="sub-info-item">
+            <div class="sub-info-item__label">حالة الحساب</div>
+            <div class="sub-info-item__value {% if center.is_active %}sub-info-item__value--green{% else %}sub-info-item__value--red{% endif %}">
+              {% if center.is_active %}نشط{% else %}موقوف{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress bar for trial -->
+        {% if center.plan == 'trial' and days_left is not None %}
+        <div class="sub-progress">
+          <div class="sub-progress__label">
+            <span>بداية التجربة</span>
+            <span>{{ days_left }} / 30 يوم متبقية</span>
+          </div>
+          <div class="sub-progress__bar">
+            {% with pct=days_left|floatformat:0 %}
+            <div class="sub-progress__fill {% if days_left <= 7 %}sub-progress__fill--danger{% endif %}"
+                 style="width:{{ days_left }}0%; max-width:100%;"
+                 data-days="{{ days_left }}"></div>
+            {% endwith %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Limits -->
+        <div class="limits-grid">
+          <div class="limit-item">
+            <div class="limit-item__num">{{ center.max_staff }}</div>
+            <div class="limit-item__label">عدد الموظفين المسموح</div>
+          </div>
+          <div class="limit-item">
+            <div class="limit-item__num">{{ center.max_users }}</div>
+            <div class="limit-item__label">عدد المستخدمين المسموح</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Features included -->
+    <div class="sub-features-card">
+      <h3>
+        <i class="fas fa-check-circle" style="color:#10b981;"></i>
+        ما يشمله اشتراكك
+      </h3>
+      <ul class="sub-features-list">
+        {% for feat in features %}
+        <li class="sub-feature">
+          <i class="fas fa-check"></i>
+          {{ feat }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── Sidebar ── -->
+  <div>
+
+    <!-- Upgrade CTA -->
+    {% if center.plan != 'enterprise' %}
+    <div class="sub-side-card">
+      <h4><i class="fas fa-arrow-up" style="color:#db2777;"></i> ترقية الباقة</h4>
+      <p style="font-size:13px;color:#64748b;font-weight:500;margin-bottom:16px;line-height:1.6;">
+        للاستمرار أو للوصول لميزات إضافية، تواصل مع فريق إنجاز لترقية اشتراكك.
+      </p>
+      <a href="{% url 'core:support_create' %}" class="upgrade-btn" onclick="prefillUpgrade(event, this)">
+        <i class="fas fa-headset"></i> تواصل معنا للترقية
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- Plan comparison mini -->
+    <div class="sub-side-card">
+      <h4><i class="fas fa-layer-group" style="color:#8b5cf6;"></i> الباقات المتاحة</h4>
+      <div class="compare-mini">
+        <a href="{% url 'core:pricing' %}" class="compare-mini-item {% if center.plan == 'starter' %}current-plan{% endif %}">
+          <div>
+            <div class="plan-name"><i class="fas fa-seedling" style="color:#3b82f6;font-size:12px;"></i> مبتدئ</div>
+            <div class="plan-price">$49 / شهر</div>
+          </div>
+          {% if center.plan == 'starter' %}<i class="fas fa-check plan-check"></i>{% else %}<i class="fas fa-chevron-left" style="color:#cbd5e1;font-size:11px;"></i>{% endif %}
+        </a>
+        <a href="{% url 'core:pricing' %}" class="compare-mini-item {% if center.plan == 'pro' or center.plan == 'trial' %}current-plan{% endif %}">
+          <div>
+            <div class="plan-name"><i class="fas fa-star" style="color:#8b5cf6;font-size:12px;"></i> احترافي</div>
+            <div class="plan-price">$99 / شهر</div>
+          </div>
+          {% if center.plan == 'pro' or center.plan == 'trial' %}<i class="fas fa-check plan-check"></i>{% else %}<i class="fas fa-chevron-left" style="color:#cbd5e1;font-size:11px;"></i>{% endif %}
+        </a>
+        <a href="{% url 'core:pricing' %}" class="compare-mini-item {% if center.plan == 'enterprise' %}current-plan{% endif %}">
+          <div>
+            <div class="plan-name"><i class="fas fa-building" style="color:#f59e0b;font-size:12px;"></i> مؤسسات</div>
+            <div class="plan-price">$199 / شهر</div>
+          </div>
+          {% if center.plan == 'enterprise' %}<i class="fas fa-check plan-check"></i>{% else %}<i class="fas fa-chevron-left" style="color:#cbd5e1;font-size:11px;"></i>{% endif %}
+        </a>
+      </div>
+      <div style="margin-top:14px;text-align:center;">
+        <a href="{% url 'core:pricing' %}" style="font-size:13px;font-weight:700;color:#db2777;text-decoration:none;">
+          <i class="fas fa-external-link-alt" style="font-size:11px;"></i> عرض صفحة الأسعار الكاملة
+        </a>
+      </div>
+    </div>
+
+    <!-- Center info -->
+    <div class="sub-side-card">
+      <h4><i class="fas fa-store" style="color:#64748b;"></i> بيانات المركز</h4>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
+          <span style="color:#64748b;">اسم المركز</span>
+          <span style="color:#0f172a;">{{ center.name }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
+          <span style="color:#64748b;">العملة</span>
+          <span style="color:#0f172a;">{{ center.currency }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
+          <span style="color:#64748b;">المنطقة الزمنية</span>
+          <span style="color:#0f172a;direction:ltr;text-align:left;">{{ center.timezone }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
+          <span style="color:#64748b;">تاريخ التسجيل</span>
+          <span style="color:#0f172a;">{{ center.created_at|date:"d/m/Y" }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Fix progress bar width (server side % can't do math easily)
+document.addEventListener('DOMContentLoaded', function() {
+  var fill = document.querySelector('.sub-progress__fill');
+  if (fill) {
+    var days = parseInt(fill.getAttribute('data-days') || '30');
+    fill.style.width = Math.min(100, Math.round((days / 30) * 100)) + '%';
+  }
+});
+
+function prefillUpgrade(e, btn) {
+  // Open support create with pre-filled upgrade intent
+  // handled via the support create page
+}
+</script>
+{% endblock %}

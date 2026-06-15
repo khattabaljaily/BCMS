@@ -18,4 +18,8 @@ urlpatterns = [
     path('support/',           views.center_support,        name='support'),
     path('support/new/',       views.center_support_create, name='support_create'),
     path('support/<int:pk>/',  views.center_support_detail, name='support_detail'),
+
+    # Pricing & subscription
+    path('pricing/',      views.pricing_view,      name='pricing'),
+    path('subscription/', views.subscription_view, name='subscription'),
 ]

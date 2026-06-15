@@ -23,7 +23,7 @@ class NoCacheMiddleware:
 class CenterMiddleware:
     OPEN_PATHS = (
         '/login/', '/register/', '/admin/', '/static/', '/media/', '/store/',
-        '/sysadmin/',
+        '/sysadmin/', '/pricing/',
     )
 
     def __init__(self, get_response):
