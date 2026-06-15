@@ -1238,6 +1238,7 @@ body { background: linear-gradient(160deg, #f0f2f7 0%, #f5f0f9 100%); }
   border-bottom: 1px solid var(--slate-200);
 }
 @media (max-width: 768px) {
+  :root { --topbar-h: 56px; }
   .topbar { padding: 0 10px; height: 56px; gap: 8px; }
   .topbar__title { font-size: 14px; }
   /* "New appointment" shortcut hidden on mobile — use the page button instead */
@@ -1738,6 +1739,7 @@ body { background: linear-gradient(160deg, #f0f2f7 0%, #f5f0f9 100%); }
 
 /* Topbar avatar: shrink slightly on mobile */
 @media (max-width: 480px) {
+  :root { --topbar-h: 52px; }
   .topbar__avatar { width: 32px; height: 32px; font-size: 12px; }
   .topbar { height: 52px; }
 }
