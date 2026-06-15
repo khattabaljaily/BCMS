@@ -33,4 +33,8 @@ urlpatterns = [
 
     # Users overview
     path('users/', views.users_overview, name='users'),
+
+    # Support tickets
+    path('support/',              views.support_list,   name='support_list'),
+    path('support/<int:pk>/',     views.support_detail, name='support_detail'),
 ]

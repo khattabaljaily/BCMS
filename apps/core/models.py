@@ -3,6 +3,7 @@ BCMS Core Models
 Center (= Tenant), Settings, ServiceType, CenterMixin
 """
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 from datetime import datetime, date as date_cls
 
@@ -351,19 +352,22 @@ class CenterMixin(models.Model):
 
 class Notification(models.Model):
     TYPES = [
-        ('booking_new', 'حجز أونلاين'),
-        ('order_new',   'طلب أونلاين'),
-        ('stock_low',   'مخزون منخفض'),
+        ('booking_new',   'حجز أونلاين'),
+        ('order_new',     'طلب أونلاين'),
+        ('stock_low',     'مخزون منخفض'),
+        ('support_reply', 'رد دعم فني'),
     ]
     ICONS = {
-        'booking_new': 'fas fa-calendar-check',
-        'order_new':   'fas fa-shopping-bag',
-        'stock_low':   'fas fa-exclamation-triangle',
+        'booking_new':   'fas fa-calendar-check',
+        'order_new':     'fas fa-shopping-bag',
+        'stock_low':     'fas fa-exclamation-triangle',
+        'support_reply': 'fas fa-headset',
     }
     COLORS = {
-        'booking_new': '#8b5cf6',
-        'order_new':   '#0ea5e9',
-        'stock_low':   '#f59e0b',
+        'booking_new':   '#8b5cf6',
+        'order_new':     '#0ea5e9',
+        'stock_low':     '#f59e0b',
+        'support_reply': '#10b981',
     }
 
     center     = models.ForeignKey(Center, on_delete=models.CASCADE, db_index=True)
@@ -390,3 +394,89 @@ class Notification(models.Model):
     @property
     def color(self):
         return self.COLORS.get(self.type, '#ec4899')
+
+
+# ============================================================
+# SUPPORT TICKETS — تذاكر الدعم الفني
+# ============================================================
+
+class SupportTicket(models.Model):
+    STATUS_CHOICES = (
+        ('open',        'مفتوحة'),
+        ('in_progress', 'قيد المعالجة'),
+        ('resolved',    'محلولة'),
+        ('closed',      'مغلقة'),
+    )
+    PRIORITY_CHOICES = (
+        ('low',    'منخفضة'),
+        ('medium', 'متوسطة'),
+        ('high',   'عالية'),
+        ('urgent', 'عاجلة'),
+    )
+    CATEGORY_CHOICES = (
+        ('technical', 'مشكلة تقنية'),
+        ('billing',   'الاشتراك والفاتورة'),
+        ('feature',   'طلب ميزة'),
+        ('account',   'الحساب والمستخدمين'),
+        ('other',     'أخرى'),
+    )
+
+    center      = models.ForeignKey(Center, on_delete=models.CASCADE,
+                                    verbose_name='المركز', related_name='support_tickets')
+    created_by  = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+                                    null=True, verbose_name='أنشئ بواسطة',
+                                    related_name='created_support_tickets')
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+                                    null=True, blank=True, verbose_name='مسند إلى',
+                                    related_name='assigned_support_tickets')
+
+    subject     = models.CharField('الموضوع', max_length=300)
+    description = models.TextField('الوصف')
+    category    = models.CharField('التصنيف', max_length=20, choices=CATEGORY_CHOICES, default='other')
+    priority    = models.CharField('الأولوية', max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    status      = models.CharField('الحالة', max_length=15, choices=STATUS_CHOICES, default='open')
+
+    last_reply_at = models.DateTimeField('آخر رد', null=True, blank=True)
+    closed_at     = models.DateTimeField('تاريخ الإغلاق', null=True, blank=True)
+    created_at    = models.DateTimeField('تاريخ الإنشاء', auto_now_add=True, db_index=True)
+    updated_at    = models.DateTimeField('تاريخ التحديث', auto_now=True)
+
+    class Meta:
+        db_table = 'support_tickets'
+        verbose_name = 'تذكرة دعم'
+        verbose_name_plural = 'تذاكر الدعم'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['center', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'#{self.pk} – {self.subject}'
+
+    def is_open(self):
+        return self.status in ('open', 'in_progress')
+
+
+class SupportMessage(models.Model):
+    SENDER_TYPE_CHOICES = (
+        ('center', 'المركز'),
+        ('admin',  'المشرف'),
+    )
+
+    ticket      = models.ForeignKey(SupportTicket, on_delete=models.CASCADE,
+                                    verbose_name='التذكرة', related_name='messages')
+    sender      = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+                                    null=True, verbose_name='المرسل')
+    sender_type = models.CharField('نوع المرسل', max_length=10, choices=SENDER_TYPE_CHOICES)
+    body        = models.TextField('الرسالة')
+    created_at  = models.DateTimeField('التاريخ', auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'support_messages'
+        verbose_name = 'رسالة دعم'
+        verbose_name_plural = 'رسائل الدعم'
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'رسالة في #{self.ticket_id} من {self.sender}'

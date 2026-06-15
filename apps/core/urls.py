@@ -13,4 +13,9 @@ urlpatterns = [
     path('notifications/<int:pk>/read/', views.notification_read, name='notification_read'),
     path('notifications/read-all/', views.notifications_read_all, name='notifications_read_all'),
     path('store/slug-check/', views.store_slug_check, name='store_slug_check'),
+
+    # Support tickets
+    path('support/',           views.center_support,        name='support'),
+    path('support/new/',       views.center_support_create, name='support_create'),
+    path('support/<int:pk>/',  views.center_support_detail, name='support_detail'),
 ]

@@ -1,11 +1,11 @@
 import json
 from datetime import timedelta
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseNotAllowed
 from django.utils import timezone
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET
 
@@ -488,3 +488,99 @@ def notifications_read_all(request):
     from apps.core.models import Notification
     Notification.objects.filter(center=request.center, is_read=False).update(is_read=True)
     return JsonResponse({'success': True})
+
+
+# ═══════════════════════════════════════════════════════════
+# SUPPORT TICKETS — center-facing views
+# ═══════════════════════════════════════════════════════════
+
+@login_required
+def center_support(request):
+    from apps.core.models import SupportTicket
+    if not request.center:
+        return redirect('core:dashboard')
+
+    status_filter = request.GET.get('status', '')
+    qs = SupportTicket.objects.filter(center=request.center).select_related('created_by').order_by('-created_at')
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+
+    counts = {
+        'all':         SupportTicket.objects.filter(center=request.center).count(),
+        'open':        SupportTicket.objects.filter(center=request.center, status='open').count(),
+        'in_progress': SupportTicket.objects.filter(center=request.center, status='in_progress').count(),
+        'closed':      SupportTicket.objects.filter(center=request.center, status__in=['resolved', 'closed']).count(),
+    }
+    return render(request, 'core/support.html', {
+        'tickets': qs,
+        'counts': counts,
+        'status_filter': status_filter,
+    })
+
+
+@login_required
+def center_support_create(request):
+    from apps.core.models import SupportTicket, SupportMessage
+    if not request.center:
+        return JsonResponse({'ok': False, 'error': 'no_center'}, status=400)
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    subject     = request.POST.get('subject', '').strip()
+    description = request.POST.get('description', '').strip()
+    category    = request.POST.get('category', 'other')
+    priority    = request.POST.get('priority', 'medium')
+
+    errors = {}
+    if not subject:
+        errors['subject'] = 'الموضوع مطلوب'
+    if not description:
+        errors['description'] = 'الوصف مطلوب'
+    if errors:
+        return JsonResponse({'ok': False, 'errors': errors}, status=400)
+
+    ticket = SupportTicket.objects.create(
+        center=request.center,
+        created_by=request.user,
+        subject=subject,
+        description=description,
+        category=category,
+        priority=priority,
+        status='open',
+    )
+    SupportMessage.objects.create(
+        ticket=ticket,
+        sender=request.user,
+        sender_type='center',
+        body=description,
+    )
+    from django.urls import reverse
+    return JsonResponse({'ok': True, 'redirect': reverse('core:support_detail', args=[ticket.pk])})
+
+
+@login_required
+def center_support_detail(request, pk):
+    from apps.core.models import SupportTicket, SupportMessage
+    if not request.center:
+        return redirect('core:dashboard')
+
+    ticket = get_object_or_404(SupportTicket, pk=pk, center=request.center)
+    ticket_messages = ticket.messages.select_related('sender').order_by('created_at')
+
+    if request.method == 'POST' and ticket.is_open():
+        body = request.POST.get('body', '').strip()
+        if body:
+            SupportMessage.objects.create(
+                ticket=ticket,
+                sender=request.user,
+                sender_type='center',
+                body=body,
+            )
+            ticket.last_reply_at = timezone.now()
+            ticket.save(update_fields=['last_reply_at', 'updated_at'])
+        return redirect('core:support_detail', pk=pk)
+
+    return render(request, 'core/support_detail.html', {
+        'ticket': ticket,
+        'ticket_messages': ticket_messages,
+    })

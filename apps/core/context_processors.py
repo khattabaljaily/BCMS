@@ -5,6 +5,7 @@ def center_context(request):
     ctx = {
         'center': getattr(request, 'center', None),
         'center_settings': None,
+        'pending_support_count': 0,
     }
     center = ctx['center']
     if center:
@@ -21,4 +22,15 @@ def center_context(request):
     else:
         ctx['pending_bookings'] = 0
         ctx['pending_orders'] = 0
+
+    # Sysadmin: count open/in_progress support tickets for sidebar badge
+    if getattr(request, 'user', None) and request.user.is_authenticated and request.user.is_superuser:
+        try:
+            from apps.core.models import SupportTicket
+            ctx['pending_support_count'] = SupportTicket.objects.filter(
+                status__in=['open', 'in_progress']
+            ).count()
+        except Exception:
+            pass
+
     return ctx

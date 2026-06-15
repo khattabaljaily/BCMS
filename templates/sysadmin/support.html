@@ -1,0 +1,256 @@
+{% extends "sysadmin/base.html" %}
+{% load static %}
+{% block page_title %}الدعم الفني{% endblock %}
+{% block nav_support %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.sup-wrapper { display:flex; flex-direction:column; gap:1rem; }
+
+.sup-hero {
+    position:relative; overflow:hidden; border-radius:18px;
+    background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#4c1d95 100%);
+    padding:.65rem 1rem; box-shadow:0 6px 22px rgba(15,23,42,.22);
+}
+.sup-hero__orb {
+    position:absolute; border-radius:50%; pointer-events:none;
+    top:-40%; right:-4%; width:260px; height:260px;
+    background:rgba(139,92,246,.1);
+}
+.sup-hero__inner {
+    position:relative; z-index:1; display:flex;
+    align-items:center; justify-content:space-between; gap:1rem;
+}
+.sup-hero__left { display:flex; align-items:center; gap:.85rem; }
+.sup-hero__icon {
+    width:44px; height:44px; border-radius:14px;
+    background:rgba(139,92,246,.25); display:flex; align-items:center;
+    justify-content:center; font-size:1.2rem; color:#c4b5fd;
+}
+.sup-hero__title { color:#fff; font-size:1.1rem; font-weight:700; margin:0; }
+.sup-hero__desc  { color:#94a3b8; font-size:.78rem; margin:0; }
+
+.sup-stats { display:flex; gap:.5rem; flex-wrap:wrap; }
+.sup-stat {
+    padding:.3rem .9rem; border-radius:30px; font-size:.75rem; font-weight:600;
+    display:flex; align-items:center; gap:.35rem;
+}
+.sup-stat--all    { background:rgba(255,255,255,.1); color:#e2e8f0; }
+.sup-stat--open   { background:rgba(239,68,68,.2);   color:#fca5a5; }
+.sup-stat--prog   { background:rgba(245,158,11,.2);  color:#fcd34d; }
+.sup-stat--res    { background:rgba(34,197,94,.2);   color:#86efac; }
+.sup-stat--closed { background:rgba(148,163,184,.15);color:#94a3b8; }
+
+.sup-filters {
+    background:var(--card-bg,#fff); border-radius:14px;
+    padding:.62rem .85rem; display:flex; gap:.65rem; flex-wrap:wrap; align-items:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.05); border:1px solid var(--border-color,#e2e8f0);
+}
+.sup-filters form { display:contents; }
+.sup-search {
+    flex:1; min-width:180px; display:flex; align-items:center;
+    gap:.5rem; background:var(--input-bg,#f8fafc); border:1px solid var(--border-color,#e2e8f0);
+    border-radius:10px; padding:.35rem .75rem; min-height:38px;
+}
+.sup-search input {
+    border:none; background:transparent; outline:none; width:100%;
+    font-size:.88rem; color:var(--text-main,#1e293b);
+    min-height:38px; line-height:1.4;
+}
+.sup-filter-group { display:flex; gap:.5rem; }
+.sup-select {
+    border:1px solid var(--border-color,#e2e8f0); border-radius:10px;
+    padding:.32rem .9rem .32rem 1.75rem; font-size:.88rem;
+    background:var(--input-bg,#f8fafc); color:var(--text-main,#1e293b);
+    outline:none; cursor:pointer; appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2364748b' d='M5 7L0 2h10z'/%3E%3C/svg%3E");
+    background-position:left 0.75rem center; background-repeat:no-repeat; background-size:0.85rem;
+    min-height:38px;
+}
+.sup-btn {
+    padding:.4rem .95rem; border-radius:10px; font-size:.86rem; font-weight:600;
+    border:none; cursor:pointer; transition:.15s;
+    min-height:38px; display:inline-flex; align-items:center; justify-content:center; gap:.4rem;
+}
+.sup-btn--primary { background:linear-gradient(135deg,#8b5cf6,#6d28d9); color:#fff; }
+.sup-btn--primary:hover { opacity:.95; }
+.sup-btn--outline {
+    background:transparent; border:1px solid var(--border-color,#e2e8f0);
+    color:var(--text-main,#1e293b);
+}
+.sup-btn--outline:hover { background:var(--hover-bg,#f1f5f9); }
+
+.sup-table-wrap {
+    background:var(--card-bg,#fff); border-radius:16px; overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,.05); border:1px solid var(--border-color,#e2e8f0);
+    overflow-x:auto;
+}
+.sup-table { width:100%; min-width:680px; border-collapse:collapse; font-size:.84rem; }
+.sup-table thead th {
+    background:var(--table-head-bg,#f8fafc); color:var(--text-muted,#64748b);
+    font-weight:600; font-size:.75rem; text-transform:uppercase; letter-spacing:.05em;
+    padding:.65rem 1rem; text-align:right; border-bottom:1px solid var(--border-color,#e2e8f0);
+    white-space:nowrap;
+}
+.sup-table tbody tr { transition:background .12s; }
+.sup-table tbody tr:hover { background:var(--hover-bg,#f8fafc); }
+.sup-table tbody td {
+    padding:.7rem 1rem; border-bottom:1px solid var(--border-color,#e2e8f0);
+    color:var(--text-main,#1e293b); vertical-align:middle;
+}
+.sup-table tbody tr:last-child td { border-bottom:none; }
+.sup-table a { color:var(--text-main,#1e293b); text-decoration:none; }
+.sup-table a:hover { color:#8b5cf6; }
+
+.badge-status, .badge-priority {
+    display:inline-flex; align-items:center; gap:.3rem;
+    padding:.2rem .6rem; border-radius:20px; font-size:.72rem; font-weight:600;
+    white-space:nowrap;
+}
+.badge-status--open       { background:#fef2f2; color:#dc2626; }
+.badge-status--in_progress{ background:#fffbeb; color:#d97706; }
+.badge-status--resolved   { background:#f0fdf4; color:#16a34a; }
+.badge-status--closed     { background:#f1f5f9; color:#64748b; }
+.badge-priority--urgent   { background:#fef2f2; color:#dc2626; }
+.badge-priority--high     { background:#fff7ed; color:#ea580c; }
+.badge-priority--medium   { background:#fffbeb; color:#d97706; }
+.badge-priority--low      { background:#f0fdf4; color:#16a34a; }
+
+.center-pill {
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:var(--hover-bg,#f1f5f9); padding:.2rem .65rem;
+    border-radius:20px; font-size:.75rem; color:var(--text-muted,#64748b);
+}
+
+.sup-empty { text-align:center; padding:3rem 1rem; color:var(--text-muted,#64748b); }
+.sup-empty__icon  { font-size:2.5rem; margin-bottom:.75rem; opacity:.4; }
+.sup-empty__title { font-size:1rem; font-weight:600; margin:.5rem 0 .25rem; }
+.sup-empty__text  { font-size:.82rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sup-wrapper">
+
+    <!-- Hero -->
+    <div class="sup-hero">
+        <div class="sup-hero__orb"></div>
+        <div class="sup-hero__inner">
+            <div class="sup-hero__left">
+                <div class="sup-hero__icon"><i class="fas fa-headset"></i></div>
+                <div>
+                    <div class="sup-hero__title">الدعم الفني</div>
+                    <div class="sup-hero__desc">إدارة جميع تذاكر الدعم الواردة من المراكز</div>
+                </div>
+            </div>
+            <div class="sup-stats">
+                <span class="sup-stat sup-stat--all"><i class="fas fa-ticket"></i>{{ counts.all }} إجمالي</span>
+                <span class="sup-stat sup-stat--open"><i class="fas fa-circle-exclamation"></i>{{ counts.open }} مفتوحة</span>
+                <span class="sup-stat sup-stat--prog"><i class="fas fa-spinner"></i>{{ counts.in_progress }} قيد المعالجة</span>
+                <span class="sup-stat sup-stat--res"><i class="fas fa-circle-check"></i>{{ counts.resolved }} محلولة</span>
+                <span class="sup-stat sup-stat--closed"><i class="fas fa-lock"></i>{{ counts.closed }} مغلقة</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="sup-filters">
+        <form method="get" style="display:contents;">
+            <div class="sup-search">
+                <i class="fas fa-search" style="color:var(--text-muted,#94a3b8);font-size:.8rem;"></i>
+                <input type="text" name="q" value="{{ search_q }}" placeholder="بحث بالموضوع أو اسم المركز…">
+            </div>
+            <div class="sup-filter-group">
+                <select name="status" class="sup-select">
+                    <option value="">كل الحالات</option>
+                    <option value="open"        {% if status_filter == 'open' %}selected{% endif %}>مفتوحة</option>
+                    <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>قيد المعالجة</option>
+                    <option value="resolved"    {% if status_filter == 'resolved' %}selected{% endif %}>محلولة</option>
+                    <option value="closed"      {% if status_filter == 'closed' %}selected{% endif %}>مغلقة</option>
+                </select>
+                <select name="priority" class="sup-select">
+                    <option value="">كل الأولويات</option>
+                    <option value="urgent" {% if priority_filter == 'urgent' %}selected{% endif %}>عاجلة</option>
+                    <option value="high"   {% if priority_filter == 'high' %}selected{% endif %}>عالية</option>
+                    <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>متوسطة</option>
+                    <option value="low"    {% if priority_filter == 'low' %}selected{% endif %}>منخفضة</option>
+                </select>
+                <button type="submit" class="sup-btn sup-btn--primary"><i class="fas fa-filter"></i> تصفية</button>
+                {% if status_filter or priority_filter or search_q %}
+                <a href="{% url 'sysadmin:support_list' %}" class="sup-btn sup-btn--outline"><i class="fas fa-times"></i> مسح</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="sup-table-wrap">
+        {% if tickets %}
+        <table class="sup-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الموضوع</th>
+                    <th>المركز</th>
+                    <th>التصنيف</th>
+                    <th>الأولوية</th>
+                    <th>الحالة</th>
+                    <th>التاريخ</th>
+                    <th>آخر رد</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td style="color:var(--text-muted,#64748b);font-size:.75rem;">#{{ ticket.pk }}</td>
+                    <td>
+                        <a href="{% url 'sysadmin:support_detail' ticket.pk %}" style="font-weight:600;">
+                            {{ ticket.subject|truncatechars:60 }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="center-pill">
+                            <i class="fas fa-spa" style="font-size:.65rem;"></i>
+                            {{ ticket.center.name }}
+                        </span>
+                    </td>
+                    <td style="color:var(--text-muted,#64748b);">{{ ticket.get_category_display }}</td>
+                    <td>
+                        <span class="badge-priority badge-priority--{{ ticket.priority }}">
+                            {% if ticket.priority == 'urgent' %}<i class="fas fa-fire"></i>
+                            {% elif ticket.priority == 'high' %}<i class="fas fa-arrow-up"></i>
+                            {% elif ticket.priority == 'medium' %}<i class="fas fa-minus"></i>
+                            {% else %}<i class="fas fa-arrow-down"></i>{% endif %}
+                            {{ ticket.get_priority_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge-status badge-status--{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                    </td>
+                    <td style="color:var(--text-muted,#64748b);font-size:.78rem;white-space:nowrap;">{{ ticket.created_at|date:"Y/m/d H:i" }}</td>
+                    <td style="color:var(--text-muted,#64748b);font-size:.78rem;white-space:nowrap;">
+                        {% if ticket.last_reply_at %}{{ ticket.last_reply_at|date:"Y/m/d H:i" }}{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'sysadmin:support_detail' ticket.pk %}" class="sup-btn sup-btn--primary" style="padding:.3rem .7rem;font-size:.75rem;display:inline-flex;align-items:center;gap:.3rem;text-decoration:none;">
+                            <i class="fas fa-eye"></i> فتح
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="sup-empty">
+            <div class="sup-empty__icon"><i class="fas fa-ticket"></i></div>
+            <div class="sup-empty__title">لا توجد تذاكر</div>
+            <div class="sup-empty__text">
+                {% if status_filter or priority_filter or search_q %}لا توجد نتائج تطابق معايير البحث{% else %}لم يرسل أي مركز تذكرة دعم بعد{% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

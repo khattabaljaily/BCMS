@@ -680,3 +680,79 @@ def users_overview(request):
         'total_pages': total_pages,
         'total': total,
     })
+
+
+# ── Support Tickets ───────────────────────────────────────────────────────────
+
+@superuser_required
+def support_list(request):
+    from apps.core.models import SupportTicket
+
+    status_filter   = request.GET.get('status', '')
+    priority_filter = request.GET.get('priority', '')
+    search_q        = request.GET.get('q', '').strip()
+
+    tickets = SupportTicket.objects.select_related('center', 'created_by').order_by('-created_at')
+    if status_filter:
+        tickets = tickets.filter(status=status_filter)
+    if priority_filter:
+        tickets = tickets.filter(priority=priority_filter)
+    if search_q:
+        tickets = tickets.filter(
+            Q(subject__icontains=search_q) | Q(center__name__icontains=search_q)
+        )
+
+    counts = {
+        'all':         SupportTicket.objects.count(),
+        'open':        SupportTicket.objects.filter(status='open').count(),
+        'in_progress': SupportTicket.objects.filter(status='in_progress').count(),
+        'resolved':    SupportTicket.objects.filter(status='resolved').count(),
+        'closed':      SupportTicket.objects.filter(status='closed').count(),
+    }
+    return render(request, 'sysadmin/support.html', {
+        'tickets':         tickets,
+        'counts':          counts,
+        'status_filter':   status_filter,
+        'priority_filter': priority_filter,
+        'search_q':        search_q,
+    })
+
+
+@superuser_required
+def support_detail(request, pk):
+    from apps.core.models import SupportTicket, SupportMessage, Notification
+
+    ticket          = get_object_or_404(SupportTicket.objects.select_related('center', 'created_by'), pk=pk)
+    ticket_messages = ticket.messages.select_related('sender').order_by('created_at')
+
+    if request.method == 'POST':
+        body       = request.POST.get('body', '').strip()
+        new_status = request.POST.get('status', ticket.status)
+
+        if body:
+            SupportMessage.objects.create(
+                ticket=ticket,
+                sender=request.user,
+                sender_type='admin',
+                body=body,
+            )
+            ticket.last_reply_at = timezone.now()
+            ticket.assigned_to   = request.user
+            Notification.objects.create(
+                center=ticket.center,
+                type='support_reply',
+                title=f'رد جديد على تذكرتك #{ticket.pk}',
+                body=f'فريق الدعم رد على التذكرة "{ticket.subject}". افتح التذكرة للاطلاع على الرد.',
+                url=f'/support/{ticket.pk}/',
+            )
+
+        ticket.status = new_status
+        if new_status == 'closed':
+            ticket.closed_at = timezone.now()
+        ticket.save()
+        return redirect('sysadmin:support_detail', pk=pk)
+
+    return render(request, 'sysadmin/support_detail.html', {
+        'ticket':          ticket,
+        'ticket_messages': ticket_messages,
+    })
