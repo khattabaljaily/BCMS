@@ -501,6 +501,7 @@ def advance_create(request):
         treasury_id = request.POST.get('treasury')
         notes = request.POST.get('notes', '')
         try:
+            method = request.POST.get('method', 'cash')
             specialist = Specialist.objects.get(pk=specialist_id, center=center)
             treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
             adv = Advance.objects.create(
@@ -508,6 +509,7 @@ def advance_create(request):
                 specialist=specialist,
                 amount=Decimal(amount),
                 date=date_val,
+                method=method,
                 treasury=treasury,
                 notes=notes,
             )
@@ -580,6 +582,7 @@ def salary_create(request):
         notes = request.POST.get('notes', '')
         advance_ids = request.POST.getlist('advance_ids')
         incentive_ids = request.POST.getlist('incentive_ids')
+        payment_method = request.POST.get('payment_method', 'cash')
         try:
             specialist = Specialist.objects.get(pk=specialist_id, center=center)
             treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
@@ -605,6 +608,7 @@ def salary_create(request):
                 advances_deducted=advances_total,
                 deductions=deductions,
                 deductions_notes=deductions_notes,
+                method=payment_method,
                 treasury=treasury,
                 notes=notes,
             )
@@ -748,12 +752,13 @@ def user_advance_create(request):
         treasury_id = request.POST.get('treasury')
         notes      = request.POST.get('notes', '')
         try:
+            method   = request.POST.get('method', 'cash')
             emp      = User.objects.get(pk=user_id, center=center)
             treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
             adv = UserAdvance.objects.create(
                 center=center, user=emp,
                 amount=Decimal(amount), date=date_val,
-                treasury=treasury, notes=notes,
+                method=method, treasury=treasury, notes=notes,
             )
             adv._record_outflow()
             messages.success(request, 'تم تسجيل السلفة.')
@@ -814,6 +819,7 @@ def user_salary_create(request):
         treasury_id   = request.POST.get('treasury')
         notes         = request.POST.get('notes', '')
         advance_ids   = request.POST.getlist('advance_ids')
+        pay_method    = request.POST.get('payment_method', 'cash')
         try:
             emp      = User.objects.get(pk=user_id, center=center)
             treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
@@ -828,7 +834,7 @@ def user_salary_create(request):
                 base_salary=base_salary, bonus=bonus,
                 advances_deducted=adv_total,
                 deductions=deductions, deductions_notes=ded_notes,
-                treasury=treasury, notes=notes,
+                method=pay_method, treasury=treasury, notes=notes,
             )
             if advance_ids:
                 UserAdvance.objects.filter(

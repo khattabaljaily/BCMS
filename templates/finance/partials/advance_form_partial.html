@@ -28,13 +28,36 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">الخزينة <span style="color:var(--red)">*</span></label>
+          <label class="form-label">طريقة الدفع</label>
+          <select name="method" class="form-control" id="adv-method" onchange="toggleAdvTreasuryLabel(this.value)">
+            <option value="cash">نقد (خزينة)</option>
+            <option value="card_or_bank">بطاقة / تحويل بنكي</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="adv-treasury-label">الخزينة <span style="color:var(--red)">*</span></label>
           <select name="treasury" class="form-control" required>
             {% for t in treasuries %}
               <option value="{{ t.pk }}" {% if forloop.first %}selected{% endif %}>{{ t.name }}</option>
             {% endfor %}
           </select>
+          <div id="adv-bank-note" style="display:none;font-size:11px;color:#6366f1;margin-top:4px;">يُحفظ كمرجع فقط — لن يُخصم من رصيد الخزينة</div>
         </div>
+        <script>
+        function toggleAdvTreasuryLabel(val) {
+          var lbl = document.getElementById('adv-treasury-label');
+          var note = document.getElementById('adv-bank-note');
+          if (val === 'card_or_bank') {
+            lbl.innerHTML = 'الحساب البنكي (مرجع) <span class="form-optional">اختياري</span>';
+            document.querySelector('[name=treasury]').removeAttribute('required');
+            if (note) note.style.display = 'block';
+          } else {
+            lbl.innerHTML = 'الخزينة <span style="color:var(--red)">*</span>';
+            document.querySelector('[name=treasury]').setAttribute('required', '');
+            if (note) note.style.display = 'none';
+          }
+        }
+        </script>
         <div class="form-group">
           <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
           <textarea name="notes" class="form-control" rows="2"></textarea>

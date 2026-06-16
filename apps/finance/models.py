@@ -165,16 +165,14 @@ class ClientPayment(CenterMixin):
 
 class Advance(CenterMixin):
     """سلفة لمقدم الخدمة"""
-    STATUS = [
-        ('pending',   'قائمة'),
-        ('deducted',  'مخصومة'),
-        ('cancelled', 'ملغاة'),
-    ]
+    STATUS  = [('pending', 'قائمة'), ('deducted', 'مخصومة'), ('cancelled', 'ملغاة')]
+    METHODS = [('cash', 'نقد'), ('card_or_bank', 'بطاقة / بنك')]
 
     specialist     = models.ForeignKey('staff.Specialist', on_delete=models.CASCADE,
                                        related_name='advances', verbose_name='مقدم الخدمة')
     amount         = models.DecimalField('المبلغ', max_digits=10, decimal_places=2)
     date           = models.DateField('التاريخ', default=timezone.localdate)
+    method         = models.CharField('طريقة الدفع', max_length=20, choices=METHODS, default='cash')
     treasury       = models.ForeignKey(Treasury, on_delete=models.SET_NULL,
                                        null=True, blank=True, verbose_name='الخزينة')
     status         = models.CharField('الحالة', max_length=20, choices=STATUS, default='pending')
@@ -197,7 +195,7 @@ class Advance(CenterMixin):
         return f'advance_{self.pk}'
 
     def _record_outflow(self):
-        if not self.treasury:
+        if not self.treasury or self.method != 'cash':
             return
         TreasuryMovement.objects.get_or_create(
             treasury=self.treasury,
@@ -231,11 +229,8 @@ class Advance(CenterMixin):
 
 class SalaryPayment(CenterMixin):
     """كشف راتب شهري لمقدم الخدمة"""
-    STATUS = [
-        ('draft',     'مسودة'),
-        ('paid',      'مدفوع'),
-        ('cancelled', 'ملغى'),
-    ]
+    STATUS  = [('draft', 'مسودة'), ('paid', 'مدفوع'), ('cancelled', 'ملغى')]
+    METHODS = [('cash', 'نقد'), ('card_or_bank', 'بطاقة / بنك')]
 
     specialist        = models.ForeignKey('staff.Specialist', on_delete=models.CASCADE,
                                           related_name='salary_payments', verbose_name='مقدم الخدمة')
@@ -249,6 +244,7 @@ class SalaryPayment(CenterMixin):
     deductions        = models.DecimalField('خصومات أخرى', max_digits=10, decimal_places=2, default=Decimal('0'))
     deductions_notes  = models.TextField('تفاصيل الخصومات', blank=True)
 
+    method            = models.CharField('طريقة الدفع', max_length=20, choices=METHODS, default='cash')
     treasury          = models.ForeignKey(Treasury, on_delete=models.SET_NULL,
                                           null=True, blank=True, verbose_name='الخزينة')
     status            = models.CharField('الحالة', max_length=20, choices=STATUS, default='draft')
@@ -278,7 +274,7 @@ class SalaryPayment(CenterMixin):
         return f'salary_{self.pk}'
 
     def _record_outflow(self):
-        if not self.treasury or self.total_due <= 0:
+        if not self.treasury or self.total_due <= 0 or self.method != 'cash':
             return
         TreasuryMovement.objects.get_or_create(
             treasury=self.treasury,
@@ -331,11 +327,8 @@ class SalaryPayment(CenterMixin):
 
 class UserAdvance(CenterMixin):
     """سلفة لموظف (مستخدم النظام)"""
-    STATUS = [
-        ('pending',   'قائمة'),
-        ('deducted',  'مخصومة'),
-        ('cancelled', 'ملغاة'),
-    ]
+    STATUS  = [('pending', 'قائمة'), ('deducted', 'مخصومة'), ('cancelled', 'ملغاة')]
+    METHODS = [('cash', 'نقد'), ('card_or_bank', 'بطاقة / بنك')]
 
     user           = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
@@ -343,6 +336,7 @@ class UserAdvance(CenterMixin):
     )
     amount         = models.DecimalField('المبلغ', max_digits=10, decimal_places=2)
     date           = models.DateField('التاريخ', default=timezone.localdate)
+    method         = models.CharField('طريقة الدفع', max_length=20, choices=METHODS, default='cash')
     treasury       = models.ForeignKey(
         Treasury, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='الخزينة'
     )
@@ -367,7 +361,7 @@ class UserAdvance(CenterMixin):
         return f'user_advance_{self.pk}'
 
     def _record_outflow(self):
-        if not self.treasury:
+        if not self.treasury or self.method != 'cash':
             return
         TreasuryMovement.objects.get_or_create(
             treasury=self.treasury,
@@ -401,11 +395,8 @@ class UserAdvance(CenterMixin):
 
 class UserSalaryPayment(CenterMixin):
     """كشف راتب شهري لموظف (مستخدم النظام)"""
-    STATUS = [
-        ('draft',     'مسودة'),
-        ('paid',      'مدفوع'),
-        ('cancelled', 'ملغى'),
-    ]
+    STATUS  = [('draft', 'مسودة'), ('paid', 'مدفوع'), ('cancelled', 'ملغى')]
+    METHODS = [('cash', 'نقد'), ('card_or_bank', 'بطاقة / بنك')]
 
     user              = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
@@ -418,6 +409,7 @@ class UserSalaryPayment(CenterMixin):
     advances_deducted = models.DecimalField('السلف المخصومة', max_digits=10, decimal_places=2, default=Decimal('0'))
     deductions        = models.DecimalField('خصومات أخرى', max_digits=10, decimal_places=2, default=Decimal('0'))
     deductions_notes  = models.TextField('تفاصيل الخصومات', blank=True)
+    method            = models.CharField('طريقة الدفع', max_length=20, choices=METHODS, default='cash')
     treasury          = models.ForeignKey(
         Treasury, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='الخزينة'
     )
@@ -447,7 +439,7 @@ class UserSalaryPayment(CenterMixin):
         return f'user_salary_{self.pk}'
 
     def _record_outflow(self):
-        if not self.treasury or self.total_due <= 0:
+        if not self.treasury or self.total_due <= 0 or self.method != 'cash':
             return
         TreasuryMovement.objects.get_or_create(
             treasury=self.treasury,
@@ -543,7 +535,7 @@ class Incentive(CenterMixin):
         return f'incentive_{self.pk}'
 
     def _record_outflow(self):
-        if not self.treasury:
+        if not self.treasury or self.method != 'cash':
             return
         person = self.specialist or self.user
         TreasuryMovement.objects.get_or_create(
