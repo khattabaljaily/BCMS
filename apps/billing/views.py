@@ -171,7 +171,6 @@ def invoice_list(request):
 
 
 @login_required
-@transaction.atomic
 def invoice_create(request):
     center = request.center
 
@@ -198,68 +197,70 @@ def invoice_create(request):
                 prefill_client_id = appointment.client_id
 
     if request.method == 'POST':
-        from apps.core.models import Settings
-        settings_obj, _ = Settings.objects.get_or_create(center=center)
-        number = settings_obj.next_invoice_number()
-
         client_id = request.POST.get('client')
         appointment_id = request.POST.get('appointment')
         lines = get_invoice_lines_from_post(request, center)
         if not lines:
             messages.error(request, 'يجب إضافة بند واحد على الأقل للفاتورة.')
         else:
-            payment_method = request.POST.get('payment_method', 'cash')
-            inv = Invoice.objects.create(
-                center=center,
-                number=number,
-                client_id=client_id or None,
-                appointment_id=appointment_id or None,
-                payment_method=payment_method,
-                notes=request.POST.get('notes', ''),
-                discount_amount=Decimal(request.POST.get('discount_amount') or '0'),
-                status='draft',
-            )
+            try:
+                with transaction.atomic():
+                    from apps.core.models import Settings
+                    settings_obj, _ = Settings.objects.get_or_create(center=center)
+                    number = settings_obj.next_invoice_number()
 
-            for item in lines:
-                InvoiceLine.objects.create(
-                    invoice=inv,
-                    description=item['description'],
-                    service=item['service'],
-                    product=item['product'],
-                    quantity=item['quantity'],
-                    unit_price=item['unit_price'],
-                    discount_percent=item['discount_percent'],
-                )
-
-                if item['product']:
-                    StockMovement.objects.create(
+                    payment_method = request.POST.get('payment_method', 'cash')
+                    inv = Invoice.objects.create(
                         center=center,
-                        product=item['product'],
-                        change=-item['quantity'],
-                        type='sale',
-                        reference=f'invoice_{inv.pk}',
-                        notes=f'Invoice #{inv.number}',
+                        number=number,
+                        client_id=client_id or None,
+                        appointment_id=appointment_id or None,
+                        payment_method=payment_method,
+                        notes=request.POST.get('notes', ''),
+                        discount_amount=Decimal(request.POST.get('discount_amount') or '0'),
+                        status='draft',
                     )
 
-            inv.recalculate()
+                    for item in lines:
+                        InvoiceLine.objects.create(
+                            invoice=inv,
+                            description=item['description'],
+                            service=item['service'],
+                            product=item['product'],
+                            quantity=item['quantity'],
+                            unit_price=item['unit_price'],
+                            discount_percent=item['discount_percent'],
+                        )
 
-            action = request.POST.get('action')
-            if action == 'pay':
-                if payment_method == 'later':
-                    # Pay-later: save as draft, no treasury movement
-                    inv.status = 'draft'
-                    inv.paid_amount = Decimal('0')
-                    inv.save(update_fields=['status', 'paid_amount'])
-                else:
-                    inv.mark_paid(amount=inv.total, method=payment_method)
-                    _create_invoice_treasury_movement(inv)
-            else:
-                # draft — save without payment
-                inv.status = 'draft'
-                inv.paid_amount = Decimal('0')
-                inv.save(update_fields=['status', 'paid_amount'])
+                        if item['product']:
+                            StockMovement.objects.create(
+                                center=center,
+                                product=item['product'],
+                                change=-item['quantity'],
+                                type='sale',
+                                reference=f'invoice_{inv.pk}',
+                                notes=f'Invoice #{inv.number}',
+                            )
 
-            return redirect('billing:detail', pk=inv.pk)
+                    inv.recalculate()
+
+                    action = request.POST.get('action')
+                    if action == 'pay':
+                        if payment_method == 'later':
+                            inv.status = 'draft'
+                            inv.paid_amount = Decimal('0')
+                            inv.save(update_fields=['status', 'paid_amount'])
+                        else:
+                            inv.mark_paid(amount=inv.total, method=payment_method)
+                            _create_invoice_treasury_movement(inv)
+                    else:
+                        inv.status = 'draft'
+                        inv.paid_amount = Decimal('0')
+                        inv.save(update_fields=['status', 'paid_amount'])
+
+                return redirect('billing:detail', pk=inv.pk)
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء حفظ الفاتورة: {e}')
         
 
     clients_json = json.dumps([{
@@ -355,7 +356,6 @@ def invoice_void(request, pk):
 
 
 @login_required
-@transaction.atomic
 def invoice_edit(request, pk):
     center = request.center
     inv = get_object_or_404(Invoice, pk=pk, center=center)

@@ -159,9 +159,11 @@ function formatNumber(value) {
 }
 
 function filterProducts(q) {
-  q = q.trim().toLowerCase();
-  if (!q) return [];
-  return PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q))).slice(0, 12);
+  q = (q || '').trim().toLowerCase();
+  const list = q
+    ? PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q)))
+    : PRODUCTS;
+  return list.slice(0, 12);
 }
 
 let GLOBAL_DROPDOWN = null;
@@ -254,7 +256,7 @@ function wireRow(row) {
     if (stockCell) stockCell.textContent = '—';
     renderAndOpen(filterProducts(searchInput.value));
   });
-  searchInput.addEventListener('focus',  () => { if (searchInput.value) renderAndOpen(filterProducts(searchInput.value)); });
+  searchInput.addEventListener('focus',  () => { renderAndOpen(filterProducts(searchInput.value)); });
   searchInput.addEventListener('blur',   () => { setTimeout(closeGlobalDropdown, 160); });
   qtyInput  && qtyInput.addEventListener('input',  updateLineTotal);
   costInput && costInput.addEventListener('input',  updateLineTotal);

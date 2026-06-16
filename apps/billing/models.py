@@ -19,7 +19,7 @@ class Invoice(CenterMixin):
         ('cancelled', 'ملغاة'),
     ]
 
-    number      = models.CharField('رقم الفاتورة', max_length=50, unique=True)
+    number      = models.CharField('رقم الفاتورة', max_length=50)
     client      = models.ForeignKey(
         Client, on_delete=models.PROTECT,
         related_name='invoices', verbose_name='العميل',
@@ -49,6 +49,9 @@ class Invoice(CenterMixin):
         ordering = ['-id']
         verbose_name = 'فاتورة'
         verbose_name_plural = 'الفواتير'
+        constraints = [
+            models.UniqueConstraint(fields=['center', 'number'], name='unique_invoice_number_per_center'),
+        ]
 
     def __str__(self):
         return self.number

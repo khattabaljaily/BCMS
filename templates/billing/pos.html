@@ -768,12 +768,12 @@ function recalcTotals() {
 function searchClients() {
   const q = document.getElementById('client-input').value.trim().toLowerCase();
   const dd = document.getElementById('client-dropdown');
-  if (!q) { dd.style.display = 'none'; return; }
-  const matches = CLIENTS.filter(c =>
-    c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
-  ).slice(0, 8);
-  if (!matches.length) { dd.style.display = 'none'; return; }
-  dd.innerHTML = matches.map(c => `
+  const matches = q
+    ? CLIENTS.filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q))
+    : CLIENTS;
+  const visible = matches.slice(0, 10);
+  if (!visible.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = visible.map(c => `
     <div class="client-option" onclick="selectClient(${c.id}, '${esc(c.name)}', '${esc(c.phone||'')}')">
       <div>
         <div class="client-option__name">${c.name}</div>
