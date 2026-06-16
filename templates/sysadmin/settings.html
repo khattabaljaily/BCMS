@@ -1,0 +1,311 @@
+{% extends "sysadmin/base.html" %}
+{% load static %}
+
+{% block title %}إعدادات النظام{% endblock %}
+{% block nav_settings %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.pg-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; gap:12px; flex-wrap:wrap; }
+.pg-head__left { display:flex; flex-direction:column; gap:4px; }
+.pg-head__title { font-size:20px; font-weight:800; color:var(--sa-text); }
+.pg-head__sub   { font-size:13px; color:var(--sa-muted); }
+
+.pg-badges { display:flex; gap:8px; flex-wrap:wrap; }
+.pg-badge  { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.pg-badge--green  { background:#d1fae5; color:#065f46; }
+.pg-badge--red    { background:#fee2e2; color:#991b1b; }
+.pg-badge--amber  { background:#fef3c7; color:#92400e; }
+
+/* Settings grid — two cols on wide, stack on mobile */
+.set-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:900px) { .set-grid { grid-template-columns:1fr; } }
+
+/* Card */
+.set-card { background:var(--sa-card); border-radius:var(--sa-radius); box-shadow:var(--sa-shadow); overflow:hidden; }
+.set-card__head {
+  display:flex; align-items:center; gap:14px;
+  padding:18px 20px; border-bottom:1px solid var(--sa-border);
+}
+.set-card__icon {
+  width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.set-card__icon--red    { background:#fee2e2; color:#ef4444; }
+.set-card__icon--amber  { background:#fef3c7; color:#f59e0b; }
+.set-card__title { font-size:15px; font-weight:800; color:var(--sa-text); }
+.set-card__sub   { font-size:12px; color:var(--sa-muted); margin-top:2px; }
+.set-card__body  { padding:20px; display:flex; flex-direction:column; gap:16px; }
+
+/* Alert banner inside card */
+.set-alert { display:flex; align-items:flex-start; gap:10px; padding:11px 14px; border-radius:10px; font-size:13px; }
+.set-alert--on  { background:#fee2e2; color:#991b1b; }
+.set-alert--off { background:#f0fdf4; color:#166534; }
+
+/* Toggle row */
+.set-toggle-row { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  background:#f8fafc; border-radius:10px; padding:12px 14px; }
+.set-toggle-label { font-size:14px; font-weight:700; color:var(--sa-text); }
+.set-toggle-sub   { font-size:12px; color:var(--sa-muted); margin-top:2px; }
+
+/* Toggle switch */
+.sa-toggle { position:relative; width:46px; height:25px; display:inline-block; flex-shrink:0; }
+.sa-toggle input { opacity:0; width:0; height:0; }
+.sa-toggle__slider {
+  position:absolute; inset:0; cursor:pointer;
+  background:#cbd5e1; border-radius:25px; transition:.25s;
+}
+.sa-toggle__slider::before {
+  content:''; position:absolute; width:19px; height:19px;
+  top:3px; right:3px; background:#fff; border-radius:50%; transition:.25s;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.sa-toggle input:checked + .sa-toggle__slider { background:var(--sa-accent); }
+.sa-toggle input:checked + .sa-toggle__slider::before { transform:translateX(-21px); }
+
+/* Form fields */
+.set-label { display:block; font-size:12px; font-weight:700; color:var(--sa-text); margin-bottom:5px; }
+.set-input, .set-textarea, .set-select {
+  width:100%; padding:9px 13px; border:1.5px solid var(--sa-border); border-radius:9px;
+  font-family:Cairo,sans-serif; font-size:13px; color:var(--sa-text); background:#f8fafc;
+  transition:border .15s, background .15s;
+}
+.set-input:focus, .set-textarea:focus, .set-select:focus {
+  outline:none; border-color:var(--sa-accent); background:#fff; box-shadow:0 0 0 3px rgba(99,102,241,.1);
+}
+.set-textarea { resize:vertical; min-height:80px; }
+
+/* Announcement type select colors via JS class */
+.set-row { display:grid; grid-template-columns:1fr auto; gap:12px; }
+@media (max-width:600px) { .set-row { grid-template-columns:1fr; } }
+
+/* Announcement preview */
+.ann-preview {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600;
+  border: 1.5px solid transparent;
+}
+.ann-preview--info    { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+.ann-preview--warning { background:#fffbeb; color:#92400e; border-color:#fde68a; }
+.ann-preview--success { background:#f0fdf4; color:#166534; border-color:#bbf7d0; }
+.ann-preview--danger  { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+
+/* Buttons */
+.set-btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border:none; border-radius:9px;
+  font-family:Cairo,sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:opacity .15s,box-shadow .15s; }
+.set-btn:hover { opacity:.88; }
+.set-btn--red   { background:#ef4444; color:#fff; }
+.set-btn--amber { background:#f59e0b; color:#fff; }
+.set-btn-wrap   { display:flex; justify-content:flex-end; }
+
+/* Toast */
+.set-toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(30px);
+  background:#1e293b; color:#fff; padding:10px 22px; border-radius:30px; font-size:13px;
+  font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.2); opacity:0; pointer-events:none;
+  transition:opacity .25s, transform .25s; z-index:9999; white-space:nowrap;
+}
+.set-toast--visible  { opacity:1; transform:translateX(-50%) translateY(0); }
+.set-toast--success::before { content:'✓  '; color:#4ade80; }
+.set-toast--error::before   { content:'✗  '; color:#f87171; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- ─── Page header ─────────────────────────────────────────── -->
+<div class="pg-head">
+  <div class="pg-head__left">
+    <h2 class="pg-head__title"><i class="fas fa-sliders-h" style="color:var(--sa-accent);margin-left:8px;font-size:18px;"></i>إعدادات النظام</h2>
+    <div class="pg-head__sub">التحكم في وضع الصيانة والإشعارات العامة للمنصة</div>
+  </div>
+  <div class="pg-badges">
+    {% if ps.maintenance_mode %}
+    <span class="pg-badge pg-badge--red"><i class="fas fa-tools"></i> وضع الصيانة مفعّل</span>
+    {% else %}
+    <span class="pg-badge pg-badge--green"><i class="fas fa-check-circle"></i> النظام يعمل</span>
+    {% endif %}
+    {% if ps.announcement_active %}
+    <span class="pg-badge pg-badge--amber"><i class="fas fa-bullhorn"></i> إشعار نشط</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ─── Toast ───────────────────────────────────────────────── -->
+<div id="setToast" class="set-toast" role="alert"></div>
+
+<!-- ─── Cards grid ──────────────────────────────────────────── -->
+<div class="set-grid">
+
+  <!-- ══ وضع الصيانة ══ -->
+  <div class="set-card">
+    <div class="set-card__head">
+      <div class="set-card__icon set-card__icon--red"><i class="fas fa-tools"></i></div>
+      <div>
+        <div class="set-card__title">وضع الصيانة</div>
+        <div class="set-card__sub">عند التفعيل يُحوَّل جميع المستخدمين لصفحة الصيانة</div>
+      </div>
+    </div>
+    <div class="set-card__body">
+
+      <div class="set-alert {% if ps.maintenance_mode %}set-alert--on{% else %}set-alert--off{% endif %}">
+        <i class="fas {% if ps.maintenance_mode %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+        {% if ps.maintenance_mode %}
+          وضع الصيانة مفعّل الآن — المستخدمون لا يستطيعون الدخول.
+        {% else %}
+          النظام يعمل بشكل طبيعي — تفعيل هذا الوضع سيوقف الوصول للجميع.
+        {% endif %}
+      </div>
+
+      <form id="maintenanceForm">
+        <input type="hidden" name="section" value="maintenance">
+
+        <div class="set-toggle-row">
+          <div>
+            <div class="set-toggle-label">تفعيل وضع الصيانة</div>
+            <div class="set-toggle-sub">يحجب الوصول عن جميع المستخدمين غير السوبر أدمن</div>
+          </div>
+          <label class="sa-toggle">
+            <input type="checkbox" name="maintenance_mode" {% if ps.maintenance_mode %}checked{% endif %}>
+            <span class="sa-toggle__slider"></span>
+          </label>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="set-label">رسالة الصيانة</label>
+          <textarea name="maintenance_message" class="set-textarea"
+                    rows="3" placeholder="النظام قيد الصيانة حالياً. سنعود قريباً.">{{ ps.maintenance_message }}</textarea>
+        </div>
+
+        <div class="set-btn-wrap" style="margin-top:4px;">
+          <button type="submit" class="set-btn set-btn--red">
+            <i class="fas fa-save"></i> حفظ إعدادات الصيانة
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ══ الإشعار العام ══ -->
+  <div class="set-card">
+    <div class="set-card__head">
+      <div class="set-card__icon set-card__icon--amber"><i class="fas fa-bullhorn"></i></div>
+      <div>
+        <div class="set-card__title">الإشعار العام للمنصة</div>
+        <div class="set-card__sub">شريط يظهر في لوحات جميع المشتركين</div>
+      </div>
+    </div>
+    <div class="set-card__body">
+
+      <!-- Live preview -->
+      <div id="annPreview" class="ann-preview ann-preview--{{ ps.announcement_type }}"
+           {% if not ps.announcement_active %}style="display:none"{% endif %}>
+        <i class="fas fa-bullhorn"></i>
+        <span id="annPreviewText">{{ ps.announcement_text|default:"..." }}</span>
+      </div>
+
+      <form id="announcementForm">
+        <input type="hidden" name="section" value="announcement">
+
+        <div class="set-toggle-row">
+          <div>
+            <div class="set-toggle-label">تفعيل الإشعار</div>
+            <div class="set-toggle-sub">يظهر لجميع المشتركين في أعلى الصفحة</div>
+          </div>
+          <label class="sa-toggle">
+            <input type="checkbox" id="annToggle" name="announcement_active"
+                   {% if ps.announcement_active %}checked{% endif %}>
+            <span class="sa-toggle__slider"></span>
+          </label>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="set-label">نص الإشعار</label>
+          <input type="text" id="annText" name="announcement_text" class="set-input"
+                 value="{{ ps.announcement_text }}"
+                 placeholder="سيتوقف النظام للصيانة الساعة 2 صباحاً...">
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="set-label">نوع الإشعار</label>
+          <select id="annType" name="announcement_type" class="set-select">
+            <option value="info"    {% if ps.announcement_type == 'info'    %}selected{% endif %}>معلوماتي</option>
+            <option value="warning" {% if ps.announcement_type == 'warning' %}selected{% endif %}>تحذير</option>
+            <option value="success" {% if ps.announcement_type == 'success' %}selected{% endif %}>نجاح</option>
+            <option value="danger"  {% if ps.announcement_type == 'danger'  %}selected{% endif %}>خطر</option>
+          </select>
+        </div>
+
+        <div class="set-btn-wrap" style="margin-top:16px;">
+          <button type="submit" class="set-btn set-btn--amber">
+            <i class="fas fa-save"></i> حفظ الإشعار
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+</div><!-- /set-grid -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SAVE_URL = "{% url 'sysadmin:settings_update' %}";
+const CSRF     = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+function showToast(msg, ok) {
+  const t = document.getElementById('setToast');
+  t.textContent = msg;
+  t.className = 'set-toast set-toast--' + (ok ? 'success' : 'error') + ' set-toast--visible';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('set-toast--visible'), 3200);
+}
+
+function bindForm(id) {
+  const form = document.getElementById(id);
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = form.querySelector('[type=submit]');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+    const data = new FormData(form);
+    form.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      data.set(cb.name, cb.checked ? 'true' : 'false');
+    });
+
+    try {
+      const res  = await fetch(SAVE_URL, { method:'POST', headers:{'X-CSRFToken':CSRF}, body:data });
+      const json = await res.json();
+      showToast(json.success ? 'تم الحفظ بنجاح' : (json.error || 'حدث خطأ'), json.success);
+    } catch { showToast('تعذّر الاتصال بالخادم', false); }
+
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  });
+}
+
+bindForm('maintenanceForm');
+bindForm('announcementForm');
+
+/* ── Announcement live preview ── */
+const annToggle  = document.getElementById('annToggle');
+const annText    = document.getElementById('annText');
+const annType    = document.getElementById('annType');
+const annPreview = document.getElementById('annPreview');
+const annPrevTxt = document.getElementById('annPreviewText');
+
+function updatePreview() {
+  annPreview.style.display = annToggle.checked ? '' : 'none';
+  annPrevTxt.textContent   = annText.value || '...';
+  annPreview.className     = 'ann-preview ann-preview--' + annType.value;
+}
+annToggle.addEventListener('change', updatePreview);
+annText.addEventListener('input',    updatePreview);
+annType.addEventListener('change',   updatePreview);
+</script>
+{% endblock %}

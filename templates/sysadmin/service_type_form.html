@@ -1,12 +1,12 @@
 {% extends "sysadmin/base.html" %}
-{% block title %}{% if obj %}تعديل نوع حساب{% else %}إضافة نوع حساب{% endif %}{% endblock %}
-{% block page_title %}{% if obj %}تعديل نوع حساب{% else %}إضافة نوع حساب{% endif %}{% endblock %}
+{% block title %}{% if obj %}تعديل نوع اشتراك{% else %}إضافة نوع اشتراك{% endif %}{% endblock %}
+{% block page_title %}{% if obj %}تعديل نوع اشتراك{% else %}إضافة نوع اشتراك{% endif %}{% endblock %}
 {% block nav_service_types %}active{% endblock %}
 
 {% block content %}
 
 <div class="sa-breadcrumb">
-  <a href="{% url 'sysadmin:service_types' %}">أنواع الحسابات</a>
+  <a href="{% url 'sysadmin:service_types' %}">أنواع الاشتراكات</a>
   ← {% if obj %}تعديل{% else %}إضافة{% endif %}
 </div>
 

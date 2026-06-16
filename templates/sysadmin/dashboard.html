@@ -70,14 +70,14 @@
 ════════════════════════════════════════ */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(8, 1fr);
   gap: 14px;
   margin-bottom: 22px;
 }
 .kpi-card {
   background: #fff;
   border-radius: 20px;
-  padding: 18px 16px 16px;
+  padding: 14px 12px 12px;
   border: 1px solid rgba(226,232,240,.85);
   box-shadow: 0 10px 28px rgba(15,23,42,.06);
   position: relative;
@@ -115,7 +115,7 @@
   background: color-mix(in srgb, var(--kpi-color, #6366f1) 16%, white);
   color: var(--kpi-color, #6366f1);
 }
-.kpi-card__num { font-size: 30px; font-weight: 900; line-height: 1; color: #111827; }
+.kpi-card__num { font-size: 26px; font-weight: 900; line-height: 1; color: #111827; }
 .kpi-card__lbl { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing:.02em; }
 
 /* KPI card color variants */
@@ -143,8 +143,9 @@
   gap: 18px;
   margin-bottom:22px;
 }
-.chart-row--main { grid-template-columns: 1fr; }
+.chart-row--main  { grid-template-columns: 1fr; }
 .chart-row--split { grid-template-columns: 1fr 1fr; }
+.chart-row--3     { grid-template-columns: 1fr 1fr 1fr; }
 
 .ch-panel {
   background: #fff;
@@ -325,14 +326,18 @@
    RESPONSIVE
 ════════════════════════════════════════ */
 @media (max-width: 1200px) {
-  .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 1000px) {
+  .chart-row--3     { grid-template-columns: 1fr 1fr; }
   .chart-row--split { grid-template-columns: 1fr; }
   .bottom-row       { grid-template-columns: 1fr; }
 }
+@media (max-width: 700px) {
+  .chart-row--3 { grid-template-columns: 1fr; }
+}
 @media (max-width: 900px) {
-  .kpi-grid  { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-grid  { grid-template-columns: repeat(4, 1fr); }
   .sa-hero__kpis { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
   .sa-hero__kpi { padding: 12px 14px; min-width: 120px; }
   .sa-hero { padding: 22px 18px; }
@@ -384,18 +389,18 @@
     <div>
       <div class="sa-hero__kicker">لوحة التحكم الرئيسية</div>
       <div class="sa-hero__title">مشرف النظام</div>
-      <div class="sa-hero__desc">نظرة شاملة على الحسابات، الاشتراكات، والنسخ الاحتياطية.</div>
+      <div class="sa-hero__desc">نظرة شاملة على الاشتراكات، الاشتراكات، والنسخ الاحتياطية.</div>
     </div>
   </div>
   <div class="sa-hero__kpis">
     <div class="sa-hero__kpi">
       <span class="sa-hero__kpi-num">{{ total_centers }}</span>
-      <span class="sa-hero__kpi-lbl">إجمالي الحسابات</span>
+      <span class="sa-hero__kpi-lbl">إجمالي الاشتراكات</span>
     </div>
     <div class="sa-hero__kpi-div"></div>
     <div class="sa-hero__kpi">
       <span class="sa-hero__kpi-num sa-hero__kpi-num--green">{{ active_centers }}</span>
-      <span class="sa-hero__kpi-lbl">حسابات نشطة</span>
+      <span class="sa-hero__kpi-lbl">اشتراكات نشطة</span>
     </div>
     <div class="sa-hero__kpi-div"></div>
     <div class="sa-hero__kpi">
@@ -412,7 +417,7 @@
     <div class="kpi-card__icon"><i class="fas fa-building"></i></div>
     <div>
       <div class="kpi-card__num">{{ total_centers }}</div>
-      <div class="kpi-card__lbl">إجمالي الحسابات</div>
+      <div class="kpi-card__lbl">إجمالي الاشتراكات</div>
     </div>
   </div>
 
@@ -420,7 +425,7 @@
     <div class="kpi-card__icon"><i class="fas fa-circle-check"></i></div>
     <div>
       <div class="kpi-card__num">{{ active_centers }}</div>
-      <div class="kpi-card__lbl">حسابات نشطة</div>
+      <div class="kpi-card__lbl">اشتراكات نشطة</div>
     </div>
   </div>
 
@@ -428,7 +433,7 @@
     <div class="kpi-card__icon"><i class="fas fa-ban"></i></div>
     <div>
       <div class="kpi-card__num">{{ inactive_centers }}</div>
-      <div class="kpi-card__lbl">حسابات موقوفة</div>
+      <div class="kpi-card__lbl">اشتراكات موقوفة</div>
     </div>
   </div>
 
@@ -436,7 +441,7 @@
     <div class="kpi-card__icon"><i class="fas fa-flask"></i></div>
     <div>
       <div class="kpi-card__num">{{ trial_centers }}</div>
-      <div class="kpi-card__lbl">حسابات تجريبية</div>
+      <div class="kpi-card__lbl">اشتراكات تجريبية</div>
     </div>
   </div>
 
@@ -474,53 +479,44 @@
 
 </div>
 
-<!-- ══════════ REGISTRATION CHART — full width ══════════ -->
-<div class="chart-row chart-row--main">
+<!-- ══════════ CHARTS ROW — 3 panels ══════════ -->
+<div class="chart-row chart-row--3">
+
+  <!-- 1. Plan distribution doughnut -->
   <div class="ch-panel">
     <div class="ch-panel__head">
-      <div class="ch-panel__icon ch-panel__icon--indigo"><i class="fas fa-chart-area"></i></div>
+      <div class="ch-panel__icon ch-panel__icon--indigo"><i class="fas fa-layer-group"></i></div>
       <div>
-        <div class="ch-panel__title">تسجيلات الحسابات الجديدة</div>
-        <div class="ch-panel__subtitle">التسجيلات اليومية خلال آخر 30 يوماً</div>
+        <div class="ch-panel__title">توزيع الباقات</div>
+        <div class="ch-panel__subtitle">أنواع خطط الاشتراك</div>
       </div>
     </div>
-    <div class="ch-panel__body ch-panel__body--chart" style="height:240px;">
-      <canvas id="regChart"></canvas>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════ SPLIT CHARTS — plans + status ══════════ -->
-<div class="chart-row chart-row--split">
-
-  <!-- Plans doughnut -->
-  <div class="ch-panel">
-    <div class="ch-panel__head">
-      <div class="ch-panel__icon ch-panel__icon--purple"><i class="fas fa-chart-pie"></i></div>
-      <div>
-        <div class="ch-panel__title">توزيع باقات الاشتراك</div>
-        <div class="ch-panel__subtitle">نسبة كل باقة من الإجمالي</div>
-      </div>
-    </div>
-    <div class="ch-panel__body" style="display:flex;align-items:center;justify-content:center;gap:28px;min-height:220px;">
-      <div style="position:relative;width:160px;height:160px;flex-shrink:0;">
-        <canvas id="planChart" width="160" height="160"></canvas>
-        <div id="planTotal" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
-          <span style="font-size:26px;font-weight:900;color:var(--sa-text);">{{ total_centers }}</span>
-          <span style="font-size:11px;color:var(--sa-muted);">حساب</span>
-        </div>
-      </div>
-      <div id="planLegend" style="font-size:12.5px;"></div>
+    <div class="ch-panel__body ch-panel__body--chart" style="height:220px;">
+      <canvas id="planChart"></canvas>
     </div>
   </div>
 
-  <!-- Status bar chart -->
+  <!-- 2. Service type distribution bar -->
   <div class="ch-panel">
     <div class="ch-panel__head">
-      <div class="ch-panel__icon ch-panel__icon--green"><i class="fas fa-chart-bar"></i></div>
+      <div class="ch-panel__icon ch-panel__icon--green"><i class="fas fa-spa"></i></div>
       <div>
-        <div class="ch-panel__title">حالة الاشتراكات</div>
-        <div class="ch-panel__subtitle">نشط · موقوف · منتهٍ · تجريبي</div>
+        <div class="ch-panel__title">أنواع الخدمات</div>
+        <div class="ch-panel__subtitle">توزيع الاشتراكات حسب نوع المركز</div>
+      </div>
+    </div>
+    <div class="ch-panel__body ch-panel__body--chart" style="height:220px;">
+      <canvas id="serviceChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 3. Status line chart -->
+  <div class="ch-panel">
+    <div class="ch-panel__head">
+      <div class="ch-panel__icon ch-panel__icon--amber"><i class="fas fa-chart-pie"></i></div>
+      <div>
+        <div class="ch-panel__title">توزيع حالة الاشتراكات</div>
+        <div class="ch-panel__subtitle">نشط · منتهٍ · موقوف</div>
       </div>
     </div>
     <div class="ch-panel__body ch-panel__body--chart" style="height:220px;">
@@ -528,6 +524,22 @@
     </div>
   </div>
 
+</div>
+
+<!-- ══════════ REGISTRATION CHART — full width ══════════ -->
+<div class="chart-row chart-row--main">
+  <div class="ch-panel">
+    <div class="ch-panel__head">
+      <div class="ch-panel__icon ch-panel__icon--blue"><i class="fas fa-chart-area"></i></div>
+      <div>
+        <div class="ch-panel__title">تسجيلات الاشتراكات الجديدة</div>
+        <div class="ch-panel__subtitle">التسجيلات اليومية خلال آخر 30 يوماً</div>
+      </div>
+    </div>
+    <div class="ch-panel__body ch-panel__body--chart" style="height:220px;">
+      <canvas id="regChart"></canvas>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════ BOTTOM ROW — table + quick actions ══════════ -->
@@ -538,8 +550,8 @@
     <div class="ch-panel__head">
       <div class="ch-panel__icon" style="background:#dbeafe;color:#3b82f6;"><i class="fas fa-clock-rotate-left"></i></div>
       <div style="flex:1;">
-        <div class="ch-panel__title">أحدث الحسابات المسجلة</div>
-        <div class="ch-panel__subtitle">آخر 8 حسابات انضمت للنظام</div>
+        <div class="ch-panel__title">أحدث الاشتراكات المسجلة</div>
+        <div class="ch-panel__subtitle">آخر 8 اشتراكات انضمت للنظام</div>
       </div>
       <a href="{% url 'sysadmin:center_list' %}"
          style="font-size:12px;color:var(--sa-accent);font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap;">
@@ -551,7 +563,7 @@
       <table class="rc-table">
         <thead>
           <tr>
-            <th>الحساب</th>
+            <th>الاشتراك</th>
             <th>النوع</th>
             <th>الباقة</th>
             <th>الحالة</th>
@@ -582,7 +594,7 @@
           <tr>
             <td colspan="5" style="text-align:center;color:var(--sa-muted);padding:40px;">
               <i class="fas fa-building" style="font-size:32px;opacity:.2;display:block;margin-bottom:10px;"></i>
-              لا توجد حسابات بعد
+              لا توجد اشتراكات بعد
             </td>
           </tr>
           {% endfor %}
@@ -630,7 +642,7 @@
       {% empty %}
       <div style="text-align:center;color:var(--sa-muted);padding:40px 16px;">
         <i class="fas fa-building" style="font-size:32px;opacity:.2;display:block;margin-bottom:10px;"></i>
-        لا توجد حسابات بعد
+        لا توجد اشتراكات بعد
       </div>
       {% endfor %}
     </div>
@@ -649,12 +661,12 @@
       <div class="qa-list">
         <a href="{% url 'sysadmin:center_add' %}" class="qa-item qa-item--indigo">
           <div class="qa-icon"><i class="fas fa-plus-circle"></i></div>
-          <div><div class="qa-title">إضافة حساب</div><div class="qa-sub">تسجيل حساب جديد</div></div>
+          <div><div class="qa-title">إضافة اشتراك</div><div class="qa-sub">تسجيل اشتراك جديد</div></div>
           <i class="fas fa-arrow-left qa-arrow"></i>
         </a>
         <a href="{% url 'sysadmin:center_list' %}" class="qa-item qa-item--blue">
           <div class="qa-icon"><i class="fas fa-building"></i></div>
-          <div><div class="qa-title">إدارة الحسابات</div><div class="qa-sub">عرض وتعديل الحسابات</div></div>
+          <div><div class="qa-title">إدارة الاشتراكات</div><div class="qa-sub">عرض وتعديل الاشتراكات</div></div>
           <i class="fas fa-arrow-left qa-arrow"></i>
         </a>
         <a href="{% url 'sysadmin:backup_list' %}" class="qa-item qa-item--green">
@@ -669,7 +681,7 @@
         </a>
         <a href="{% url 'sysadmin:service_types' %}" class="qa-item qa-item--purple">
           <div class="qa-icon"><i class="fas fa-spa"></i></div>
-          <div><div class="qa-title">أنواع الحسابات</div><div class="qa-sub">إدارة التصنيفات</div></div>
+          <div><div class="qa-title">أنواع الاشتراكات</div><div class="qa-sub">إدارة التصنيفات</div></div>
           <i class="fas fa-arrow-left qa-arrow"></i>
         </a>
       </div>
@@ -693,13 +705,25 @@
     </a>
   </div>
   <div class="exp-row">
-    {% for c in expiring_soon %}
-    <a href="{% url 'sysadmin:center_detail' c.pk %}" style="text-decoration:none;">
-      <div class="exp-item">
-        <div class="exp-item__avatar">{{ c.name|slice:":1" }}</div>
+    {% for item in expiring_soon %}
+    <a href="{% url 'sysadmin:center_detail' item.center.pk %}" style="text-decoration:none;">
+      <div class="exp-item" {% if item.days_left == 0 %}style="border-color:#fecaca;background:#fff1f2;"{% endif %}>
+        <div class="exp-item__avatar" {% if item.days_left == 0 %}style="background:linear-gradient(135deg,#ef4444,#f87171);"{% endif %}>
+          {{ item.center.name|slice:":1" }}
+        </div>
         <div>
-          <div class="exp-item__name">{{ c.name }}</div>
-          <div class="exp-item__date"><i class="fas fa-calendar-xmark"></i> {{ c.plan_expires|date:"d/m/Y" }}</div>
+          <div class="exp-item__name">{{ item.center.name }}</div>
+          <div class="exp-item__date">
+            <i class="fas fa-calendar-xmark"></i> {{ item.center.plan_expires|date:"d/m/Y" }}
+          </div>
+          <div style="font-size:10.5px;font-weight:700;margin-top:3px;
+            {% if item.days_left == 0 %}color:#ef4444;{% elif item.days_left <= 3 %}color:#f59e0b;{% else %}color:#64748b;{% endif %}">
+            {% if item.days_left == 0 %}
+              ينتهي اليوم
+            {% else %}
+              متبقي {{ item.days_left }} يوم
+            {% endif %}
+          </div>
         </div>
       </div>
     </a>
@@ -709,29 +733,43 @@
 {% endif %}
 
 <!-- ══════════ SYSTEM HEALTH ALERTS ══════════ -->
-{% if expired_centers or expiring_soon %}
+{% if expiring_7 or expired_centers or old_tickets %}
 <div style="margin-bottom:8px;">
   <div class="health-bar"><i class="fas fa-heartbeat"></i> تنبيهات صحة النظام</div>
   <div class="health-grid">
+
+    {% if expiring_7 %}
+    <a href="{% url 'sysadmin:center_list' %}?status=active" class="health-card health-card--red" style="text-decoration:none;color:inherit;">
+      <div class="health-card__icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div>
+        <div class="health-card__num">{{ expiring_7|length }}</div>
+        <div class="health-card__lbl">اشتراك ينتهي خلال 7 أيام</div>
+        <div class="health-card__names">{% for c in expiring_7 %}{{ c.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+      </div>
+    </a>
+    {% endif %}
+
     {% if expired_centers %}
     <a href="{% url 'sysadmin:center_list' %}?status=expired" class="health-card health-card--amber" style="text-decoration:none;color:inherit;">
       <div class="health-card__icon"><i class="fas fa-times-circle"></i></div>
       <div>
         <div class="health-card__num">{{ expired_centers }}</div>
-        <div class="health-card__lbl">اشتراكات منتهية (نشطة لكن منتهية)</div>
+        <div class="health-card__lbl">اشتراك منتهٍ (نشط لكن منتهي الصلاحية)</div>
       </div>
     </a>
     {% endif %}
-    {% if expiring_soon %}
-    <a href="{% url 'sysadmin:center_list' %}?status=active" class="health-card health-card--red" style="text-decoration:none;color:inherit;">
-      <div class="health-card__icon"><i class="fas fa-exclamation-triangle"></i></div>
+
+    {% if old_tickets %}
+    <a href="{% url 'sysadmin:support_list' %}" class="health-card health-card--amber" style="text-decoration:none;color:inherit;">
+      <div class="health-card__icon"><i class="fas fa-headset"></i></div>
       <div>
-        <div class="health-card__num">{{ expiring_soon|length }}</div>
-        <div class="health-card__lbl">اشتراك ينتهي خلال 14 يوماً</div>
-        <div class="health-card__names">{% for c in expiring_soon %}{{ c.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+        <div class="health-card__num">{{ old_tickets|length }}</div>
+        <div class="health-card__lbl">تذكرة مفتوحة منذ أكثر من 3 أيام</div>
+        <div class="health-card__names">{% for t in old_tickets %}{{ t.center.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
       </div>
     </a>
     {% endif %}
+
   </div>
 </div>
 {% endif %}
@@ -749,163 +787,127 @@ const tooltipDefaults = {
   bodyFont:  { size: 12 },
 };
 
-/* ─── Registration Area Chart ─── */
-(function () {
-  const ctx  = document.getElementById('regChart').getContext('2d');
-  const grad = ctx.createLinearGradient(0, 0, 0, 240);
-  grad.addColorStop(0, 'rgba(99,102,241,.35)');
-  grad.addColorStop(1, 'rgba(99,102,241,.02)');
+const GRID_COLOR = 'rgba(0,0,0,.05)';
+const TICK_COLOR = '#94a3b8';
+const scaleDefaults = {
+  y: { beginAtZero: true, ticks: { stepSize:1, color: TICK_COLOR, font:{size:11} },
+       grid: { color: GRID_COLOR, borderDash:[4,4], drawBorder:false }, border:{display:false} },
+  x: { grid: { display:false, drawBorder:false }, ticks: { color: TICK_COLOR, font:{size:11} } }
+};
 
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: {{ chart_reg_labels|safe }},
-      datasets: [{
-        label: 'تسجيلات جديدة',
-        data: {{ chart_reg_data|safe }},
-        fill: true,
-        backgroundColor: grad,
-        borderColor: '#6366f1',
-        borderWidth: 2.5,
-        tension: 0.38,
-        pointRadius: 3,
-        pointHoverRadius: 7,
-        pointBackgroundColor: '#6366f1',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-      }]
-    },
+/* ─── Chart 1: Plan distribution doughnut ─── */
+(function () {
+  const labels = {{ chart_plan_labels|safe }};
+  const data   = {{ chart_plan_data|safe }};
+  const colors = ['#6366f1','#10b981','#3b82f6','#f97316','#8b5cf6','#f59e0b'];
+  const total  = data.reduce((s,v) => s+v, 0);
+
+  new Chart(document.getElementById('planChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth:3, borderColor:'#fff', hoverOffset:10 }] },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 800, easing: 'easeInOutQuart' },
-      interaction: { mode: 'index', intersect: false },
+      cutout: '70%', responsive:true, maintainAspectRatio:false,
+      animation: { duration:800, easing:'easeInOutQuart' },
       plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...tooltipDefaults,
-          callbacks: { label: c => '  تسجيل جديد: ' + c.parsed.y }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { stepSize: 1, color: '#94a3b8', font: { size: 11 } },
-          grid: { color: 'rgba(0,0,0,.05)', borderDash: [5,4], drawBorder: false },
-          border: { display: false }
-        },
-        x: {
-          grid: { display: false, drawBorder: false },
-          ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 10 }
-        }
+        legend: { position:'bottom', labels:{ boxWidth:10, padding:12, font:{size:11}, color:'#64748b' } },
+        tooltip: { ...tooltipDefaults, callbacks: { label: c => {
+          const pct = total ? Math.round(c.parsed/total*100) : 0;
+          return '  ' + c.label + ': ' + c.parsed + ' (' + pct + '%)';
+        }}}
       }
     }
   });
 })();
 
-/* ─── Plans Doughnut ─── */
+/* ─── Chart 2: Service type distribution bar ─── */
 (function () {
-  const labels = {{ chart_plan_labels|safe }};
-  const data   = {{ chart_plan_data|safe }};
-  const colors = {{ chart_plan_colors|safe }};
-
-  new Chart(document.getElementById('planChart'), {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        data,
-        backgroundColor: colors,
-        borderWidth: 3,
-        borderColor: '#fff',
-        hoverOffset: 10,
-      }]
-    },
-    options: {
-      responsive: false,
-      maintainAspectRatio: false,
-      animation: { duration: 800, easing: 'easeInOutQuart' },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...tooltipDefaults,
-          callbacks: {
-            label: c => {
-              const total = data.reduce((a, b) => a + b, 0);
-              const pct   = total ? Math.round(c.parsed / total * 100) : 0;
-              return `  ${c.label}: ${c.parsed} (${pct}%)`;
-            }
-          }
-        }
-      },
-      cutout: '70%',
-    }
-  });
-
-  const legend = document.getElementById('planLegend');
-  labels.forEach((l, i) => {
-    legend.innerHTML += `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
-        <span style="width:11px;height:11px;border-radius:4px;background:${colors[i]};flex-shrink:0;"></span>
-        <span>${l}</span>
-        <strong style="margin-right:auto;padding-right:12px;">${data[i]}</strong>
-      </div>`;
-  });
-})();
-
-/* ─── Status Bar Chart ─── */
-(function () {
-  const ctx  = document.getElementById('statusChart').getContext('2d');
-  const vals = [
-    {{ active_centers }} - {{ expired_centers }},
-    {{ inactive_centers }},
-    {{ expired_centers }},
-    {{ trial_centers }}
-  ];
-  const lbls   = ['نشط ومشترك', 'موقوف', 'منتهي الاشتراك', 'تجريبي'];
-  const clrs   = ['#10b981', '#94a3b8', '#ef4444', '#6366f1'];
-  const grads  = clrs.map(hex => {
-    const g = ctx.createLinearGradient(0, 0, 0, 200);
-    g.addColorStop(0, hex);
-    g.addColorStop(1, hex + '44');
+  const ctx    = document.getElementById('serviceChart').getContext('2d');
+  const labels = {{ chart_service_labels|safe }};
+  const data   = {{ chart_service_data|safe }};
+  const colors = ['#6366f1','#10b981','#f59e0b','#3b82f6','#8b5cf6','#ef4444','#14b8a6'];
+  const grads  = colors.slice(0, data.length).map(hex => {
+    const g = ctx.createLinearGradient(0,0,0,200);
+    g.addColorStop(0, hex); g.addColorStop(1, hex+'33');
     return g;
   });
 
   new Chart(ctx, {
     type: 'bar',
+    data: { labels, datasets: [{ label:'عدد الاشتراكات', data, backgroundColor: grads,
+      borderRadius:6, borderSkipped:false, barPercentage:.6, categoryPercentage:.8 }] },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      animation: { duration:800, easing:'easeInOutQuart' },
+      plugins: {
+        legend: { display:false },
+        tooltip: { ...tooltipDefaults, callbacks: { label: c => '  عدد الاشتراكات: ' + c.parsed.y } }
+      },
+      scales: scaleDefaults
+    }
+  });
+})();
+
+/* ─── Chart 3: Status line chart ─── */
+(function () {
+  const ctx = document.getElementById('statusChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,200);
+  grad.addColorStop(0,'rgba(16,185,129,.22)'); grad.addColorStop(1,'rgba(16,185,129,.01)');
+
+  const statusData = [
+    { name:'نشط ومشترك',      value: Math.max(0, {{ active_centers }} - {{ expired_centers }}) },
+    { name:'منتهي الاشتراك',  value: {{ expired_centers }} },
+    { name:'موقوف',           value: Math.max(0, {{ inactive_centers }}) },
+  ];
+
+  new Chart(ctx, {
+    type: 'line',
     data: {
-      labels: lbls,
-      datasets: [{
-        data: vals,
-        backgroundColor: grads,
-        borderRadius: 8,
-        borderSkipped: false,
-        barPercentage: .55,
-        categoryPercentage: .85,
-      }]
+      labels: statusData.map(d => d.name),
+      datasets: [{ label:'عدد الاشتراكات', data: statusData.map(d => d.value),
+        fill:true, backgroundColor: grad, borderColor:'#10b981', borderWidth:2.5,
+        tension:0.42, pointRadius:5, pointHoverRadius:8,
+        pointBackgroundColor:['#10b981','#ef4444','#94a3b8'],
+        pointBorderColor:'#fff', pointBorderWidth:2 }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 800, easing: 'easeInOutQuart' },
+      responsive:true, maintainAspectRatio:false,
+      animation: { duration:800, easing:'easeInOutQuart' },
+      interaction: { mode:'index', intersect:false },
       plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...tooltipDefaults,
-          callbacks: { label: c => '  العدد: ' + c.parsed.y }
-        }
+        legend: { display:false },
+        tooltip: { ...tooltipDefaults, callbacks: { label: c => '  العدد: ' + c.parsed.y } }
+      },
+      scales: scaleDefaults
+    }
+  });
+})();
+
+/* ─── Chart 4: Registration area chart (30 days) ─── */
+(function () {
+  const ctx  = document.getElementById('regChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,220);
+  grad.addColorStop(0,'rgba(59,130,246,.3)'); grad.addColorStop(1,'rgba(59,130,246,.02)');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_reg_labels|safe }},
+      datasets: [{ label:'تسجيلات جديدة', data: {{ chart_reg_data|safe }},
+        fill:true, backgroundColor: grad, borderColor:'#3b82f6', borderWidth:2.5,
+        tension:0.38, pointRadius:3, pointHoverRadius:7,
+        pointBackgroundColor:'#3b82f6', pointBorderColor:'#fff', pointBorderWidth:2 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      animation: { duration:800, easing:'easeInOutQuart' },
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display:false },
+        tooltip: { ...tooltipDefaults, callbacks: { label: c => '  تسجيل جديد: ' + c.parsed.y } }
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { stepSize: 1, color: '#94a3b8', font: { size: 11 } },
-          grid: { color: 'rgba(0,0,0,.05)', borderDash: [5,4], drawBorder: false },
-          border: { display: false }
-        },
-        x: {
-          grid: { display: false, drawBorder: false },
-          ticks: { color: '#64748b', font: { size: 12 } }
-        }
+        ...scaleDefaults,
+        x: { grid:{display:false,drawBorder:false}, ticks:{color:TICK_COLOR,font:{size:10},maxTicksLimit:10} }
       }
     }
   });

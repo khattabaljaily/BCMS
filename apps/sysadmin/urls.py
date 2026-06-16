@@ -37,4 +37,11 @@ urlpatterns = [
     # Support tickets
     path('support/',              views.support_list,   name='support_list'),
     path('support/<int:pk>/',     views.support_detail, name='support_detail'),
+
+    # Reports
+    path('reports/',          views.reports,                name='reports'),
+
+    # System settings
+    path('settings/',         views.system_settings,        name='settings'),
+    path('settings/update/',  views.system_settings_update, name='settings_update'),
 ]

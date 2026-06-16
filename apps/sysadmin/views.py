@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.db.models import Count, Q, Sum
 from django.views.decorators.http import require_POST
 
-from apps.core.models import Center, ServiceType, Settings, CenterBackup
+from apps.core.models import Center, ServiceType, Settings, CenterBackup, SupportTicket, PlatformSettings
 from apps.core.countries import ARAB_COUNTRIES, COUNTRY_CHOICES
 from apps.accounts.models import User
 from apps.clients.models import Client
@@ -30,7 +30,7 @@ def dashboard(request):
 
     total_centers  = Center.objects.count()
     active_centers = Center.objects.filter(is_active=True).count()
-    trial_centers  = Center.objects.filter(plan='trial').count()
+    trial_centers  = Center.objects.filter(is_demo=True).count()
     expired_centers = Center.objects.filter(
         plan_expires__lt=today, is_active=True
     ).count()
@@ -82,7 +82,7 @@ def dashboard(request):
         .order_by('-created_at')[:8]
     )
 
-    expiring_soon = (
+    _expiring_qs = (
         Center.objects
         .filter(
             plan_expires__gte=today,
@@ -91,6 +91,10 @@ def dashboard(request):
         )
         .order_by('plan_expires')[:6]
     )
+    expiring_soon = [
+        {'center': c, 'days_left': (c.plan_expires - today).days}
+        for c in _expiring_qs
+    ]
 
     total_users        = User.objects.filter(center__isnull=False).count()
     total_clients      = Client.objects.count()
@@ -105,6 +109,43 @@ def dashboard(request):
         .aggregate(t=Sum('total'))['t'] or 0
     )
 
+    # Service type distribution (for chart)
+    service_type_dist = list(
+        Center.objects
+        .values('service_type__name')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+    chart_service_labels = json.dumps(
+        [r['service_type__name'] or 'غير محدد' for r in service_type_dist],
+        ensure_ascii=False
+    )
+    chart_service_data = json.dumps([r['count'] for r in service_type_dist])
+
+    # Health: expiring in 7 days
+    expiring_7 = list(
+        Center.objects
+        .filter(
+            is_active=True,
+            plan_expires__gte=today,
+            plan_expires__lte=today + timedelta(days=7),
+        )
+        .order_by('plan_expires')
+    )
+
+    # Health: old open support tickets (> 3 days)
+    old_tickets = list(
+        SupportTicket.objects
+        .filter(
+            status__in=['open', 'in_progress'],
+            created_at__date__lte=today - timedelta(days=3),
+        )
+        .select_related('center')
+        .order_by('created_at')[:8]
+    )
+
+    pending_support = SupportTicket.objects.filter(status__in=['open', 'in_progress']).count()
+
     return render(request, 'sysadmin/dashboard.html', {
         'total_centers':   total_centers,
         'active_centers':  active_centers,
@@ -117,12 +158,17 @@ def dashboard(request):
         'appointments_this_month':  appointments_this_month,
         'total_revenue':            total_revenue,
         'recent_centers':           recent_centers,
-        'expiring_soon':   expiring_soon,
-        'chart_plan_labels': json.dumps(chart_plan_labels),
-        'chart_plan_data':   json.dumps(chart_plan_data),
-        'chart_plan_colors': json.dumps(chart_plan_colors),
-        'chart_reg_labels':  json.dumps(chart_reg_labels),
-        'chart_reg_data':    json.dumps(chart_reg_data),
+        'expiring_soon':            expiring_soon,
+        'expiring_7':               expiring_7,
+        'old_tickets':              old_tickets,
+        'pending_support':          pending_support,
+        'chart_plan_labels':        json.dumps(chart_plan_labels),
+        'chart_plan_data':          json.dumps(chart_plan_data),
+        'chart_plan_colors':        json.dumps(chart_plan_colors),
+        'chart_service_labels':     chart_service_labels,
+        'chart_service_data':       chart_service_data,
+        'chart_reg_labels':         json.dumps(chart_reg_labels),
+        'chart_reg_data':           json.dumps(chart_reg_data),
         'today': today,
     })
 
@@ -277,7 +323,7 @@ def center_add(request):
         # Validation
         errors = []
         if not name or not slug:
-            errors.append('اسم الحساب والرابط المختصر مطلوبان.')
+            errors.append('اسم الاشتراك والرابط المختصر مطلوبان.')
         if Center.objects.filter(slug=slug).exists():
             errors.append('هذا الرابط المختصر مستخدم بالفعل.')
         if not owner_full_name:
@@ -329,14 +375,14 @@ def center_add(request):
                         'owner_username': owner_username,
                         'owner_full_name': owner_full_name,
                     })
-                messages.success(request, f'تم إنشاء الحساب "{name}" بنجاح. بيانات الدخول: المستخدم "{owner_username}".')
+                messages.success(request, f'تم إنشاء الاشتراك "{name}" بنجاح. بيانات الدخول: المستخدم "{owner_username}".')
                 return redirect('sysadmin:center_detail', pk=c.pk)
             except Exception as e:
                 import logging
                 logging.exception("Error creating center")
                 if ajax:
                     return JsonResponse({'success': False, 'error': str(e)}, status=500)
-                messages.error(request, f'حدث خطأ أثناء إنشاء الحساب: {e}')
+                messages.error(request, f'حدث خطأ أثناء إنشاء الاشتراك: {e}')
 
     return render(request, 'sysadmin/center_form.html', {
         'service_types':   service_types,
@@ -379,7 +425,7 @@ def center_edit(request, pk):
             center.save()
             if ajax:
                 return JsonResponse({'success': True, 'center': _center_payload(center)})
-            messages.success(request, 'تم حفظ بيانات الحساب.')
+            messages.success(request, 'تم حفظ بيانات الاشتراك.')
             return redirect('sysadmin:center_detail', pk=center.pk)
         except Exception as e:
             import logging
@@ -406,7 +452,7 @@ def center_toggle(request, pk):
         if _is_ajax(request):
             return JsonResponse({'success': True, 'is_active': center.is_active})
         state = 'تم تفعيل' if center.is_active else 'تم إيقاف'
-        messages.success(request, f'{state} الحساب "{center.name}".')
+        messages.success(request, f'{state} الاشتراك "{center.name}".')
     return redirect(request.POST.get('next', 'sysadmin:center_list'))
 
 
@@ -488,12 +534,12 @@ def center_delete(request, pk):
             logging.exception("Error force-deleting center %s", pk)
             if _is_ajax(request):
                 return JsonResponse({'success': False, 'error': str(e)}, status=500)
-            messages.error(request, f'حدث خطأ أثناء حذف الحساب: {e}')
+            messages.error(request, f'حدث خطأ أثناء حذف الاشتراك: {e}')
             return redirect('sysadmin:center_detail', pk=pk)
 
         if _is_ajax(request):
             return JsonResponse({'success': True})
-        messages.success(request, f'تم حذف الحساب "{name}" وجميع بياناته.')
+        messages.success(request, f'تم حذف الاشتراك "{name}" وجميع بياناته.')
     return redirect('sysadmin:center_list')
 
 
@@ -531,7 +577,7 @@ def service_type_save(request, pk=None):
                 obj.save()
                 if ajax:
                     return JsonResponse({'success': True, 'type': _service_type_payload(obj)})
-                messages.success(request, 'تم تعديل نوع الحساب.')
+                messages.success(request, 'تم تعديل نوع الاشتراك.')
             else:
                 t = ServiceType.objects.create(
                     name=name, icon=icon, color=color,
@@ -539,7 +585,7 @@ def service_type_save(request, pk=None):
                 )
                 if ajax:
                     return JsonResponse({'success': True, 'type': _service_type_payload(t)})
-                messages.success(request, 'تم إضافة نوع الحساب.')
+                messages.success(request, 'تم إضافة نوع الاشتراك.')
         if not ajax:
             return redirect('sysadmin:service_types')
 
@@ -554,7 +600,7 @@ def service_type_delete(request, pk):
         obj  = get_object_or_404(ServiceType, pk=pk)
         ajax = _is_ajax(request)
         if obj.centers.exists():
-            err = 'لا يمكن حذف نوع مرتبط بحسابات موجودة.'
+            err = 'لا يمكن حذف نوع مرتبط باشتراكات موجودة.'
             if ajax:
                 return JsonResponse({'success': False, 'error': err})
             messages.error(request, err)
@@ -562,7 +608,7 @@ def service_type_delete(request, pk):
             obj.delete()
             if ajax:
                 return JsonResponse({'success': True})
-            messages.success(request, 'تم حذف نوع الحساب.')
+            messages.success(request, 'تم حذف نوع الاشتراك.')
     return redirect('sysadmin:service_types')
 
 
@@ -774,3 +820,113 @@ def support_detail(request, pk):
         'ticket':          ticket,
         'ticket_messages': ticket_messages,
     })
+
+
+# ── Reports ───────────────────────────────────────────────────────────────────
+
+@superuser_required
+def reports(request):
+    today = timezone.localdate()
+
+    total_centers   = Center.objects.count()
+    active_centers  = Center.objects.filter(is_active=True).count()
+    expired_centers = Center.objects.filter(plan_expires__lt=today, is_active=True).count()
+    inactive_centers = total_centers - active_centers
+
+    # Plan distribution
+    plans_data = (
+        Center.objects.values('plan').annotate(count=Count('id')).order_by('plan')
+    )
+    PLAN_LABELS = {'trial':'تجريبي','starter':'أساسي','pro':'متقدم','enterprise':'بريميوم'}
+    PLAN_COLORS = {'trial':'#94a3b8','starter':'#3b82f6','pro':'#8b5cf6','enterprise':'#f59e0b'}
+    chart_plan_labels = [PLAN_LABELS.get(r['plan'], r['plan']) for r in plans_data]
+    chart_plan_data   = [r['count'] for r in plans_data]
+    chart_plan_colors = [PLAN_COLORS.get(r['plan'], '#94a3b8') for r in plans_data]
+
+    # Service type distribution
+    service_type_dist = list(
+        Center.objects.values('service_type__name').annotate(count=Count('id')).order_by('-count')
+    )
+    chart_service_labels = json.dumps(
+        [r['service_type__name'] or 'غير محدد' for r in service_type_dist], ensure_ascii=False
+    )
+    chart_service_data = json.dumps([r['count'] for r in service_type_dist])
+
+    # Registrations last 30 days
+    thirty_ago = today - timedelta(days=29)
+    reg_rows = (
+        Center.objects
+        .filter(created_at__date__gte=thirty_ago)
+        .extra(select={'day': 'DATE(created_at)'})
+        .values('day').annotate(count=Count('id')).order_by('day')
+    )
+    reg_map = {}
+    for r in reg_rows:
+        d = r['day']
+        if isinstance(d, str):
+            d = date.fromisoformat(d)
+        reg_map[d] = r['count']
+    chart_reg_labels, chart_reg_data = [], []
+    for i in range(29, -1, -1):
+        d = today - timedelta(days=i)
+        chart_reg_labels.append(d.strftime('%d/%m'))
+        chart_reg_data.append(reg_map.get(d, 0))
+
+    # Revenue by month (last 6 months)
+    from django.db.models.functions import TruncMonth
+    rev_rows = (
+        Invoice.objects
+        .filter(status='paid', created_at__date__gte=today - timedelta(days=180))
+        .annotate(month=TruncMonth('created_at'))
+        .values('month').annotate(total=Sum('total')).order_by('month')
+    )
+    chart_rev_labels = json.dumps([r['month'].strftime('%m/%Y') for r in rev_rows], ensure_ascii=False)
+    chart_rev_data   = json.dumps([float(r['total']) for r in rev_rows])
+
+    return render(request, 'sysadmin/reports.html', {
+        'total_centers':      total_centers,
+        'active_centers':     active_centers,
+        'expired_centers':    expired_centers,
+        'inactive_centers':   inactive_centers,
+        'chart_plan_labels':  json.dumps(chart_plan_labels),
+        'chart_plan_data':    json.dumps(chart_plan_data),
+        'chart_plan_colors':  json.dumps(chart_plan_colors),
+        'chart_service_labels': chart_service_labels,
+        'chart_service_data':   chart_service_data,
+        'chart_reg_labels':   json.dumps(chart_reg_labels),
+        'chart_reg_data':     json.dumps(chart_reg_data),
+        'chart_rev_labels':   chart_rev_labels,
+        'chart_rev_data':     chart_rev_data,
+    })
+
+
+# ── System Settings ───────────────────────────────────────────────────────────
+
+@superuser_required
+def system_settings(request):
+    ps = PlatformSettings.get()
+    return render(request, 'sysadmin/settings.html', {'ps': ps})
+
+
+@require_POST
+@superuser_required
+def system_settings_update(request):
+    ps      = PlatformSettings.get()
+    section = request.POST.get('section', '')
+
+    if section == 'maintenance':
+        ps.maintenance_mode    = request.POST.get('maintenance_mode') == 'true'
+        msg = request.POST.get('maintenance_message', '').strip()
+        if msg:
+            ps.maintenance_message = msg
+
+    elif section == 'announcement':
+        ps.announcement_active = request.POST.get('announcement_active') == 'true'
+        ps.announcement_text   = request.POST.get('announcement_text', '').strip()
+        ps.announcement_type   = request.POST.get('announcement_type', 'info')
+
+    else:
+        return JsonResponse({'success': False, 'error': 'قسم غير معروف'}, status=400)
+
+    ps.save()
+    return JsonResponse({'success': True})

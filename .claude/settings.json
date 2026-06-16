@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(python -c ' *)",
-      "Bash(python manage.py shell -c ' *)"
+      "Bash(python manage.py shell -c ' *)",
+      "Bash(python3)",
+      "Bash(find /home/khattab/Projects/EnjazIMS -type f -name \"*.html\" | xargs grep -l \"sysadmin\\\\|sys_admin\\\\|dashboard\" 2>/dev/null | head -10)",
+      "Read(//home/khattab/Projects/EnjazIMS/**)",
+      "Bash(find /home/khattab/Projects/EnjazIMS -path \"*/sysadmin*\" -name \"*.html\" 2>/dev/null | head -20)",
+      "Bash(python manage.py makemigrations core --name=platform_settings)"
     ]
   }
 }

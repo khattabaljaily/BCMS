@@ -4,6 +4,33 @@ based on the logged-in user, and activates the tenant's timezone.
 """
 import zoneinfo
 from django.utils import timezone
+from django.shortcuts import render
+
+
+class MaintenanceMiddleware:
+    BYPASS_PATHS = ('/sysadmin/', '/static/', '/media/', '/favicon', '/login/', '/logout/')
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path
+        # Superusers always pass through
+        if request.user.is_authenticated and request.user.is_superuser:
+            return self.get_response(request)
+        # Sysadmin and static paths always pass through
+        if any(path.startswith(p) for p in self.BYPASS_PATHS):
+            return self.get_response(request)
+        # Lazy-import to avoid app-registry issues at startup
+        try:
+            from apps.core.models import PlatformSettings
+            ps = PlatformSettings.get()
+            if ps.maintenance_mode:
+                return render(request, 'maintenance.html',
+                              {'message': ps.maintenance_message}, status=503)
+        except Exception:
+            pass
+        return self.get_response(request)
 
 
 class NoCacheMiddleware:

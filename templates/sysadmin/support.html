@@ -140,7 +140,7 @@
                 <div class="sup-hero__icon"><i class="fas fa-headset"></i></div>
                 <div>
                     <div class="sup-hero__title">الدعم الفني</div>
-                    <div class="sup-hero__desc">إدارة جميع تذاكر الدعم الواردة من الحسابات</div>
+                    <div class="sup-hero__desc">إدارة جميع تذاكر الدعم الواردة من الاشتراكات</div>
                 </div>
             </div>
             <div class="sup-stats">
@@ -158,7 +158,7 @@
         <form method="get" style="display:contents;">
             <div class="sup-search">
                 <i class="fas fa-search" style="color:var(--text-muted,#94a3b8);font-size:.8rem;"></i>
-                <input type="text" name="q" value="{{ search_q }}" placeholder="بحث بالموضوع أو اسم الحساب…">
+                <input type="text" name="q" value="{{ search_q }}" placeholder="بحث بالموضوع أو اسم الاشتراك…">
             </div>
             <div class="sup-filter-group">
                 <select name="status" class="sup-select">
@@ -191,7 +191,7 @@
                 <tr>
                     <th>#</th>
                     <th>الموضوع</th>
-                    <th>الحساب</th>
+                    <th>الاشتراك</th>
                     <th>التصنيف</th>
                     <th>الأولوية</th>
                     <th>الحالة</th>
@@ -246,7 +246,7 @@
             <div class="sup-empty__icon"><i class="fas fa-ticket"></i></div>
             <div class="sup-empty__title">لا توجد تذاكر</div>
             <div class="sup-empty__text">
-                {% if status_filter or priority_filter or search_q %}لا توجد نتائج تطابق معايير البحث{% else %}لم يرسل أي حساب تذكرة دعم بعد{% endif %}
+                {% if status_filter or priority_filter or search_q %}لا توجد نتائج تطابق معايير البحث{% else %}لم يرسل أي اشتراك تذكرة دعم بعد{% endif %}
             </div>
         </div>
         {% endif %}

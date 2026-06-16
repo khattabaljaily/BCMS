@@ -484,3 +484,42 @@ class SupportMessage(models.Model):
 
     def __str__(self):
         return f'رسالة في #{self.ticket_id} من {self.sender}'
+
+
+# ============================================================
+# PLATFORM SETTINGS — إعدادات النظام (Singleton)
+# ============================================================
+
+class PlatformSettings(models.Model):
+    ANNOUNCEMENT_TYPES = [
+        ('info',    'معلوماتي'),
+        ('warning', 'تحذير'),
+        ('success', 'نجاح'),
+        ('danger',  'خطر'),
+    ]
+
+    # ── وضع الصيانة
+    maintenance_mode    = models.BooleanField('وضع الصيانة', default=False)
+    maintenance_message = models.TextField('رسالة الصيانة', blank=True,
+                                           default='النظام قيد الصيانة حالياً. سنعود قريباً.')
+
+    # ── الإشعار العام
+    announcement_active = models.BooleanField('تفعيل الإشعار', default=False)
+    announcement_text   = models.CharField('نص الإشعار', max_length=500, blank=True)
+    announcement_type   = models.CharField('نوع الإشعار', max_length=10,
+                                           choices=ANNOUNCEMENT_TYPES, default='info')
+
+    updated_at = models.DateTimeField('آخر تحديث', auto_now=True)
+
+    class Meta:
+        db_table = 'platform_settings'
+        verbose_name = 'إعدادات النظام'
+        verbose_name_plural = 'إعدادات النظام'
+
+    def __str__(self):
+        return 'إعدادات النظام'
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

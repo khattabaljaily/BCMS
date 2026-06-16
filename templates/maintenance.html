@@ -1,0 +1,158 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>وضع الصيانة — EnjazBCMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:Cairo,sans-serif;
+  background:#0f172a;
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  direction:rtl;padding:20px;
+  position:relative;overflow:hidden;
+}
+
+/* Animated background orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;animation:drift 12s ease-in-out infinite alternate;}
+.orb--1{width:500px;height:500px;background:rgba(99,102,241,.18);top:-120px;right:-100px;animation-delay:0s;}
+.orb--2{width:400px;height:400px;background:rgba(139,92,246,.14);bottom:-80px;left:-80px;animation-delay:-4s;}
+.orb--3{width:300px;height:300px;background:rgba(59,130,246,.1);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-8s;}
+@keyframes drift{from{transform:translate(0,0) scale(1);}to{transform:translate(30px,20px) scale(1.08);}}
+
+/* Card */
+.card{
+  position:relative;z-index:1;
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:28px;
+  padding:52px 44px 44px;
+  max-width:500px;width:100%;
+  text-align:center;
+  box-shadow:0 32px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+/* Icon */
+.icon-wrap{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:88px;height:88px;border-radius:24px;margin-bottom:28px;
+  background:linear-gradient(135deg,#f59e0b,#ef4444);
+  box-shadow:0 12px 40px rgba(245,158,11,.4);
+  animation:pulse 3s ease-in-out infinite;
+}
+.icon-wrap i{font-size:38px;color:#fff;}
+@keyframes pulse{0%,100%{box-shadow:0 12px 40px rgba(245,158,11,.4);}50%{box-shadow:0 16px 52px rgba(245,158,11,.7);}}
+
+/* Kicker */
+.kicker{
+  display:inline-block;
+  background:rgba(245,158,11,.15);
+  color:#fbbf24;
+  border:1px solid rgba(245,158,11,.3);
+  border-radius:20px;
+  padding:4px 16px;
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  margin-bottom:16px;
+}
+
+h1{font-size:26px;font-weight:900;color:#f8fafc;margin-bottom:14px;line-height:1.25;}
+
+/* Message box */
+.message-box{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+  padding:16px 20px;
+  font-size:14px;color:#cbd5e1;line-height:1.75;
+  margin-bottom:28px;
+}
+
+/* Divider */
+.divider{height:1px;background:rgba(255,255,255,.08);margin-bottom:24px;}
+
+/* Status pill */
+.status-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:28px;}
+.dot{width:9px;height:9px;border-radius:50%;background:#f59e0b;animation:blink 1.6s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.status-text{font-size:13px;font-weight:700;color:#94a3b8;}
+
+/* Logout button */
+.btn-logout{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 24px;
+  background:rgba(255,255,255,.08);
+  color:#94a3b8;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  font-family:Cairo,sans-serif;font-size:13px;font-weight:700;
+  text-decoration:none;
+  transition:background .18s,color .18s,border-color .18s;
+}
+.btn-logout:hover{background:rgba(255,255,255,.14);color:#e2e8f0;border-color:rgba(255,255,255,.22);}
+
+/* Branding header */
+.brand-header{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:32px;}
+.brand-icon{
+  width:48px;height:48px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 20px rgba(99,102,241,.4);
+}
+.brand-icon i{font-size:22px;color:#fff;}
+.brand-text{text-align:start;}
+.brand-name{font-size:17px;font-weight:900;color:#f1f5f9;line-height:1.2;}
+.brand-slogan{font-size:11px;color:rgba(148,163,184,.65);font-weight:600;margin-top:3px;}
+
+@media(max-width:480px){
+  .card{padding:36px 22px 32px;}
+  .icon-wrap{width:72px;height:72px;}
+  .icon-wrap i{font-size:30px;}
+  h1{font-size:22px;}
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb--1"></div>
+<div class="orb orb--2"></div>
+<div class="orb orb--3"></div>
+
+<div class="card">
+
+  <div class="icon-wrap"><i class="fas fa-tools"></i></div><br>
+
+  <div class="kicker"><i class="fas fa-circle-exclamation" style="margin-left:5px;"></i>وضع الصيانة</div>
+
+  <h1>سنعود قريباً</h1>
+
+  <div class="message-box">
+    {{ message|default:"النظام قيد الصيانة حالياً. نعمل على تحسين الخدمة وسنعود في أقرب وقت ممكن." }}
+  </div>
+
+  <div class="status-row">
+    <span class="dot"></span>
+    <span class="status-text">نشكر صبركم وتفهمكـــم <i class="fa fa-heart"></i></span>
+  </div>
+
+  <div class="divider"></div>
+
+  {% if user.is_authenticated %}
+  <a href="{% url 'accounts:logout' %}" class="btn-logout">
+    <i class="fas fa-right-from-bracket"></i> تسجيل الخروج
+  </a>
+  {% else %}
+  <a href="{% url 'accounts:login' %}" class="btn-logout">
+    <i class="fas fa-right-to-bracket"></i> تسجيل الدخول
+  </a>
+  {% endif %}
+
+</div>
+
+</body>
+</html>
