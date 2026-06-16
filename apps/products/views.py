@@ -306,22 +306,31 @@ def purchase_create(request):
                     'products_json': _products_json(all_products),
                 })
 
-        inv = PurchaseInvoice.objects.create(
-            center=center,
-            number=_next_purchase_number(center),
-            supplier=request.POST.get('supplier', '').strip(),
-            payment_method=payment_method,
-            notes=request.POST.get('notes', '').strip(),
-        )
-        for product, qty, cost in lines_data:
-            PurchaseInvoiceLine.objects.create(
-                invoice=inv, product=product,
-                quantity=qty, unit_cost=cost,
-            )
-        inv.recalculate()
-        _apply_purchase_effects(inv)
-        messages.success(request, f'تم إنشاء فاتورة المشتريات {inv.number}.')
-        return redirect('products:purchase_detail', pk=inv.pk)
+        try:
+            from django.db import transaction as _tx
+            with _tx.atomic():
+                inv = PurchaseInvoice.objects.create(
+                    center=center,
+                    number=_next_purchase_number(center),
+                    supplier=request.POST.get('supplier', '').strip(),
+                    payment_method=payment_method,
+                    notes=request.POST.get('notes', '').strip(),
+                )
+                for product, qty, cost in lines_data:
+                    PurchaseInvoiceLine.objects.create(
+                        invoice=inv, product=product,
+                        quantity=qty, unit_cost=cost,
+                    )
+                inv.recalculate()
+                _apply_purchase_effects(inv)
+            messages.success(request, f'تم إنشاء فاتورة المشتريات {inv.number}.')
+            return redirect('products:purchase_detail', pk=inv.pk)
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء حفظ الفاتورة: {e}')
+            return render(request, 'products/purchase_form.html', {
+                'all_products': all_products,
+                'products_json': _products_json(all_products),
+            })
 
     return render(request, 'products/purchase_form.html', {
         'all_products': all_products,
@@ -429,31 +438,41 @@ def purchase_edit(request, pk):
                         f'رصيد الخزينة غير كافٍ. المتاح بعد الإلغاء: {available}، المبلغ المطلوب: {estimated_total}.'
                     )
                 else:
-                    _reverse_purchase_effects(inv)
-                    inv.lines.all().delete()
-                    inv.supplier       = request.POST.get('supplier', '').strip()
-                    inv.payment_method = new_payment_method
-                    inv.notes          = request.POST.get('notes', '').strip()
-                    inv.save(update_fields=['supplier', 'payment_method', 'notes'])
-                    for product, qty, cost in lines_data:
-                        PurchaseInvoiceLine.objects.create(invoice=inv, product=product, quantity=qty, unit_cost=cost)
-                    inv.recalculate()
-                    _apply_purchase_effects(inv)
+                    try:
+                        from django.db import transaction as _tx
+                        with _tx.atomic():
+                            _reverse_purchase_effects(inv)
+                            inv.lines.all().delete()
+                            inv.supplier       = request.POST.get('supplier', '').strip()
+                            inv.payment_method = new_payment_method
+                            inv.notes          = request.POST.get('notes', '').strip()
+                            inv.save(update_fields=['supplier', 'payment_method', 'notes'])
+                            for product, qty, cost in lines_data:
+                                PurchaseInvoiceLine.objects.create(invoice=inv, product=product, quantity=qty, unit_cost=cost)
+                            inv.recalculate()
+                            _apply_purchase_effects(inv)
+                        messages.success(request, 'تم تحديث الفاتورة.')
+                        return redirect('products:purchase_detail', pk=pk)
+                    except Exception as e:
+                        messages.error(request, f'حدث خطأ أثناء تحديث الفاتورة: {e}')
+            else:
+                try:
+                    from django.db import transaction as _tx
+                    with _tx.atomic():
+                        _reverse_purchase_effects(inv)
+                        inv.lines.all().delete()
+                        inv.supplier       = request.POST.get('supplier', '').strip()
+                        inv.payment_method = new_payment_method
+                        inv.notes          = request.POST.get('notes', '').strip()
+                        inv.save(update_fields=['supplier', 'payment_method', 'notes'])
+                        for product, qty, cost in lines_data:
+                            PurchaseInvoiceLine.objects.create(invoice=inv, product=product, quantity=qty, unit_cost=cost)
+                        inv.recalculate()
+                        _apply_purchase_effects(inv)
                     messages.success(request, 'تم تحديث الفاتورة.')
                     return redirect('products:purchase_detail', pk=pk)
-            else:
-                _reverse_purchase_effects(inv)
-                inv.lines.all().delete()
-                inv.supplier       = request.POST.get('supplier', '').strip()
-                inv.payment_method = new_payment_method
-                inv.notes          = request.POST.get('notes', '').strip()
-                inv.save(update_fields=['supplier', 'payment_method', 'notes'])
-                for product, qty, cost in lines_data:
-                    PurchaseInvoiceLine.objects.create(invoice=inv, product=product, quantity=qty, unit_cost=cost)
-                inv.recalculate()
-                _apply_purchase_effects(inv)
-                messages.success(request, 'تم تحديث الفاتورة.')
-                return redirect('products:purchase_detail', pk=pk)
+                except Exception as e:
+                    messages.error(request, f'حدث خطأ أثناء تحديث الفاتورة: {e}')
 
     existing_lines = list(inv.lines.select_related('product'))
     return render(request, 'products/purchase_form.html', {

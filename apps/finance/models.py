@@ -308,8 +308,8 @@ class SalaryPayment(CenterMixin):
             self.status = 'paid'
             self.save(update_fields=['status'])
             self._record_outflow()
-            # mark linked advances as deducted
             self.advance_items.filter(status='pending').update(status='deducted')
+            self.incentive_items.filter(status='pending').update(status='paid')
 
     def cancel(self):
         if self.status == 'cancelled':
@@ -317,8 +317,10 @@ class SalaryPayment(CenterMixin):
         from django.db import transaction
         with transaction.atomic():
             self._reverse_outflow()
-            # restore advances to pending
             self.advance_items.filter(status='deducted').update(
+                status='pending', salary_payment=None
+            )
+            self.incentive_items.filter(status='paid').update(
                 status='pending', salary_payment=None
             )
             self.status = 'cancelled'
@@ -517,7 +519,12 @@ class Incentive(CenterMixin):
         Treasury, on_delete=models.SET_NULL,
         null=True, blank=True, verbose_name='الخزينة'
     )
-    status      = models.CharField('الحالة', max_length=20, choices=STATUS, default='pending')
+    status         = models.CharField('الحالة', max_length=20, choices=STATUS, default='pending')
+    salary_payment = models.ForeignKey(
+        'SalaryPayment', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='incentive_items',
+        verbose_name='كشف الراتب'
+    )
     date        = models.DateField('التاريخ', default=timezone.localdate)
     notes       = models.TextField('ملاحظات', blank=True)
     created_at  = models.DateTimeField(auto_now_add=True)

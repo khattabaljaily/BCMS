@@ -130,7 +130,7 @@
   </div>
 
   <!-- ── Details ───────────────────────────────────────────────── -->
-  <div style="display:grid;grid-template-columns:1fr {% if advances %}1fr{% endif %};gap:16px;align-items:start;">
+  <div style="display:grid;grid-template-columns:1fr {% if advances or incentives %}1fr{% endif %};gap:16px;align-items:start;">
 
     <!-- Details card -->
     <div class="cx-panel">
@@ -220,27 +220,62 @@
       </div>
     </div>
 
-    <!-- Advances card -->
-    {% if advances %}
-    <div class="cx-panel">
-      <div style="padding:16px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <i class="fas fa-minus-circle" style="color:#ef4444;font-size:13px;"></i>
-          <span style="font-size:13px;font-weight:800;color:var(--slate-700);">السلف المخصومة</span>
-        </div>
-        <span style="font-size:12px;font-weight:700;color:#ef4444;background:#fee2e2;padding:3px 10px;border-radius:20px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">−{{ sp.advances_deducted|format_number:2 }}</span>
-      </div>
-      <div style="padding:0;">
-        {% for adv in advances %}
-        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--slate-700);">{{ adv.date }}</div>
-            {% if adv.notes %}<div style="font-size:12px;color:var(--muted);margin-top:2px;">{{ adv.notes }}</div>{% endif %}
+    <!-- Advances + Incentives column -->
+    {% if advances or incentives %}
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      {% if advances %}
+      <div class="cx-panel">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-minus-circle" style="color:#ef4444;font-size:13px;"></i>
+            <span style="font-size:13px;font-weight:800;color:var(--slate-700);">السلف المخصومة</span>
           </div>
-          <span style="font-weight:800;color:#ef4444;font-size:14px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">{{ adv.amount|format_number:2 }}</span>
+          <span style="font-size:12px;font-weight:700;color:#ef4444;background:#fee2e2;padding:3px 10px;border-radius:20px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">−{{ sp.advances_deducted|format_number:2 }}</span>
         </div>
-        {% endfor %}
+        <div style="padding:0;">
+          {% for adv in advances %}
+          <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--slate-700);">{{ adv.date }}</div>
+              {% if adv.notes %}<div style="font-size:12px;color:var(--muted);margin-top:2px;">{{ adv.notes }}</div>{% endif %}
+            </div>
+            <span style="font-weight:800;color:#ef4444;font-size:14px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">{{ adv.amount|format_number:2 }}</span>
+          </div>
+          {% endfor %}
+        </div>
       </div>
+      {% endif %}
+
+      {% if incentives %}
+      <div class="cx-panel">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-star" style="color:#f59e0b;font-size:13px;"></i>
+          <span style="font-size:13px;font-weight:800;color:var(--slate-700);">الحوافز والخصومات</span>
+        </div>
+        <div style="padding:0;">
+          {% for inc in incentives %}
+          <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                {% if inc.type == 'bonus' %}
+                  <span style="font-size:11px;font-weight:700;color:#059669;background:#d1fae5;padding:2px 8px;border-radius:20px;">حافز</span>
+                {% else %}
+                  <span style="font-size:11px;font-weight:700;color:#dc2626;background:#fee2e2;padding:2px 8px;border-radius:20px;">خصم</span>
+                {% endif %}
+                <span style="font-size:13px;font-weight:600;color:var(--slate-700);">{{ inc.description|default:inc.get_type_display }}</span>
+              </div>
+              <div style="font-size:12px;color:var(--muted);">{{ inc.date }}</div>
+            </div>
+            <span style="font-weight:800;font-size:14px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';color:{% if inc.type == 'bonus' %}#059669{% else %}#ef4444{% endif %};">
+              {% if inc.type == 'bonus' %}+{% else %}−{% endif %}{{ inc.amount|format_number:2 }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
     </div>
     {% endif %}
 

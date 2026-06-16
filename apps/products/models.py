@@ -112,7 +112,7 @@ class PurchaseInvoice(CenterMixin):
     STATUS  = [('active', 'نشطة'), ('cancelled', 'ملغاة')]
     PAYMENT = [('cash', 'نقد'), ('card_or_bank', 'بطاقة/بنك'), ('credit', 'آجل')]
 
-    number         = models.CharField('الرقم', max_length=50, unique=True)
+    number         = models.CharField('الرقم', max_length=50)
     supplier       = models.CharField('المورد', max_length=200, blank=True)
     date           = models.DateField('التاريخ', default=timezone.localdate)
     payment_method = models.CharField('طريقة الدفع', max_length=20, choices=PAYMENT, default='cash')
@@ -127,6 +127,9 @@ class PurchaseInvoice(CenterMixin):
         ordering = ['-id']
         verbose_name = 'فاتورة مشتريات'
         verbose_name_plural = 'فواتير المشتريات'
+        constraints = [
+            models.UniqueConstraint(fields=['center', 'number'], name='unique_purchase_number_per_center'),
+        ]
 
     def __str__(self):
         return self.number

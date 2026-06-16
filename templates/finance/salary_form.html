@@ -138,6 +138,40 @@
       </div>
       {% endif %}
 
+      <!-- ── الحوافز والخصومات المعلقة ───────────────────────── -->
+      {% if pending_incentives %}
+      <div class="cx-panel" style="margin-bottom:16px;">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-star" style="color:#f59e0b;font-size:13px;"></i>
+          <span style="font-size:13px;font-weight:800;color:var(--slate-700);">الحوافز والخصومات المعلقة</span>
+        </div>
+        <div style="padding:14px 20px;">
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">اختر الحوافز والخصومات التي تريد إضافتها لهذا الكشف</p>
+          {% for inc in pending_incentives %}
+          <label style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid {% if inc.type == 'bonus' %}#d1fae5{% else %}#fee2e2{% endif %};border-radius:10px;cursor:pointer;margin-bottom:8px;transition:background .15s;"
+                 onmouseover="this.style.background='{% if inc.type == 'bonus' %}#f0fdf4{% else %}#fff1f2{% endif %}'" onmouseout="this.style.background=''">
+            <input type="checkbox" name="incentive_ids" value="{{ inc.pk }}" checked
+                   style="flex-shrink:0;accent-color:{% if inc.type == 'bonus' %}#10b981{% else %}#ef4444{% endif %};"
+                   onchange="calcTotal()">
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                {% if inc.type == 'bonus' %}
+                  <span style="font-size:11px;font-weight:700;color:#059669;background:#d1fae5;padding:2px 8px;border-radius:20px;">حافز</span>
+                {% else %}
+                  <span style="font-size:11px;font-weight:700;color:#dc2626;background:#fee2e2;padding:2px 8px;border-radius:20px;">خصم</span>
+                {% endif %}
+                <span style="font-size:13px;font-weight:600;color:var(--slate-700);">{{ inc.description|default:inc.get_type_display }}</span>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">{{ inc.date }}</div>
+            </div>
+            <strong style="color:{% if inc.type == 'bonus' %}#059669{% else %}#ef4444{% endif %};font-size:14px;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';"
+                    data-inc-amount data-inc-type="{{ inc.type }}">{{ inc.amount }}</strong>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
       <!-- ── الصرف ─────────────────────────────────────────────── -->
       <div class="cx-panel" style="margin-bottom:16px;">
         <div style="padding:14px 20px;border-bottom:1px solid var(--slate-100);background:linear-gradient(135deg,#fff 0%,var(--slate-50) 100%);display:flex;align-items:center;gap:8px;">
@@ -191,7 +225,14 @@ function calcTotal() {
     var amtEl = cb.closest('label').querySelector('[data-adv-amount]');
     if (amtEl) adv += parseFloat(amtEl.textContent.replace(/,/g, '')) || 0;
   });
-  var total = base + comm + bonus - ded - adv;
+  var incBonus = 0, incDed = 0;
+  document.querySelectorAll('[name=incentive_ids]:checked').forEach(function(cb) {
+    var amtEl = cb.closest('label').querySelector('[data-inc-amount]');
+    if (!amtEl) return;
+    var amt = parseFloat(amtEl.textContent.replace(/,/g, '')) || 0;
+    if (amtEl.dataset.incType === 'bonus') incBonus += amt; else incDed += amt;
+  });
+  var total = base + comm + bonus + incBonus - ded - incDed - adv;
   var el = document.getElementById('total-preview');
   if (el) {
     el.textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

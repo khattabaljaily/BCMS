@@ -579,6 +579,7 @@ def salary_create(request):
         treasury_id = request.POST.get('treasury')
         notes = request.POST.get('notes', '')
         advance_ids = request.POST.getlist('advance_ids')
+        incentive_ids = request.POST.getlist('incentive_ids')
         try:
             specialist = Specialist.objects.get(pk=specialist_id, center=center)
             treasury = Treasury.objects.get(pk=treasury_id, center=center) if treasury_id else None
@@ -587,6 +588,12 @@ def salary_create(request):
                 advances_total = Advance.objects.filter(
                     pk__in=advance_ids, specialist=specialist, status='pending'
                 ).aggregate(t=Sum('amount'))['t'] or Decimal('0')
+            if incentive_ids:
+                for inc in Incentive.objects.filter(pk__in=incentive_ids, specialist=specialist, status='pending'):
+                    if inc.type == 'bonus':
+                        bonus += inc.amount
+                    else:
+                        deductions += inc.amount
             sp = SalaryPayment.objects.create(
                 center=center,
                 specialist=specialist,
@@ -605,6 +612,10 @@ def salary_create(request):
                 Advance.objects.filter(
                     pk__in=advance_ids, specialist=specialist, status='pending'
                 ).update(salary_payment=sp)
+            if incentive_ids:
+                Incentive.objects.filter(
+                    pk__in=incentive_ids, specialist=specialist, status='pending'
+                ).update(salary_payment=sp)
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': True})
             messages.success(request, 'تم إنشاء كشف الراتب (مسودة). اضغط "صرف" لتأكيده.')
@@ -619,6 +630,7 @@ def salary_create(request):
     treasuries = Treasury.objects.filter(center=center)
     selected_specialist_id = request.GET.get('specialist')
     pending_advances = []
+    pending_incentives = []
     commission_calc = Decimal('0')
     pre_base = Decimal('0')
     if selected_specialist_id:
@@ -627,22 +639,21 @@ def salary_create(request):
             pending_advances = list(Advance.objects.filter(
                 specialist=sp_obj, status='pending', center=center
             ))
+            pending_incentives = list(Incentive.objects.filter(
+                specialist=sp_obj, status='pending', payout='with_salary', center=center
+            ))
             pre_base = sp_obj.base_salary
             period_start_get = request.GET.get('period_start')
             period_end_get = request.GET.get('period_end')
             if period_start_get and period_end_get and sp_obj.commission_rate > 0:
-                from apps.appointments.models import Appointment
-                appts = Appointment.objects.filter(
-                    center=center,
+                from apps.appointments.models import AppointmentService
+                revenue = AppointmentService.objects.filter(
                     specialist=sp_obj,
-                    status='completed',
-                    date__gte=period_start_get,
-                    date__lte=period_end_get,
-                )
-                revenue = InvoiceLine.objects.filter(
-                    invoice__center=center,
-                    invoice__appointment__in=appts,
-                ).aggregate(t=Sum('line_total'))['t'] or Decimal('0')
+                    appointment__center=center,
+                    appointment__status='completed',
+                    appointment__date__gte=period_start_get,
+                    appointment__date__lte=period_end_get,
+                ).aggregate(t=Sum('unit_price'))['t'] or Decimal('0')
                 commission_calc = (revenue * sp_obj.commission_rate / 100).quantize(Decimal('0.01'))
         except Specialist.DoesNotExist:
             pass
@@ -651,6 +662,7 @@ def salary_create(request):
         'treasuries': treasuries,
         'selected_specialist_id': selected_specialist_id,
         'pending_advances': pending_advances,
+        'pending_incentives': pending_incentives,
         'commission_calc': commission_calc,
         'pre_base': pre_base,
     })
@@ -687,6 +699,7 @@ def salary_detail(request, pk):
     center = request.user.center
     sp = get_object_or_404(SalaryPayment, pk=pk, center=center)
     advances = sp.advance_items.all()
+    incentives = sp.incentive_items.all()
     rows = [
         ('الراتب الأساسي',    f'{sp.base_salary:,.2f}',       None),
         ('العمولة',           f'{sp.commission_amount:,.2f}',  None),
@@ -695,7 +708,7 @@ def salary_detail(request, pk):
         ('خصومات أخرى',      f'−{sp.deductions:,.2f}',        '#ef4444' if sp.deductions else None),
         ('الخزينة',           sp.treasury.short_name if sp.treasury else '—', None),
     ]
-    return render(request, 'finance/salary_detail.html', {'sp': sp, 'advances': advances, 'rows': rows})
+    return render(request, 'finance/salary_detail.html', {'sp': sp, 'advances': advances, 'incentives': incentives, 'rows': rows})
 
 
 # ── سلف الموظفين ──────────────────────────────────────────────────────────────
