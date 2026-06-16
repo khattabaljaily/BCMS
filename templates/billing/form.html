@@ -274,6 +274,7 @@ if (clientSearchInput) {
 
 const PREFILL_CLIENT_ID = {{ prefill_client_id|default:'null' }};
 const PREFILL_APPOINTMENT_ID = {{ prefill_appointment_id|default:'null' }};
+const PREFILL_LINES = {{ prefill_lines_json|default:'[]'|safe }};
 
 if (clientDropdown) {
   clientDropdown.addEventListener('click', function(e) {
@@ -478,6 +479,14 @@ document.getElementById('lines-body').addEventListener('click', function(e) {
   if (!btn) return;
   removeLine(btn.dataset.target);
 });
+
+{% if not edit_mode %}
+if (PREFILL_LINES && PREFILL_LINES.length) {
+  PREFILL_LINES.forEach(function(line) {
+    addLine(line.name, line.qty, line.price, line.product_id || '', line.service_id || '');
+  });
+}
+{% endif %}
 
 {% if edit_mode %}
 lineCount = {{ inv.lines.count }};

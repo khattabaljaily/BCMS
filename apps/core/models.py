@@ -236,10 +236,15 @@ class Settings(models.Model):
         return valid_dates
 
     def next_invoice_number(self):
-        num = f'{self.invoice_prefix}-{self.invoice_next_number:05d}'
-        self.invoice_next_number += 1
-        self.save(update_fields=['invoice_next_number'])
-        return num
+        from django.db import transaction
+        with transaction.atomic():
+            # Lock this row so concurrent requests wait rather than reading the same counter.
+            locked = type(self).objects.select_for_update().get(pk=self.pk)
+            num = f'{locked.invoice_prefix}-{locked.invoice_next_number:05d}'
+            type(self).objects.filter(pk=self.pk).update(
+                invoice_next_number=locked.invoice_next_number + 1
+            )
+            return num
 
     def delete(self, *args, **kwargs):
         """

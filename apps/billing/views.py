@@ -187,6 +187,7 @@ def invoice_create(request):
 
     prefill_client_id = None
     prefill_appointment_id = None
+    prefill_lines = []
     appointment_param = request.GET.get('appointment') or request.POST.get('appointment')
     if appointment_param:
         from apps.appointments.models import Appointment
@@ -195,6 +196,14 @@ def invoice_create(request):
             prefill_appointment_id = appointment.pk
             if appointment.client_id:
                 prefill_client_id = appointment.client_id
+            for appt_svc in appointment.appointment_services.select_related('service').all():
+                prefill_lines.append({
+                    'name':       appt_svc.service.name,
+                    'qty':        1,
+                    'price':      float(appt_svc.unit_price),
+                    'service_id': appt_svc.service_id,
+                    'product_id': '',
+                })
 
     if request.method == 'POST':
         client_id = request.POST.get('client')
@@ -288,13 +297,14 @@ def invoice_create(request):
     } for p in products])
 
     return render(request, 'billing/form.html', {
-        'clients_json':  clients_json,
-        'services_json': services_json,
-        'products_json': products_json,
-        'today':         timezone.localdate().isoformat(),
-        'payment_choices': Invoice.PAYMENT,
-        'prefill_client_id': prefill_client_id,
+        'clients_json':       clients_json,
+        'services_json':      services_json,
+        'products_json':      products_json,
+        'today':              timezone.localdate().isoformat(),
+        'payment_choices':    Invoice.PAYMENT,
+        'prefill_client_id':      prefill_client_id,
         'prefill_appointment_id': prefill_appointment_id,
+        'prefill_lines_json':     json.dumps(prefill_lines),
         'edit_mode': False,
     })
 
