@@ -248,7 +248,7 @@
           الحسابات والمالية
           <i class="fas fa-chevron-left nav-arrow"></i>
         </div>
-        <div class="nav-submenu">
+        <div class="nav-submenu nav-submenu--finance">
           <a href="{% url 'finance:treasury_list' %}" class="nav-subitem {% block nav_finance_treasury %}{% endblock %}">
             <i class="fas fa-university"></i> الخزينة
           </a>
@@ -261,18 +261,30 @@
           <a href="{% url 'finance:client_statement' %}" class="nav-subitem {% block nav_finance_statements %}{% endblock %}">
             <i class="fas fa-list"></i> كشف حساب عميل
           </a>
-          <a href="{% url 'finance:advances' %}" class="nav-subitem {% block nav_finance_advances %}{% endblock %}">
-            <i class="fas fa-hand-holding-usd"></i> سلف الفريق
-          </a>
-          <a href="{% url 'finance:salary_list' %}" class="nav-subitem {% block nav_finance_salaries %}{% endblock %}">
-            <i class="fas fa-file-invoice-dollar"></i> رواتب الفريق
-          </a>
-          <a href="{% url 'finance:user_advances' %}" class="nav-subitem {% block nav_finance_user_advances %}{% endblock %}">
-            <i class="fas fa-hand-holding-usd"></i> سلف الموظفين
-          </a>
-          <a href="{% url 'finance:user_salary_list' %}" class="nav-subitem {% block nav_finance_user_salaries %}{% endblock %}">
-            <i class="fas fa-id-badge"></i> رواتب الموظفين
-          </a>
+          <!-- Nested: الرواتب والسلفيات -->
+          <div class="nav-subgroup {% block nav_finance_salary_open %}{% endblock %}">
+            <div class="nav-subitem nav-subitem--group" onclick="this.closest('.nav-subgroup').classList.toggle('open')">
+              <i class="fas fa-money-bill-transfer"></i> الرواتب والسلفيات
+              <i class="fas fa-chevron-left nav-subarrow"></i>
+            </div>
+            <div class="nav-submenu2">
+              <a href="{% url 'finance:salary_list' %}" class="nav-subitem nav-subitem--deep {% block nav_finance_salaries %}{% endblock %}">
+                <i class="fas fa-file-invoice-dollar"></i> رواتب الفريق
+              </a>
+              <a href="{% url 'finance:advances' %}" class="nav-subitem nav-subitem--deep {% block nav_finance_advances %}{% endblock %}">
+                <i class="fas fa-hand-holding-usd"></i> سلفيات الفريق
+              </a>
+              <a href="{% url 'finance:user_salary_list' %}" class="nav-subitem nav-subitem--deep {% block nav_finance_user_salaries %}{% endblock %}">
+                <i class="fas fa-id-badge"></i> رواتب الموظفين
+              </a>
+              <a href="{% url 'finance:user_advances' %}" class="nav-subitem nav-subitem--deep {% block nav_finance_user_advances %}{% endblock %}">
+                <i class="fas fa-hand-holding-usd"></i> سلفيات الموظفين
+              </a>
+              <a href="{% url 'finance:incentives' %}" class="nav-subitem nav-subitem--deep {% block nav_incentives %}{% endblock %}">
+                <i class="fas fa-gift"></i> الحوافز والخصومات
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -614,6 +626,12 @@ thead th[data-sortable]:hover { background: var(--rose-50, #fff1f5); }
     parent.addEventListener('click', function(){
       this.closest('.nav-group').classList.toggle('open');
     });
+  });
+  // Auto-open nested nav-subgroup if it contains active item
+  document.querySelectorAll('.nav-subgroup').forEach(function(sg){
+    if(sg.querySelector('.nav-subitem.active')){
+      sg.classList.add('open');
+    }
   });
 
   // Close topbar user menu when clicking outside

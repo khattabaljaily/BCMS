@@ -42,4 +42,9 @@ urlpatterns = [
     path('user-salaries/<int:pk>/', views.user_salary_detail, name='user_salary_detail'),
     path('user-salaries/<int:pk>/pay/', views.user_salary_pay, name='user_salary_pay'),
     path('user-salaries/<int:pk>/cancel/', views.user_salary_cancel, name='user_salary_cancel'),
+
+    # الحوافز والخصومات
+    path('incentives/', views.incentive_list, name='incentives'),
+    path('incentives/new/', views.incentive_create, name='incentive_create'),
+    path('incentives/<int:pk>/cancel/', views.incentive_cancel, name='incentive_cancel'),
 ]

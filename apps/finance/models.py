@@ -488,3 +488,83 @@ class UserSalaryPayment(CenterMixin):
             )
             self.status = 'cancelled'
             self.save(update_fields=['status'])
+
+
+# ── الحوافز والخصومات ─────────────────────────────────────────────────────────
+
+class Incentive(CenterMixin):
+    PERSON_TYPE = [('specialist', 'فريق الخدمة'), ('user', 'موظف')]
+    TYPE        = [('bonus', 'حافز'), ('deduction', 'خصم')]
+    PAYOUT      = [('immediate', 'فوري'), ('with_salary', 'مع الراتب')]
+    METHOD      = [('cash', 'نقد'), ('card_or_bank', 'بطاقة أو بنك')]
+    STATUS      = [('pending', 'معلق'), ('paid', 'مدفوع'), ('cancelled', 'ملغى')]
+
+    person_type = models.CharField('نوع الشخص', max_length=20, choices=PERSON_TYPE, default='specialist')
+    specialist  = models.ForeignKey(
+        'staff.Specialist', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='incentives', verbose_name='مقدم الخدمة'
+    )
+    user        = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='incentives', verbose_name='الموظف'
+    )
+    type        = models.CharField('النوع', max_length=20, choices=TYPE, default='bonus')
+    amount      = models.DecimalField('المبلغ', max_digits=10, decimal_places=2)
+    description = models.CharField('الوصف', max_length=255)
+    payout      = models.CharField('طريقة الصرف', max_length=20, choices=PAYOUT, default='with_salary')
+    method      = models.CharField('طريقة الدفع', max_length=20, choices=METHOD, default='cash')
+    treasury    = models.ForeignKey(
+        Treasury, on_delete=models.SET_NULL,
+        null=True, blank=True, verbose_name='الخزينة'
+    )
+    status      = models.CharField('الحالة', max_length=20, choices=STATUS, default='pending')
+    date        = models.DateField('التاريخ', default=timezone.localdate)
+    notes       = models.TextField('ملاحظات', blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'incentives'
+        ordering = ['-created_at']
+        verbose_name = 'حافز أو خصم'
+        verbose_name_plural = 'الحوافز والخصومات'
+
+    def __str__(self):
+        person = self.specialist or self.user
+        return f"{self.get_type_display()} — {person} — {self.amount}"
+
+    def _movement_ref(self):
+        return f'incentive_{self.pk}'
+
+    def _record_outflow(self):
+        if not self.treasury:
+            return
+        person = self.specialist or self.user
+        TreasuryMovement.objects.get_or_create(
+            treasury=self.treasury,
+            reference=self._movement_ref(),
+            defaults=dict(
+                type='out',
+                amount=self.amount,
+                notes=f'حافز {person} — {self.description}',
+            )
+        )
+
+    def _reverse_outflow(self):
+        person = self.specialist or self.user
+        for tm in TreasuryMovement.objects.filter(reference=self._movement_ref()):
+            TreasuryMovement.objects.create(
+                treasury=tm.treasury,
+                type='in',
+                amount=tm.amount,
+                reference=f'rev_{tm.reference}',
+                notes=f'إلغاء حافز {person} — {self.description}',
+            )
+
+    def cancel(self):
+        if self.status == 'cancelled':
+            return
+        from django.db import transaction
+        with transaction.atomic():
+            self._reverse_outflow()
+            self.status = 'cancelled'
+            self.save(update_fields=['status'])

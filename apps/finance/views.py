@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Treasury, TreasuryMovement, Expense, ClientPayment, Advance, SalaryPayment, UserAdvance, UserSalaryPayment
+from .models import Treasury, TreasuryMovement, Expense, ClientPayment, Advance, SalaryPayment, UserAdvance, UserSalaryPayment, Incentive
 from apps.accounts.models import User
 from apps.billing.models import Invoice, InvoiceLine
 from apps.clients.models import Client
@@ -882,3 +882,111 @@ def user_salary_detail(request, pk):
         ('الخزينة',           sp.treasury.short_name if sp.treasury else '—', None),
     ]
     return render(request, 'finance/user_salary_detail.html', {'sp': sp, 'advances': advances, 'rows': rows})
+
+
+# ── الحوافز والخصومات ─────────────────────────────────────────────────────────
+
+@login_required
+def incentive_list(request):
+    if not request.user.can('finance', 'view'):
+        return HttpResponseForbidden()
+    center = request.center
+    tab = request.GET.get('tab', 'specialist')
+
+    qs = Incentive.objects.filter(center=center)
+    if tab == 'user':
+        qs = qs.filter(person_type='user').select_related('user')
+    else:
+        tab = 'specialist'
+        qs = qs.filter(person_type='specialist').select_related('specialist')
+
+    type_filter   = request.GET.get('type', '')
+    status_filter = request.GET.get('status', '')
+    if type_filter:
+        qs = qs.filter(type=type_filter)
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+
+    specialists = Specialist.objects.filter(center=center, is_active=True).order_by('name')
+    users       = User.objects.filter(center=center, is_active=True).order_by('full_name')
+    treasuries  = Treasury.objects.filter(center=center)
+
+    return render(request, 'finance/incentive_list.html', {
+        'incentives':    qs,
+        'tab':           tab,
+        'type_filter':   type_filter,
+        'status_filter': status_filter,
+        'specialists':   specialists,
+        'users':         users,
+        'treasuries':    treasuries,
+    })
+
+
+@login_required
+def incentive_create(request):
+    if not request.user.can('finance', 'view'):
+        return HttpResponseForbidden()
+    if request.method != 'POST':
+        return redirect('finance:incentives')
+
+    center      = request.center
+    person_type = request.POST.get('person_type', 'specialist')
+    inc_type    = request.POST.get('type', 'bonus')
+    amount      = Decimal(request.POST.get('amount') or '0')
+    description = request.POST.get('description', '').strip()
+    payout      = request.POST.get('payout', 'with_salary')
+    method      = request.POST.get('method', 'cash')
+    treasury_id = request.POST.get('treasury')
+    date_val    = request.POST.get('date') or None
+    notes       = request.POST.get('notes', '').strip()
+
+    inc = Incentive(
+        center=center,
+        person_type=person_type,
+        type=inc_type,
+        amount=amount,
+        description=description,
+        payout=payout if inc_type == 'bonus' else 'with_salary',
+        method=method,
+        notes=notes,
+    )
+    if date_val:
+        inc.date = date_val
+
+    if person_type == 'specialist':
+        sp_id = request.POST.get('specialist')
+        inc.specialist = get_object_or_404(Specialist, pk=sp_id, center=center)
+    else:
+        user_id = request.POST.get('user')
+        inc.user = get_object_or_404(User, pk=user_id, center=center)
+
+    if treasury_id:
+        try:
+            inc.treasury = Treasury.objects.get(pk=treasury_id, center=center)
+        except Treasury.DoesNotExist:
+            pass
+
+    inc.save()
+
+    # If bonus + immediate → record outflow and mark as paid
+    if inc_type == 'bonus' and payout == 'immediate':
+        if method == 'cash' and inc.treasury:
+            inc._record_outflow()
+        inc.status = 'paid'
+        inc.save(update_fields=['status'])
+
+    messages.success(request, 'تم حفظ الحافز / الخصم بنجاح.')
+    return redirect(f'/finance/incentives/?tab={person_type}')
+
+
+@login_required
+def incentive_cancel(request, pk):
+    if not request.user.can('finance', 'view'):
+        return HttpResponseForbidden()
+    center = request.center
+    inc = get_object_or_404(Incentive, pk=pk, center=center)
+    tab = request.POST.get('tab', 'specialist')
+    if request.method == 'POST':
+        inc.cancel()
+        messages.success(request, 'تم إلغاء الحافز / الخصم وعكس أي حركة خزينة.')
+    return redirect(f'/finance/incentives/?tab={tab}')

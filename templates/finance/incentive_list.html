@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+{% load number_format %}
+{% block title %}الحوافز والخصومات{% endblock %}
+{% block page_title %}الحوافز والخصومات{% endblock %}
+{% block nav_finance_open %}open{% endblock %}
+{% block nav_finance_salary_open %}open{% endblock %}
+{% block nav_incentives %}active{% endblock %}
+
+{% block content %}
+<div class="cx-scene">
+
+  <div class="cx-hero">
+    <div class="cx-hero-inner">
+      <div class="cx-hero-left">
+        <div class="cx-hero-icon-wrap" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 4px 14px rgba(139,92,246,.32);">
+          <i class="fas fa-gift"></i>
+        </div>
+        <div>
+          <h1 class="cx-hero-title">الحوافز والخصومات</h1>
+          <p class="cx-hero-desc">{{ incentives.count }} سجل</p>
+        </div>
+      </div>
+      <div class="cx-hero-right">
+        <div class="cx-hero-actions">
+          <button type="button" class="btn btn--primary" onclick="openIncentiveModal()">
+            <i class="fas fa-plus"></i> إضافة حافز / خصم
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="padding:0 0 0 0;border-bottom:2px solid var(--slate-100);">
+    <div style="display:flex;gap:0;padding:0 20px;">
+      <a href="?tab=specialist{% if type_filter %}&type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+         style="padding:12px 20px;font-size:13px;font-weight:700;border-bottom:2px solid {% if tab == 'specialist' %}#8b5cf6{% else %}transparent{% endif %};color:{% if tab == 'specialist' %}#8b5cf6{% else %}#64748b{% endif %};text-decoration:none;margin-bottom:-2px;">
+        <i class="fas fa-user-friends"></i> فريق الخدمة
+      </a>
+      <a href="?tab=user{% if type_filter %}&type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+         style="padding:12px 20px;font-size:13px;font-weight:700;border-bottom:2px solid {% if tab == 'user' %}#8b5cf6{% else %}transparent{% endif %};color:{% if tab == 'user' %}#8b5cf6{% else %}#64748b{% endif %};text-decoration:none;margin-bottom:-2px;">
+        <i class="fas fa-id-badge"></i> الموظفون
+      </a>
+    </div>
+  </div>
+
+  <div class="cx-panel">
+    <!-- Filters -->
+    <div style="padding:12px 16px;border-bottom:1px solid var(--slate-100);">
+      <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <div class="form-group" style="margin:0;min-width:140px;">
+          <select name="type" class="form-control" onchange="this.form.submit()">
+            <option value="">كل الأنواع</option>
+            <option value="bonus"     {% if type_filter == 'bonus' %}selected{% endif %}>حوافز</option>
+            <option value="deduction" {% if type_filter == 'deduction' %}selected{% endif %}>خصومات</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:140px;">
+          <select name="status" class="form-control" onchange="this.form.submit()">
+            <option value="">كل الحالات</option>
+            <option value="pending"   {% if status_filter == 'pending' %}selected{% endif %}>معلق</option>
+            <option value="paid"      {% if status_filter == 'paid' %}selected{% endif %}>مدفوع</option>
+            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>ملغى</option>
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table desktop -->
+    <div class="cx-table-wrap">
+      <table class="cx-table">
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>الاسم</th>
+            <th>النوع</th>
+            <th>الوصف</th>
+            <th>المبلغ</th>
+            <th>الصرف</th>
+            <th>الحالة</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inc in incentives %}
+          <tr id="row-inc-{{ inc.pk }}">
+            <td class="text-muted">{{ inc.date }}</td>
+            <td>
+              <strong>
+                {% if inc.person_type == 'specialist' %}{{ inc.specialist.name|default:'—' }}
+                {% else %}{{ inc.user.full_name|default:'—' }}{% endif %}
+              </strong>
+            </td>
+            <td>
+              {% if inc.type == 'bonus' %}
+                <span class="badge" style="background:#d1fae5;color:#065f46;">حافز</span>
+              {% else %}
+                <span class="badge" style="background:#fee2e2;color:#991b1b;">خصم</span>
+              {% endif %}
+            </td>
+            <td>{{ inc.description }}</td>
+            <td><strong>{{ inc.amount|format_number:2 }}</strong></td>
+            <td class="text-muted">
+              {% if inc.type == 'bonus' %}
+                {% if inc.payout == 'immediate' %}فوري{% else %}مع الراتب{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if inc.status == 'pending' %}
+                <span class="cx-status cx-status--warn"><span class="cx-status-dot"></span>معلق</span>
+              {% elif inc.status == 'paid' %}
+                <span class="cx-status cx-status--on"><span class="cx-status-dot"></span>مدفوع</span>
+              {% else %}
+                <span class="cx-status cx-status--off"><span class="cx-status-dot"></span>ملغى</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if inc.status != 'cancelled' %}
+              <form method="post" action="{% url 'finance:incentive_cancel' inc.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="tab" value="{{ tab }}">
+                <button type="submit" class="cx-act cx-act--del" title="إلغاء"
+                        onclick="return confirm('إلغاء هذا السجل؟')">
+                  <i class="fas fa-ban"></i>
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8">
+              <div class="cx-empty" style="padding:48px 24px;">
+                <i class="fas fa-gift"></i>
+                <p>لا توجد سجلات بعد</p>
+                <button class="btn btn--primary" onclick="openIncentiveModal()" style="margin-top:12px;">
+                  <i class="fas fa-plus"></i> إضافة أول سجل
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cx-mobile-cards">
+      {% for inc in incentives %}
+      <div class="cx-card" id="card-inc-{{ inc.pk }}">
+        <div class="cx-card-head">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:38px;height:38px;border-radius:50%;
+              background:{% if inc.type == 'bonus' %}linear-gradient(135deg,#d1fae5,#a7f3d0){% else %}linear-gradient(135deg,#fee2e2,#fecaca){% endif %};
+              display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+              {% if inc.type == 'bonus' %}<i class="fas fa-star" style="color:#065f46;"></i>
+              {% else %}<i class="fas fa-minus-circle" style="color:#991b1b;"></i>{% endif %}
+            </div>
+            <div>
+              <div class="cx-card-title">
+                {% if inc.person_type == 'specialist' %}{{ inc.specialist.name|default:'—' }}
+                {% else %}{{ inc.user.full_name|default:'—' }}{% endif %}
+              </div>
+              <div class="cx-card-sub">{{ inc.description }}</div>
+            </div>
+          </div>
+          <div class="cx-card-actions">
+            {% if inc.status != 'cancelled' %}
+            <form method="post" action="{% url 'finance:incentive_cancel' inc.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="tab" value="{{ tab }}">
+              <button type="submit" class="cx-act cx-act--del" title="إلغاء"
+                      onclick="return confirm('إلغاء هذا السجل؟')">
+                <i class="fas fa-ban"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        <div class="cx-card-meta">
+          <div>
+            <span class="cx-card-meta-label">التاريخ</span>
+            <span class="cx-card-meta-value">{{ inc.date }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">المبلغ</span>
+            <span class="cx-card-meta-value"><strong>{{ inc.amount|format_number:2 }}</strong></span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">الحالة</span>
+            <span class="cx-card-meta-value">
+              {% if inc.status == 'pending' %}<span style="color:#f59e0b;">معلق</span>
+              {% elif inc.status == 'paid' %}<span style="color:#10b981;">مدفوع</span>
+              {% else %}<span style="color:#ef4444;">ملغى</span>{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cx-empty">
+        <i class="fas fa-gift"></i>
+        <p>لا توجد سجلات بعد</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal: إضافة حافز / خصم -->
+<div class="modal-overlay" id="modal-incentive" style="display:none;">
+  <div class="modal-dialog" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">إضافة حافز / خصم</span>
+      <button class="modal-close" onclick="closeModal('modal-incentive')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" action="{% url 'finance:incentive_create' %}" id="incentive-form">
+      {% csrf_token %}
+      <div class="modal-body">
+
+        <!-- Person type tabs -->
+        <div style="display:flex;border:1.5px solid var(--slate-200);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;" id="tab-btn-specialist">
+            <input type="radio" name="person_type" value="specialist" checked onchange="onPersonTypeChange()" style="display:none;">
+            <i class="fas fa-user-friends"></i> فريق الخدمة
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;cursor:pointer;font-size:13px;font-weight:700;border-right:1.5px solid var(--slate-200);transition:all .15s;" id="tab-btn-user">
+            <input type="radio" name="person_type" value="user" onchange="onPersonTypeChange()" style="display:none;">
+            <i class="fas fa-id-badge"></i> الموظفون
+          </label>
+        </div>
+
+        <!-- Person select -->
+        <div class="form-group" id="field-specialist">
+          <label class="form-label">مقدم الخدمة <span style="color:var(--red)">*</span></label>
+          <select name="specialist" class="form-control" required>
+            <option value="">اختر...</option>
+            {% for s in specialists %}
+            <option value="{{ s.pk }}">{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" id="field-user" style="display:none;">
+          <label class="form-label">الموظف <span style="color:var(--red)">*</span></label>
+          <select name="user" class="form-control">
+            <option value="">اختر...</option>
+            {% for u in users %}
+            <option value="{{ u.pk }}">{{ u.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-grid-2">
+          <!-- Type -->
+          <div class="form-group">
+            <label class="form-label">النوع <span style="color:var(--red)">*</span></label>
+            <select name="type" class="form-control" id="field-type" onchange="onTypeChange()">
+              <option value="bonus">حافز</option>
+              <option value="deduction">خصم</option>
+            </select>
+          </div>
+          <!-- Amount -->
+          <div class="form-group">
+            <label class="form-label">المبلغ <span style="color:var(--red)">*</span></label>
+            <input class="form-control" type="number" name="amount" min="0.01" step="0.01" placeholder="0.00" required>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label">الوصف <span style="color:var(--red)">*</span></label>
+          <input class="form-control" type="text" name="description" placeholder="مثال: حافز أداء، تأخر متكرر..." required>
+        </div>
+
+        <!-- Payout (bonuses only) -->
+        <div class="form-group" id="field-payout">
+          <label class="form-label">طريقة الصرف</label>
+          <div style="display:flex;gap:10px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--slate-200);border-radius:8px;flex:1;">
+              <input type="radio" name="payout" value="with_salary" checked onchange="onPayoutChange()">
+              <span><strong>مع الراتب</strong><br><small style="color:#64748b;">يُضاف لكشف الراتب القادم</small></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--slate-200);border-radius:8px;flex:1;">
+              <input type="radio" name="payout" value="immediate" onchange="onPayoutChange()">
+              <span><strong>فوري</strong><br><small style="color:#64748b;">يُصرف الآن</small></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Method + Treasury (immediate only) -->
+        <div id="field-immediate" style="display:none;">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">طريقة الدفع</label>
+              <select name="method" class="form-control" id="field-method" onchange="onMethodChange()">
+                <option value="cash">نقد</option>
+                <option value="card_or_bank">بطاقة أو بنك</option>
+              </select>
+            </div>
+            <div class="form-group" id="field-treasury">
+              <label class="form-label">الخزينة</label>
+              <select name="treasury" class="form-control">
+                <option value="">— اختر —</option>
+                {% for t in treasuries %}
+                <option value="{{ t.pk }}">{{ t.short_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="form-group">
+          <label class="form-label">التاريخ</label>
+          <input class="form-control" type="date" name="date" value="{% now 'Y-m-d' %}">
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
+          <textarea class="form-control" name="notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="closeModal('modal-incentive')">إلغاء</button>
+        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openIncentiveModal() {
+  // Pre-select tab based on current list tab
+  var currentTab = '{{ tab }}';
+  var specRadio = document.querySelector('input[name="person_type"][value="specialist"]');
+  var userRadio = document.querySelector('input[name="person_type"][value="user"]');
+  if (currentTab === 'user') {
+    userRadio.checked = true;
+  } else {
+    specRadio.checked = true;
+  }
+  onPersonTypeChange();
+  onTypeChange();
+  openModal('modal-incentive');
+}
+
+function onPersonTypeChange() {
+  var val = document.querySelector('input[name="person_type"]:checked').value;
+  document.getElementById('field-specialist').style.display = val === 'specialist' ? '' : 'none';
+  document.getElementById('field-user').style.display       = val === 'user'       ? '' : 'none';
+
+  var PURPLE = '#8b5cf6', GRAY = '#64748b', GRAY_BG = '#f8fafc', PURPLE_BG = '#f5f3ff';
+  var specBtn = document.getElementById('tab-btn-specialist');
+  var userBtn = document.getElementById('tab-btn-user');
+  if (val === 'specialist') {
+    specBtn.style.background = PURPLE_BG; specBtn.style.color = PURPLE;
+    userBtn.style.background = GRAY_BG;   userBtn.style.color = GRAY;
+  } else {
+    userBtn.style.background = PURPLE_BG; userBtn.style.color = PURPLE;
+    specBtn.style.background = GRAY_BG;   specBtn.style.color = GRAY;
+  }
+  // Required attrs
+  var specSel = document.querySelector('select[name="specialist"]');
+  var userSel = document.querySelector('select[name="user"]');
+  if (specSel) specSel.required = (val === 'specialist');
+  if (userSel) userSel.required = (val === 'user');
+}
+
+function onTypeChange() {
+  var type = document.getElementById('field-type').value;
+  var payoutField = document.getElementById('field-payout');
+  payoutField.style.display = type === 'bonus' ? '' : 'none';
+  if (type !== 'bonus') {
+    document.getElementById('field-immediate').style.display = 'none';
+  } else {
+    onPayoutChange();
+  }
+}
+
+function onPayoutChange() {
+  var payout = document.querySelector('input[name="payout"]:checked');
+  var isImmediate = payout && payout.value === 'immediate';
+  document.getElementById('field-immediate').style.display = isImmediate ? '' : 'none';
+  if (isImmediate) onMethodChange();
+}
+
+function onMethodChange() {
+  var method = document.getElementById('field-method').value;
+  document.getElementById('field-treasury').style.display = method === 'cash' ? '' : 'none';
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', function() {
+  onPersonTypeChange();
+  onTypeChange();
+});
+</script>
+{% endblock %}
