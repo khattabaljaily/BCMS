@@ -208,9 +208,24 @@ def invoice_create(request):
     if request.method == 'POST':
         client_id = request.POST.get('client')
         appointment_id = request.POST.get('appointment')
+        appointment = None
+        appointment_error = False
+        if appointment_id:
+            from apps.appointments.models import Appointment
+            appointment = Appointment.objects.filter(pk=appointment_id, center=center).first()
+            if not appointment:
+                messages.error(request, 'الموعد المحدد غير صالح أو لا ينتمي لهذا الحساب.')
+                appointment_error = True
+            elif Invoice.objects.filter(appointment=appointment).exists():
+                messages.error(request, 'لقد تم إنشاء فاتورة لهذا الموعد مسبقاً.')
+                appointment_error = True
+
         lines = get_invoice_lines_from_post(request, center)
         if not lines:
             messages.error(request, 'يجب إضافة بند واحد على الأقل للفاتورة.')
+        elif appointment_error:
+            # Prevent saving invoices with invalid or duplicate appointment references.
+            pass
         else:
             try:
                 with transaction.atomic():
@@ -223,7 +238,7 @@ def invoice_create(request):
                         center=center,
                         number=number,
                         client_id=client_id or None,
-                        appointment_id=appointment_id or None,
+                        appointment=appointment,
                         payment_method=payment_method,
                         notes=request.POST.get('notes', ''),
                         discount_amount=Decimal(request.POST.get('discount_amount') or '0'),
