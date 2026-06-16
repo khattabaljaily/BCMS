@@ -46,11 +46,7 @@
           </div>
           <div class="role-card__stats">
             <span><i class="fas fa-users"></i> {{ role.user_count }} مستخدم</span>
-            <span><i class="fas fa-key"></i>
-              {% with count=role.permissions.values|dictsortreversed:""|length %}
-              {{ role.permissions|length }} صلاحية
-              {% endwith %}
-            </span>
+            <span><i class="fas fa-key"></i> {{ role.enabled_perm_count }} صلاحية</span>
           </div>
         </div>
         <div class="role-card__actions">

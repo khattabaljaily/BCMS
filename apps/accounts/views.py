@@ -221,7 +221,14 @@ def user_save(request, pk=None):
         instance.is_staff = 'is_staff' in data
         if data.get('password'):
             instance.set_password(data.get('password'))
-        instance.save()
+        try:
+            instance.save()
+        except Exception as e:
+            err = 'اسم المستخدم مستخدم بالفعل.' if '1062' in str(e) or 'UNIQUE' in str(e).upper() else f'خطأ: {e}'
+            if _is_ajax(request):
+                return JsonResponse({'success': False, 'message': err}, status=400)
+            messages.error(request, err)
+            return render(request, 'accounts/user_form.html', {'instance': instance, 'roles': roles})
         if _is_ajax(request):
             return JsonResponse({'success': True, 'message': 'تم حفظ المستخدم بنجاح.'})
         messages.success(request, 'تم حفظ المستخدم.')
@@ -270,7 +277,14 @@ def role_save(request, pk=None):
         instance.name = name
         instance.permissions = _collect_permissions(request.POST)
         instance.is_default = 'is_default' in request.POST
-        instance.save()
+        try:
+            instance.save()
+        except Exception as e:
+            err = 'يوجد دور بهذا الاسم بالفعل.' if '1062' in str(e) or 'UNIQUE' in str(e).upper() else f'خطأ: {e}'
+            if _is_ajax(request):
+                return JsonResponse({'success': False, 'message': err}, status=400)
+            messages.error(request, err)
+            return render(request, 'accounts/role_form.html', {'instance': instance, 'permissions_meta': _build_permissions_meta(instance)})
         if _is_ajax(request):
             return JsonResponse({'success': True, 'message': 'تم حفظ الدور بنجاح.'})
         messages.success(request, 'تم حفظ الدور.')

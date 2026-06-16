@@ -87,6 +87,12 @@ class Role(models.Model):
     def __str__(self):
         return f'{self.name}'
 
+    @property
+    def enabled_perm_count(self):
+        if not self.permissions:
+            return 0
+        return sum(1 for v in self.permissions.values() if v)
+
     def has_perm(self, section, action):
         """role.has_perm('billing', 'create')"""
         return bool(self.permissions.get(f'{section}.{action}', False))
