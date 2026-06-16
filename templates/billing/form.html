@@ -47,6 +47,7 @@
           <thead>
             <tr>
               <th>الوصف</th>
+              <th style="width:140px;">مقدم الخدمة</th>
               <th style="width:100px;text-align:center;">الكمية</th>
               <th style="width:140px;text-align:center;">السعر</th>
               <th style="width:100px;text-align:center;">خصم%</th>
@@ -56,13 +57,26 @@
           </thead>
           <tbody id="lines-body">
             {% if edit_mode %}
-              {% for line in inv.lines.all %}
+              {% for line in inv.lines.select_related('specialist') %}
               <tr id="line-{{ forloop.counter }}">
                 <td>
                   <input class="form-control form-control--sm" type="text"
                     name="description[]" value="{{ line.description|default:''|escape }}" placeholder="الوصف..." required>
                   <input type="hidden" name="product_id[]" value="{{ line.product_id|default:'' }}">
                   <input type="hidden" name="service_id[]" value="{{ line.service_id|default:'' }}">
+                </td>
+                <td>
+                  {% if line.service_id %}
+                  <select name="specialist_id[]" class="form-control form-control--sm specialist-sel">
+                    <option value="">—</option>
+                    {% for sp in specialists %}
+                    <option value="{{ sp.pk }}" {% if sp.pk == line.specialist_id %}selected{% endif %}>{{ sp.name }}</option>
+                    {% endfor %}
+                  </select>
+                  {% else %}
+                  <input type="hidden" name="specialist_id[]" value="">
+                  <span style="color:var(--slate-300);font-size:12px;">—</span>
+                  {% endif %}
                 </td>
                 <td>
                   <input class="form-control form-control--sm tc" type="number"
@@ -189,9 +203,10 @@
 {% block extra_js %}
 <script>
 // ── Server data ───────────────────────────────────
-const CLIENTS  = {{ clients_json|safe }};
-const SERVICES = {{ services_json|safe }};
-const PRODUCTS = {{ products_json|safe }};
+const CLIENTS     = {{ clients_json|safe }};
+const SERVICES    = {{ services_json|safe }};
+const PRODUCTS    = {{ products_json|safe }};
+const SPECIALISTS = {{ specialists_json|safe }};
 
 // ── State ─────────────────────────────────────────
 let activeTab  = 'services';
@@ -377,20 +392,41 @@ function catalogCard(item) {
 // ════════════════════════════════════════════════════
 // LINES TABLE
 // ════════════════════════════════════════════════════
-function addFromCatalog(name, price, productId, serviceId) {
-  addLine(name, 1, price, productId || '', serviceId || '');
+function buildSpecialistOptions(serviceId, selectedId) {
+  let list = SPECIALISTS;
+  if (serviceId) {
+    const svc = SERVICES.find(s => s.id === parseInt(serviceId, 10));
+    if (svc && svc.specialist_ids && svc.specialist_ids.length) {
+      list = SPECIALISTS.filter(sp => svc.specialist_ids.includes(sp.id));
+    }
+  }
+  if (!list.length) list = SPECIALISTS;
+  return `<option value="">—</option>` + list.map(sp =>
+    `<option value="${sp.id}"${sp.id === parseInt(selectedId, 10) ? ' selected' : ''}>${esc(sp.name)}</option>`
+  ).join('');
+}
+
+function addFromCatalog(name, price, productId, serviceId, specialistId) {
+  addLine(name, 1, price, productId || '', serviceId || '', specialistId || '');
 }
 
 function addManualLine() {
-  addLine('', 1, 0, '', '');
+  addLine('', 1, 0, '', '', '');
 }
 
-function addLine(desc, qty, price, productId = '', serviceId = '') {
+function addLine(desc, qty, price, productId = '', serviceId = '', specialistId = '') {
   document.getElementById('lines-empty').style.display = 'none';
   const n  = ++lineCount;
   const tr = document.createElement('tr');
   tr.id    = 'line-' + n;
   const tot = (qty * price).toFixed(2);
+
+  const specialistCell = serviceId
+    ? `<select name="specialist_id[]" class="form-control form-control--sm specialist-sel">
+         ${buildSpecialistOptions(serviceId, specialistId)}
+       </select>`
+    : `<input type="hidden" name="specialist_id[]" value=""><span style="color:var(--slate-300);font-size:12px;">—</span>`;
+
   tr.innerHTML = `
     <td>
       <input class="form-control form-control--sm" type="text"
@@ -398,6 +434,7 @@ function addLine(desc, qty, price, productId = '', serviceId = '') {
       <input type="hidden" name="product_id[]" value="${productId}">
       <input type="hidden" name="service_id[]" value="${serviceId}">
     </td>
+    <td>${specialistCell}</td>
     <td>
       <input class="form-control form-control--sm tc" type="number"
         name="quantity[]" value="${qty}" min="1" step="1" oninput="calcLine(this)" style="min-width:100px;">
@@ -470,7 +507,8 @@ document.getElementById('catalog-grid').addEventListener('click', function(e) {
     item.dataset.name,
     parseFloat(item.dataset.price) || 0,
     item.dataset.productId || '',
-    item.dataset.serviceId || ''
+    item.dataset.serviceId || '',
+    ''
   );
 });
 
@@ -483,7 +521,7 @@ document.getElementById('lines-body').addEventListener('click', function(e) {
 {% if not edit_mode %}
 if (PREFILL_LINES && PREFILL_LINES.length) {
   PREFILL_LINES.forEach(function(line) {
-    addLine(line.name, line.qty, line.price, line.product_id || '', line.service_id || '');
+    addLine(line.name, line.qty, line.price, line.product_id || '', line.service_id || '', line.specialist_id || '');
   });
 }
 {% endif %}

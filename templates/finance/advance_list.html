@@ -58,7 +58,7 @@
             <th>التاريخ</th>
             <th>مقدم الخدمة</th>
             <th>المبلغ</th>
-            <th>الخزينة</th>
+            <th>طريقة الدفع</th>
             <th>الحالة</th>
             <th>ملاحظات</th>
             <th></th>
@@ -70,7 +70,13 @@
             <td class="text-muted">{{ adv.date }}</td>
             <td><strong>{{ adv.specialist.name }}</strong></td>
             <td><strong style="color:#f59e0b;">{{ adv.amount|format_number:2 }}</strong></td>
-            <td class="text-muted">{{ adv.treasury.short_name|default:"—" }}</td>
+            <td class="text-muted" style="font-size:12px;">
+              {% if adv.method == 'card_or_bank' %}
+                <i class="fas fa-university" style="color:#6366f1;margin-left:4px;"></i>بنك
+              {% else %}
+                <i class="fas fa-money-bill-wave" style="color:#10b981;margin-left:4px;"></i>نقد
+              {% endif %}
+            </td>
             <td>
               {% if adv.status == 'pending' %}
                 <span class="badge badge--warning">قائمة</span>
@@ -85,7 +91,7 @@
               {% if adv.status == 'pending' %}
               <div class="cx-row-actions">
                 <button class="cx-act cx-act--del" title="إلغاء"
-                  onclick="BCMS.confirmDelete('إلغاء السلفة وعكس حركة الخزينة؟').then(ok=>{ if(ok) fetch('{% url 'finance:advance_cancel' adv.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','success');setTimeout(()=>location.reload(),400);}}); })">
+                  onclick="BCMS.confirmYesNo('{% if adv.method == "card_or_bank" %}إلغاء السلفة البنكية؟{% else %}إلغاء السلفة وعكس حركة الخزينة؟{% endif %}', 'إلغاء السلفة', 'نعم، إلغاء', 'fa-times-circle').then(ok=>{ if(ok) fetch('{% url 'finance:advance_cancel' adv.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','success');setTimeout(()=>location.reload(),400);}}); })">
                   <i class="fas fa-times-circle"></i>
                 </button>
               </div>
@@ -121,7 +127,7 @@
             {% if adv.status == 'pending' %}
               <span class="badge badge--warning">قائمة</span>
               <button class="cx-act cx-act--del"
-                onclick="BCMS.confirmDelete('إلغاء السلفة؟').then(ok=>{ if(ok) fetch('{% url 'finance:advance_cancel' adv.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
+                onclick="BCMS.confirmYesNo('{% if adv.method == "card_or_bank" %}إلغاء السلفة البنكية؟{% else %}إلغاء السلفة وعكس حركة الخزينة؟{% endif %}', 'إلغاء السلفة', 'نعم، إلغاء', 'fa-times-circle').then(ok=>{ if(ok) fetch('{% url 'finance:advance_cancel' adv.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
                 <i class="fas fa-times-circle"></i>
               </button>
             {% elif adv.status == 'deducted' %}
@@ -137,8 +143,11 @@
             <span class="cx-card-meta-value" style="color:#f59e0b;font-weight:800;">{{ adv.amount|format_number:2 }}</span>
           </div>
           <div>
-            <span class="cx-card-meta-label">الخزينة</span>
-            <span class="cx-card-meta-value">{{ adv.treasury.short_name|default:"—" }}</span>
+            <span class="cx-card-meta-label">طريقة الدفع</span>
+            <span class="cx-card-meta-value">
+              {% if adv.method == 'card_or_bank' %}<i class="fas fa-university" style="color:#6366f1;margin-left:3px;"></i>بنك
+              {% else %}<i class="fas fa-money-bill-wave" style="color:#10b981;margin-left:3px;"></i>نقد{% endif %}
+            </span>
           </div>
           {% if adv.notes %}
           <div>

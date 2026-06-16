@@ -650,14 +650,15 @@ def salary_create(request):
             period_start_get = request.GET.get('period_start')
             period_end_get = request.GET.get('period_end')
             if period_start_get and period_end_get and sp_obj.commission_rate > 0:
-                from apps.appointments.models import AppointmentService
-                revenue = AppointmentService.objects.filter(
+                from apps.billing.models import InvoiceLine
+                revenue = InvoiceLine.objects.filter(
                     specialist=sp_obj,
-                    appointment__center=center,
-                    appointment__status='completed',
-                    appointment__date__gte=period_start_get,
-                    appointment__date__lte=period_end_get,
-                ).aggregate(t=Sum('unit_price'))['t'] or Decimal('0')
+                    invoice__center=center,
+                    invoice__status__in=['paid', 'partial'],
+                    invoice__date__gte=period_start_get,
+                    invoice__date__lte=period_end_get,
+                    service__isnull=False,
+                ).aggregate(t=Sum('line_total'))['t'] or Decimal('0')
                 commission_calc = (revenue * sp_obj.commission_rate / 100).quantize(Decimal('0.01'))
         except Specialist.DoesNotExist:
             pass
@@ -776,6 +777,8 @@ def user_advance_cancel(request, pk):
     adv = get_object_or_404(UserAdvance, pk=pk, center=center)
     if request.method == 'POST':
         adv.cancel()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
         messages.success(request, 'تم إلغاء السلفة وعكس حركة الخزينة.')
     return redirect('finance:user_advances')
 
@@ -874,6 +877,8 @@ def user_salary_pay(request, pk):
     sp = get_object_or_404(UserSalaryPayment, pk=pk, center=center)
     if request.method == 'POST':
         sp.pay()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
         messages.success(request, 'تم صرف الراتب وخصمه من الخزينة.')
     return redirect('finance:user_salary_list')
 
@@ -884,6 +889,8 @@ def user_salary_cancel(request, pk):
     sp = get_object_or_404(UserSalaryPayment, pk=pk, center=center)
     if request.method == 'POST':
         sp.cancel()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
         messages.success(request, 'تم إلغاء الراتب وعكس حركة الخزينة.')
     return redirect('finance:user_salary_list')
 
@@ -1007,5 +1014,7 @@ def incentive_cancel(request, pk):
     tab = request.POST.get('tab', 'specialist')
     if request.method == 'POST':
         inc.cancel()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
         messages.success(request, 'تم إلغاء الحافز / الخصم وعكس أي حركة خزينة.')
     return redirect(f'/finance/incentives/?tab={tab}')

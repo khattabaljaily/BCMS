@@ -83,6 +83,11 @@ class InvoiceLine(models.Model):
     description  = models.CharField('الوصف', max_length=300)
     service      = models.ForeignKey(Service, on_delete=models.SET_NULL, null=True, blank=True)
     product      = models.ForeignKey('products.Product', on_delete=models.SET_NULL, null=True, blank=True)
+    specialist   = models.ForeignKey(
+        'staff.Specialist', on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='invoice_lines', verbose_name='مقدم الخدمة'
+    )
     quantity         = models.DecimalField('الكمية',      max_digits=10, decimal_places=2, default=Decimal('1'))
     unit_price       = models.DecimalField('سعر الوحدة', max_digits=10, decimal_places=2, default=Decimal('0'))
     discount_percent = models.DecimalField('خصم %',       max_digits=5,  decimal_places=2, default=Decimal('0'))

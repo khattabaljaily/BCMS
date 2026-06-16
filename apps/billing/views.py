@@ -12,6 +12,7 @@ from .models import Invoice, InvoiceLine
 from apps.clients.models import Client
 from apps.services.models import Service
 from apps.products.models import Product, StockMovement
+from apps.staff.models import Specialist
 
 
 def _is_ajax(request):
@@ -27,8 +28,8 @@ def _payment_ref(pk):
 
 
 def _create_invoice_treasury_movement(invoice):
-    """Record a paid cash/card invoice as a treasury inflow. No-op for 'later' or if already recorded."""
-    if invoice.payment_method not in ('cash', 'card_or_bank'):
+    """Record a cash-paid invoice as a treasury inflow. Bank/card and deferred payments are not recorded."""
+    if invoice.payment_method != 'cash':
         return
     from apps.finance.models import Treasury, TreasuryMovement
     treasury = Treasury.objects.filter(center=invoice.center).first()
@@ -119,6 +120,7 @@ def get_invoice_lines_from_post(request, center):
     discs = request.POST.getlist('discount_percent[]') or request.POST.getlist('discount_percent')
     product_ids = request.POST.getlist('product_id[]') or request.POST.getlist('product_id')
     service_ids = request.POST.getlist('service_id[]') or request.POST.getlist('service_id')
+    specialist_ids = request.POST.getlist('specialist_id[]') or request.POST.getlist('specialist_id')
 
     lines = []
     for i, desc in enumerate(descs):
@@ -129,8 +131,10 @@ def get_invoice_lines_from_post(request, center):
         discount = Decimal(discs[i] if i < len(discs) and discs[i] else '0')
         service_id = service_ids[i] if i < len(service_ids) else None
         product_id = product_ids[i] if i < len(product_ids) else None
+        specialist_id = specialist_ids[i] if i < len(specialist_ids) else None
         service = Service.objects.filter(pk=service_id, center=center).first() if service_id else None
         product = Product.objects.filter(pk=product_id, center=center).first() if product_id else None
+        specialist = Specialist.objects.filter(pk=specialist_id, center=center).first() if specialist_id else None
 
         lines.append({
             'description': desc,
@@ -139,6 +143,7 @@ def get_invoice_lines_from_post(request, center):
             'discount_percent': discount,
             'service': service,
             'product': product,
+            'specialist': specialist,
         })
     return lines
 
@@ -184,6 +189,7 @@ def invoice_create(request):
     )
     services = Service.objects.filter(center=center, is_active=True).select_related('category')
     products = Product.objects.filter(center=center, is_active=True)
+    specialists = Specialist.objects.filter(center=center, is_active=True).prefetch_related('services')
 
     prefill_client_id = None
     prefill_appointment_id = None
@@ -196,13 +202,14 @@ def invoice_create(request):
             prefill_appointment_id = appointment.pk
             if appointment.client_id:
                 prefill_client_id = appointment.client_id
-            for appt_svc in appointment.appointment_services.select_related('service').all():
+            for appt_svc in appointment.appointment_services.select_related('service', 'specialist').all():
                 prefill_lines.append({
-                    'name':       appt_svc.service.name,
-                    'qty':        1,
-                    'price':      float(appt_svc.unit_price),
-                    'service_id': appt_svc.service_id,
-                    'product_id': '',
+                    'name':          appt_svc.service.name,
+                    'qty':           1,
+                    'price':         float(appt_svc.unit_price),
+                    'service_id':    appt_svc.service_id,
+                    'product_id':    '',
+                    'specialist_id': appt_svc.specialist_id or '',
                 })
 
     if request.method == 'POST':
@@ -251,6 +258,7 @@ def invoice_create(request):
                             description=item['description'],
                             service=item['service'],
                             product=item['product'],
+                            specialist=item['specialist'],
                             quantity=item['quantity'],
                             unit_price=item['unit_price'],
                             discount_percent=item['discount_percent'],
@@ -297,11 +305,12 @@ def invoice_create(request):
     } for c in clients])
 
     services_json = json.dumps([{
-        'id':       s.pk,
-        'name':     s.name,
-        'price':    float(s.price),
-        'category': s.category.name if s.category else '',
-        'duration': s.duration_display,
+        'id':              s.pk,
+        'name':            s.name,
+        'price':           float(s.price),
+        'category':        s.category.name if s.category else '',
+        'duration':        s.duration_display,
+        'specialist_ids':  [sp.pk for sp in s.specialists.filter(center=center, is_active=True)],
     } for s in services])
 
     products_json = json.dumps([{
@@ -311,10 +320,17 @@ def invoice_create(request):
         'sku':   p.sku or '',
     } for p in products])
 
+    specialists_json = json.dumps([{
+        'id':   sp.pk,
+        'name': sp.name,
+    } for sp in specialists])
+
     return render(request, 'billing/form.html', {
         'clients_json':       clients_json,
         'services_json':      services_json,
         'products_json':      products_json,
+        'specialists_json':   specialists_json,
+        'specialists':        specialists,
         'today':              timezone.localdate().isoformat(),
         'payment_choices':    Invoice.PAYMENT,
         'prefill_client_id':      prefill_client_id,
@@ -327,7 +343,7 @@ def invoice_create(request):
 @login_required
 def invoice_detail(request, pk):
     inv = get_object_or_404(Invoice, pk=pk, center=request.center)
-    lines = inv.lines.select_related('service', 'product')
+    lines = inv.lines.select_related('service', 'product', 'specialist')
     return render(request, 'billing/detail.html', {
         'inv': inv,
         'lines': lines,
@@ -395,6 +411,7 @@ def invoice_edit(request, pk):
     )
     services = Service.objects.filter(center=center, is_active=True).select_related('category')
     products = Product.objects.filter(center=center, is_active=True)
+    specialists = Specialist.objects.filter(center=center, is_active=True).prefetch_related('services')
 
     store_order_id = _parse_store_order_id_from_notes(inv.notes)
     store_order = None
@@ -430,6 +447,7 @@ def invoice_edit(request, pk):
                     description=item['description'],
                     service=item['service'],
                     product=item['product'],
+                    specialist=item['specialist'],
                     quantity=item['quantity'],
                     unit_price=item['unit_price'],
                     discount_percent=item['discount_percent'],
@@ -493,11 +511,12 @@ def invoice_edit(request, pk):
     } for c in clients])
 
     services_json = json.dumps([{
-        'id':       s.pk,
-        'name':     s.name,
-        'price':    float(s.price),
-        'category': s.category.name if s.category else '',
-        'duration': s.duration_display,
+        'id':              s.pk,
+        'name':            s.name,
+        'price':           float(s.price),
+        'category':        s.category.name if s.category else '',
+        'duration':        s.duration_display,
+        'specialist_ids':  [sp.pk for sp in s.specialists.filter(center=center, is_active=True)],
     } for s in services])
 
     products_json = json.dumps([{
@@ -507,15 +526,22 @@ def invoice_edit(request, pk):
         'sku':   p.sku or '',
     } for p in products])
 
+    specialists_json = json.dumps([{
+        'id':   sp.pk,
+        'name': sp.name,
+    } for sp in specialists])
+
     return render(request, 'billing/form.html', {
         'inv': inv,
         'edit_mode': True,
-        'clients_json':  clients_json,
-        'services_json': services_json,
-        'products_json': products_json,
-        'today':         timezone.localdate().isoformat(),
+        'clients_json':    clients_json,
+        'services_json':   services_json,
+        'products_json':   products_json,
+        'specialists_json': specialists_json,
+        'specialists':     specialists,
+        'today':           timezone.localdate().isoformat(),
         'payment_choices': Invoice.PAYMENT,
-        'store_order_id': store_order_id,
+        'store_order_id':  store_order_id,
     })
 
 

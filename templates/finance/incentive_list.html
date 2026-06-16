@@ -117,14 +117,12 @@
             </td>
             <td>
               {% if inc.status != 'cancelled' %}
-              <form method="post" action="{% url 'finance:incentive_cancel' inc.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <input type="hidden" name="tab" value="{{ tab }}">
-                <button type="submit" class="cx-act cx-act--del" title="إلغاء"
-                        onclick="return confirm('إلغاء هذا السجل؟')">
+              <div class="cx-row-actions">
+                <button class="cx-act cx-act--del" title="إلغاء"
+                  onclick="BCMS.confirmYesNo('إلغاء هذا السجل وعكس أي حركة خزينة؟', 'إلغاء الحافز / الخصم', 'نعم، إلغاء', 'fa-ban').then(ok=>{ if(ok) fetch('{% url 'finance:incentive_cancel' inc.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()},body:new URLSearchParams({tab:'{{ tab }}'})}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','success');setTimeout(()=>location.reload(),400);}}); })">
                   <i class="fas fa-ban"></i>
                 </button>
-              </form>
+              </div>
               {% endif %}
             </td>
           </tr>
@@ -167,14 +165,10 @@
           </div>
           <div class="cx-card-actions">
             {% if inc.status != 'cancelled' %}
-            <form method="post" action="{% url 'finance:incentive_cancel' inc.pk %}">
-              {% csrf_token %}
-              <input type="hidden" name="tab" value="{{ tab }}">
-              <button type="submit" class="cx-act cx-act--del" title="إلغاء"
-                      onclick="return confirm('إلغاء هذا السجل؟')">
-                <i class="fas fa-ban"></i>
-              </button>
-            </form>
+            <button class="cx-act cx-act--del" title="إلغاء"
+              onclick="BCMS.confirmYesNo('إلغاء هذا السجل وعكس أي حركة خزينة؟', 'إلغاء الحافز / الخصم', 'نعم، إلغاء', 'fa-ban').then(ok=>{ if(ok) fetch('{% url 'finance:incentive_cancel' inc.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()},body:new URLSearchParams({tab:'{{ tab }}'})}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
+              <i class="fas fa-ban"></i>
+            </button>
             {% endif %}
           </div>
         </div>

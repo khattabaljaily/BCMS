@@ -58,6 +58,7 @@
             <th>الموظف</th>
             <th>الفترة</th>
             <th>الصافي</th>
+            <th>طريقة الدفع</th>
             <th>الحالة</th>
             <th></th>
           </tr>
@@ -68,6 +69,13 @@
             <td><strong>{{ sp.user.full_name }}</strong></td>
             <td class="text-muted" style="white-space:nowrap;font-size:13px;">{{ sp.period_start }} — {{ sp.period_end }}</td>
             <td><strong style="color:#6366f1;">{{ sp.total_due|format_number:2 }}</strong></td>
+            <td class="text-muted" style="font-size:12px;">
+              {% if sp.method == 'card_or_bank' %}
+                <i class="fas fa-university" style="color:#6366f1;margin-left:4px;"></i>بنك
+              {% else %}
+                <i class="fas fa-money-bill-wave" style="color:#10b981;margin-left:4px;"></i>نقد
+              {% endif %}
+            </td>
             <td>
               {% if sp.status == 'draft' %}
                 <span class="badge badge--warning">مسودة</span>
@@ -83,35 +91,26 @@
                   <i class="fas fa-eye"></i>
                 </a>
                 {% if sp.status == 'draft' %}
-                <form method="post" action="{% url 'finance:user_salary_pay' sp.pk %}" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="cx-act" title="صرف" style="color:var(--green,#10b981);"
-                    onclick="return confirm('تأكيد صرف الراتب وخصمه من الخزينة؟')">
-                    <i class="fas fa-check-circle"></i>
-                  </button>
-                </form>
-                <form method="post" action="{% url 'finance:user_salary_cancel' sp.pk %}" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="cx-act cx-act--del" title="إلغاء"
-                    onclick="return confirm('إلغاء كشف الراتب؟')">
-                    <i class="fas fa-times-circle"></i>
-                  </button>
-                </form>
+                <button class="cx-act" title="صرف" style="color:var(--green,#10b981);"
+                  onclick="BCMS.confirmYesNo('{% if sp.method == "card_or_bank" %}تأكيد صرف الراتب بتحويل بنكي؟{% else %}تأكيد صرف الراتب وخصمه من الخزينة؟{% endif %}', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:user_salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
+                  <i class="fas fa-check-circle"></i>
+                </button>
+                <button class="cx-act cx-act--del" title="إلغاء"
+                  onclick="BCMS.confirmYesNo('إلغاء كشف الراتب وعكس أي حركة خزينة؟', 'إلغاء الكشف', 'نعم، إلغاء', 'fa-times-circle').then(ok=>{ if(ok) fetch('{% url 'finance:user_salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','success');setTimeout(()=>location.reload(),400);}}); })">
+                  <i class="fas fa-times-circle"></i>
+                </button>
                 {% elif sp.status == 'paid' %}
-                <form method="post" action="{% url 'finance:user_salary_cancel' sp.pk %}" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="cx-act" title="عكس الصرف" style="color:var(--red);"
-                    onclick="return confirm('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.')">
-                    <i class="fas fa-undo"></i>
-                  </button>
-                </form>
+                <button class="cx-act" title="عكس الصرف" style="color:var(--red);"
+                  onclick="BCMS.confirmYesNo('{% if sp.method == "card_or_bank" %}عكس صرف الراتب البنكي؟{% else %}عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.{% endif %}', 'عكس الصرف', 'نعم، اعكس', 'fa-undo').then(ok=>{ if(ok) fetch('{% url 'finance:user_salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','success');setTimeout(()=>location.reload(),400);}}); })">
+                  <i class="fas fa-undo"></i>
+                </button>
                 {% endif %}
               </div>
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5">
+            <td colspan="6">
               <div class="cx-empty" style="padding:48px 24px;">
                 <i class="fas fa-id-badge"></i>
                 <p>لا كشوف رواتب</p>
@@ -159,21 +158,15 @@
         <div style="display:flex;gap:8px;padding:4px 0 2px;justify-content:flex-end;">
           <a href="{% url 'finance:user_salary_detail' sp.pk %}" class="cx-act"><i class="fas fa-eye"></i></a>
           {% if sp.status == 'draft' %}
-          <form method="post" action="{% url 'finance:user_salary_pay' sp.pk %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="cx-act" style="color:var(--green,#10b981);"
-              onclick="return confirm('تأكيد صرف الراتب؟')">
-              <i class="fas fa-check-circle"></i>
-            </button>
-          </form>
+          <button class="cx-act" style="color:var(--green,#10b981);"
+            onclick="BCMS.confirmYesNo('{% if sp.method == "card_or_bank" %}تأكيد صرف الراتب بتحويل بنكي؟{% else %}تأكيد صرف الراتب وخصمه من الخزينة؟{% endif %}', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:user_salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
+            <i class="fas fa-check-circle"></i>
+          </button>
           {% elif sp.status == 'paid' %}
-          <form method="post" action="{% url 'finance:user_salary_cancel' sp.pk %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="cx-act" style="color:var(--red);"
-              onclick="return confirm('عكس الصرف؟')">
-              <i class="fas fa-undo"></i>
-            </button>
-          </form>
+          <button class="cx-act" style="color:var(--red);"
+            onclick="BCMS.confirmYesNo('{% if sp.method == "card_or_bank" %}عكس صرف الراتب البنكي؟{% else %}عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.{% endif %}', 'عكس الصرف', 'نعم، اعكس', 'fa-undo').then(ok=>{ if(ok) fetch('{% url 'finance:user_salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
+            <i class="fas fa-undo"></i>
+          </button>
           {% endif %}
         </div>
       </div>

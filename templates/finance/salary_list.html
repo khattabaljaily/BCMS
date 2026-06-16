@@ -101,7 +101,7 @@
                 </button>
                 {% elif sp.status == 'paid' %}
                 <button class="cx-act" title="عكس الصرف" style="color:var(--red);"
-                  onclick="BCMS.confirmYesNo('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.', 'عكس الصرف', 'نعم، اعكس', 'fa-undo').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','success');setTimeout(()=>location.reload(),400);}}); })">
+                  onclick="BCMS.confirmYesNo('{% if sp.method == "card_or_bank" %}عكس صرف الراتب البنكي؟{% else %}عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.{% endif %}', 'عكس الصرف', 'نعم، اعكس', 'fa-undo').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','success');setTimeout(()=>location.reload(),400);}}); })">
                   <i class="fas fa-undo"></i>
                 </button>
                 {% endif %}
@@ -110,7 +110,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5">
+            <td colspan="6">
               <div class="cx-empty" style="padding:48px 24px;">
                 <i class="fas fa-file-invoice-dollar"></i>
                 <p>لا كشوف رواتب</p>

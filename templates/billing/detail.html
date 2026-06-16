@@ -51,18 +51,19 @@
       <div class="card__header"><span class="card__title">البنود</span></div>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>الوصف</th><th>الكمية</th><th>السعر</th><th>خصم%</th><th>الإجمالي</th></tr></thead>
+          <thead><tr><th>الوصف</th><th>مقدم الخدمة</th><th>الكمية</th><th>السعر</th><th>خصم%</th><th>الإجمالي</th></tr></thead>
           <tbody>
             {% for line in lines %}
             <tr>
               <td>{{ line.description }}</td>
+              <td class="text-muted" style="font-size:12px;">{{ line.specialist.name|default:"—" }}</td>
               <td>{{ line.quantity|format_number:0 }}</td>
               <td>{{ line.unit_price|format_number:2 }}</td>
               <td>{% if line.discount_percent %}{{ line.discount_percent|format_number:0 }}%{% else %}—{% endif %}</td>
               <td><strong>{{ line.line_total|format_number:2 }}</strong></td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" class="text-muted" style="text-align:center;">لا بنود</td></tr>
+            <tr><td colspan="6" class="text-muted" style="text-align:center;">لا بنود</td></tr>
             {% endfor %}
           </tbody>
         </table>

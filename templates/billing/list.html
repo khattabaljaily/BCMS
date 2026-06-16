@@ -60,6 +60,7 @@
             <th>التاريخ</th>
             <th>الإجمالي</th>
             <th>المدفوع</th>
+            <th>طريقة الدفع</th>
             <th>الحالة</th>
             <th></th>
           </tr>
@@ -72,6 +73,15 @@
             <td class="text-muted">{{ inv.date }}</td>
             <td><strong>{{ inv.total|format_number:2 }}</strong></td>
             <td>{{ inv.paid_amount|format_number:2 }}</td>
+            <td class="text-muted" style="font-size:12px;">
+              {% if inv.payment_method == 'card_or_bank' %}
+                <i class="fas fa-university" style="color:#6366f1;margin-left:4px;"></i>بنك
+              {% elif inv.payment_method == 'later' %}
+                <i class="fas fa-clock" style="color:#f59e0b;margin-left:4px;"></i>لاحقاً
+              {% else %}
+                <i class="fas fa-money-bill-wave" style="color:#10b981;margin-left:4px;"></i>نقد
+              {% endif %}
+            </td>
             <td>
               <span class="badge badge--{% if inv.status == 'paid' %}green{% elif inv.status == 'partial' %}yellow{% elif inv.status == 'cancelled' %}red{% else %}gray{% endif %}">
                 {{ inv.get_status_display }}
@@ -91,7 +101,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="7">
+            <td colspan="8">
               <div class="cx-empty" style="padding:48px 24px;">
                 <i class="fas fa-file-invoice"></i>
                 <p>لا توجد فواتير{% if status_filter %} بهذه الحالة{% endif %}{% if q %} لهذا البحث{% endif %}</p>
@@ -137,6 +147,14 @@
           <div>
             <span class="cx-card-meta-label">المدفوع</span>
             <span class="cx-card-meta-value">{{ inv.paid_amount|format_number:2 }}</span>
+          </div>
+          <div>
+            <span class="cx-card-meta-label">طريقة الدفع</span>
+            <span class="cx-card-meta-value" style="font-size:12px;">
+              {% if inv.payment_method == 'card_or_bank' %}<i class="fas fa-university" style="color:#6366f1;margin-left:3px;"></i>بنك
+              {% elif inv.payment_method == 'later' %}<i class="fas fa-clock" style="color:#f59e0b;margin-left:3px;"></i>لاحقاً
+              {% else %}<i class="fas fa-money-bill-wave" style="color:#10b981;margin-left:3px;"></i>نقد{% endif %}
+            </span>
           </div>
           <div>
             <span class="cx-card-meta-label">التاريخ</span>
