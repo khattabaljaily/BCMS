@@ -570,7 +570,6 @@ def pos_view(request):
 
 
 @login_required
-@transaction.atomic
 def pos_save(request):
     if not request.user.can('billing', 'pos') and not request.user.can('billing', 'create'):
         return JsonResponse({'error': 'ليس لديك صلاحية'}, status=403)
@@ -587,57 +586,62 @@ def pos_save(request):
     if not items:
         return JsonResponse({'error': 'لا توجد بنود في الفاتورة'}, status=400)
 
-    client_id = data.get('client_id')
-    client = Client.objects.filter(pk=client_id, center=center).first() if client_id else None
+    try:
+        with transaction.atomic():
+            client_id = data.get('client_id')
+            client = Client.objects.filter(pk=client_id, center=center).first() if client_id else None
 
-    payment_method = data.get('payment_method', 'cash')
-    discount_amount = Decimal(str(data.get('discount', 0) or 0))
-    notes = data.get('notes', '')
+            payment_method = data.get('payment_method', 'cash')
+            discount_amount = Decimal(str(data.get('discount', 0) or 0))
+            notes = data.get('notes', '')
 
-    from apps.core.models import Settings
-    settings_obj, _ = Settings.objects.get_or_create(center=center)
-    number = settings_obj.next_invoice_number()
+            from apps.core.models import Settings
+            settings_obj, _ = Settings.objects.get_or_create(center=center)
+            number = settings_obj.next_invoice_number()
 
-    inv = Invoice.objects.create(
-        center=center,
-        number=number,
-        client=client,
-        payment_method=payment_method,
-        discount_amount=discount_amount,
-        notes=notes,
-        status='draft',
-    )
-
-    for item in items:
-        svc = Service.objects.filter(pk=item.get('service_id'), center=center).first() if item.get('service_id') else None
-        prd = Product.objects.filter(pk=item.get('product_id'), center=center).first() if item.get('product_id') else None
-        qty = Decimal(str(item.get('qty', 1)))
-
-        InvoiceLine.objects.create(
-            invoice=inv,
-            description=item.get('name', '—'),
-            service=svc,
-            product=prd,
-            quantity=qty,
-            unit_price=Decimal(str(item.get('price', 0))),
-            discount_percent=Decimal('0'),
-        )
-
-        if prd:
-            StockMovement.objects.create(
+            inv = Invoice.objects.create(
                 center=center,
-                product=prd,
-                change=-qty,
-                type='sale',
-                reference=f'invoice_{inv.pk}',
-                notes=f'POS {number}',
+                number=number,
+                client=client,
+                payment_method=payment_method,
+                discount_amount=discount_amount,
+                notes=notes,
+                status='draft',
             )
 
-    inv.recalculate()
+            for item in items:
+                svc = Service.objects.filter(pk=item.get('service_id'), center=center).first() if item.get('service_id') else None
+                prd = Product.objects.filter(pk=item.get('product_id'), center=center).first() if item.get('product_id') else None
+                qty = Decimal(str(item.get('qty') or 1))
 
-    if payment_method != 'later':
-        inv.mark_paid(amount=inv.total, method=payment_method)
-        _create_invoice_treasury_movement(inv)
+                InvoiceLine.objects.create(
+                    invoice=inv,
+                    description=item.get('name', '—'),
+                    service=svc,
+                    product=prd,
+                    quantity=qty,
+                    unit_price=Decimal(str(item.get('price') or 0)),
+                    discount_percent=Decimal('0'),
+                )
+
+                if prd:
+                    StockMovement.objects.create(
+                        center=center,
+                        product=prd,
+                        change=-qty,
+                        type='sale',
+                        reference=f'invoice_{inv.pk}',
+                        notes=f'POS {number}',
+                    )
+
+            inv.recalculate()
+
+            if payment_method != 'later':
+                inv.mark_paid(amount=inv.total, method=payment_method)
+                _create_invoice_treasury_movement(inv)
+
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=500)
 
     return JsonResponse({
         'ok': True,

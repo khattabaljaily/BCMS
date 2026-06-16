@@ -729,15 +729,15 @@ function removeItem(idx) {
 
 function renderCart() {
   const el = document.getElementById('cart-items');
-  const empty = document.getElementById('cart-empty');
   if (!cart.length) {
-    el.innerHTML = '';
-    el.appendChild(empty);
-    empty.style.display = '';
+    el.innerHTML = `
+      <div class="cart-empty" id="cart-empty">
+        <i class="fas fa-shopping-basket" style="font-size:32px;margin-bottom:8px;display:block;"></i>
+        أضف خدمات أو منتجات من القائمة
+      </div>`;
     recalcTotals();
     return;
   }
-  empty.style.display = 'none';
   let html = '';
   cart.forEach((it, i) => {
     html += `
