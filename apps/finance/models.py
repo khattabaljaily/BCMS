@@ -253,7 +253,7 @@ class SalaryPayment(CenterMixin):
 
     class Meta:
         db_table = 'salary_payments'
-        ordering = ['-period_start', '-created_at']
+        ordering = ['-id']
         verbose_name = 'كشف راتب'
         verbose_name_plural = 'كشوف الرواتب'
 
@@ -419,7 +419,7 @@ class UserSalaryPayment(CenterMixin):
 
     class Meta:
         db_table = 'user_salary_payments'
-        ordering = ['-period_start', '-created_at']
+        ordering = ['-id']
         verbose_name = 'كشف راتب موظف'
         verbose_name_plural = 'كشوف رواتب الموظفين'
 

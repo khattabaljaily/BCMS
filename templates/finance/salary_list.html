@@ -58,6 +58,7 @@
             <th>مقدم الخدمة</th>
             <th>الفترة</th>
             <th>الصافي</th>
+            <th>طريقة الدفع</th>
             <th>الحالة</th>
             <th></th>
           </tr>
@@ -68,6 +69,13 @@
             <td><strong>{{ sp.specialist.name }}</strong></td>
             <td class="text-muted" style="white-space:nowrap;font-size:13px;">{{ sp.period_start }} — {{ sp.period_end }}</td>
             <td><strong style="color:#8b5cf6;">{{ sp.total_due|format_number:2 }}</strong></td>
+            <td class="text-muted" style="font-size:12px;">
+              {% if sp.method == 'card_or_bank' %}
+                <i class="fas fa-university" style="color:#6366f1;margin-left:4px;"></i>بنك
+              {% else %}
+                <i class="fas fa-money-bill-wave" style="color:#10b981;margin-left:4px;"></i>نقد
+              {% endif %}
+            </td>
             <td>
               {% if sp.status == 'draft' %}
                 <span class="badge badge--warning">مسودة</span>
@@ -84,7 +92,7 @@
                 </a>
                 {% if sp.status == 'draft' %}
                 <button class="cx-act" title="صرف" style="color:var(--green,#10b981);"
-                  onclick="BCMS.confirmYesNo('تأكيد صرف الراتب وخصمه من الخزينة؟', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
+                  onclick="BCMS.confirmYesNo('{% if sp.method == "card_or_bank" %}تأكيد صرف الراتب بتحويل بنكي؟{% else %}تأكيد صرف الراتب وخصمه من الخزينة؟{% endif %}', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
                   <i class="fas fa-check-circle"></i>
                 </button>
                 <button class="cx-act cx-act--del" title="إلغاء"
@@ -149,7 +157,7 @@
           <a href="{% url 'finance:salary_detail' sp.pk %}" class="cx-act"><i class="fas fa-eye"></i></a>
           {% if sp.status == 'draft' %}
           <button class="cx-act" style="color:var(--green,#10b981);"
-            onclick="BCMS.confirmYesNo('تأكيد صرف الراتب وخصمه من الخزينة؟', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
+            onclick="BCMS.confirmYesNo('{% if sp.method == "card_or_bank" %}تأكيد صرف الراتب بتحويل بنكي؟{% else %}تأكيد صرف الراتب وخصمه من الخزينة؟{% endif %}', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم','success');setTimeout(()=>location.reload(),400);}}); })">
             <i class="fas fa-check-circle"></i>
           </button>
           {% elif sp.status == 'paid' %}

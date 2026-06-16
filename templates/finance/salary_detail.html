@@ -37,7 +37,7 @@
         <div class="cx-hero-actions">
           {% if sp.status == 'draft' %}
             <button class="btn btn--primary btn--sm"
-              onclick="BCMS.confirmYesNo('تأكيد صرف الراتب وخصمه من الخزينة؟', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
+              onclick="BCMS.confirmYesNo('{% if sp.method == 'card_or_bank' %}تأكيد صرف الراتب بتحويل بنكي؟{% else %}تأكيد صرف الراتب وخصمه من الخزينة؟{% endif %}', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
               <i class="fas fa-check-circle"></i> صرف الراتب
             </button>
             <button class="btn btn--ghost btn--sm"
@@ -46,7 +46,7 @@
             </button>
           {% elif sp.status == 'paid' %}
             <button class="btn btn--ghost btn--sm"
-              onclick="BCMS.confirmYesNo('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.', 'عكس الصرف', 'نعم، اعكس', 'fa-undo').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','warning');setTimeout(()=>location.reload(),400);}}); })">
+              onclick="BCMS.confirmYesNo('{% if sp.method == 'card_or_bank' %}عكس صرف الراتب البنكي؟{% else %}عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.{% endif %}', 'عكس الصرف', 'نعم، اعكس', 'fa-undo').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','warning');setTimeout(()=>location.reload(),400);}}); })">
               <i class="fas fa-undo"></i> عكس الصرف
             </button>
           {% endif %}
@@ -193,9 +193,19 @@
           <span style="font-size:18px;font-weight:900;color:#7c3aed;direction:ltr;unicode-bidi:isolate;font-feature-settings:'tnum';">{{ sp.total_due|format_number:2 }}</span>
         </div>
 
+        <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">طريقة الدفع</span>
+          <span style="font-weight:700;font-size:13px;">
+            {% if sp.method == 'card_or_bank' %}
+              <i class="fas fa-university" style="color:#6366f1;margin-left:5px;font-size:11px;"></i>بطاقة / تحويل بنكي
+            {% else %}
+              <i class="fas fa-money-bill-wave" style="color:#10b981;margin-left:5px;font-size:11px;"></i>نقد
+            {% endif %}
+          </span>
+        </div>
         {% if sp.treasury %}
         <div style="padding:13px 20px;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:13px;color:var(--muted);">الخزينة</span>
+          <span style="font-size:13px;color:var(--muted);">{% if sp.method == 'card_or_bank' %}الحساب البنكي{% else %}الخزينة{% endif %}</span>
           <span style="font-weight:700;font-size:13px;">
             <i class="fas fa-university" style="color:#8b5cf6;margin-left:5px;font-size:11px;"></i>
             {{ sp.treasury.short_name }}

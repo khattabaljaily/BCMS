@@ -784,6 +784,11 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
                 class="btn btn--secondary btn--sm">
                 <i class="fas fa-copy"></i> نسخ الرابط
               </button>
+              <button type="button"
+                onclick="openStoreQrModal('{{ request.scheme }}://{{ request.get_host }}{% url 'store:home' slug=center.slug %}')"
+                class="btn btn--secondary btn--sm">
+                <i class="fas fa-qrcode"></i> رمز QR
+              </button>
               <a href="{% url 'store:home' slug=center.slug %}" target="_blank" rel="noopener noreferrer"
                  class="btn btn--primary btn--sm">
                 <i class="fas fa-external-link-alt"></i> فتح المتجر
@@ -945,6 +950,23 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
 
 </div><!-- /sp-body -->
 
+<div class="modal-overlay" id="modal-store-qr" style="display:none;">
+  <div class="modal-dialog modal-dialog--sm" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>رمز QR لرابط المتجر</h3>
+      <button class="modal-close" onclick="BCMS.closeModal('modal-store-qr')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="text-align:center; gap:18px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <div id="store-qr-code"></div>
+      <p class="sp-hint" style="margin-top:8px;">امسح الرمز بالهاتف لفتح صفحة المتجر.</p>
+      <button type="button" id="store-qr-copy-btn" class="btn btn--secondary">نسخ الرابط</button>
+    </div>
+    <div class="modal-footer" style="justify-content:center; margin-top:0;">
+      <button type="button" class="btn btn--ghost" onclick="BCMS.closeModal('modal-store-qr')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Floating Save Bar ──────────────────────────────────── -->
 <div class="sp-float-bar" id="sp-float-bar">
   <span class="sp-float-bar-text"><i class="fas fa-circle-info"></i> تغييرات غير محفوظة</span>
@@ -1069,6 +1091,28 @@ textarea.sp-input { min-height: 110px; resize: vertical; }
     }, function () {
       window.prompt('انسخ الرابط يدوياً:', url);
     });
+  };
+
+  window.openStoreQrModal = function (url) {
+    var container = document.getElementById('store-qr-code');
+    var copyBtn = document.getElementById('store-qr-copy-btn');
+    if (!container) return;
+    container.innerHTML = '';
+    var img = document.createElement('img');
+    img.alt = 'QR code';
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url);
+    img.onerror = function () {
+      container.textContent = 'فشل تحميل رمز QR. يرجى نسخ الرابط يدوياً.';
+    };
+    container.appendChild(img);
+    if (copyBtn) {
+      copyBtn.onclick = function () { copyStoreLink(url); };
+    }
+    if (typeof BCMS !== 'undefined' && BCMS.openModal) {
+      BCMS.openModal('modal-store-qr');
+    } else if (typeof openModal === 'function') {
+      openModal('modal-store-qr');
+    }
   };
 
   /* ── Apply working hours to all rows ────────────────────── */
