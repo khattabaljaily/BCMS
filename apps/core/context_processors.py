@@ -1,6 +1,24 @@
 from apps.core.models import Settings
 
 
+def help_context(request):
+    """Inject the help template path for the current page."""
+    try:
+        match = request.resolver_match
+        if not match or not match.namespace or not match.url_name:
+            return {'help_template': None}
+        candidate = f"help/{match.namespace}/{match.url_name}.html"
+        from django.template.loader import get_template
+        from django.template import TemplateDoesNotExist
+        try:
+            get_template(candidate)
+            return {'help_template': candidate}
+        except TemplateDoesNotExist:
+            return {'help_template': None}
+    except Exception:
+        return {'help_template': None}
+
+
 def center_context(request):
     ctx = {
         'center': getattr(request, 'center', None),

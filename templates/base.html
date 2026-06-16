@@ -784,5 +784,10 @@ function toggleTopbarMenu() {
   setInterval(poll, 10000);
 })();
 </script>
+
+{% if request.user.is_authenticated and request.center %}
+{% include 'components/help_panel.html' %}
+{% endif %}
+
 </body>
 </html>

@@ -1,0 +1,326 @@
+<!-- Help FAB -->
+<button id="help-fab" class="bcms-help-fab" title="دليل الاستخدام" aria-label="فتح دليل الاستخدام">
+  <i class="fas fa-circle-question"></i>
+</button>
+
+<!-- Help Panel (slides from right on RTL) -->
+<div id="help-panel" class="bcms-help-panel" role="dialog" aria-label="دليل الاستخدام" aria-hidden="true">
+
+  <div class="bcms-help-panel__header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="bcms-help-panel__avatar"><i class="fas fa-book-open"></i></div>
+      <div>
+        <div class="bcms-help-panel__title">دليل الاستخدام</div>
+        <div class="bcms-help-panel__subtitle">شرح مكونات الشاشة الحالية</div>
+      </div>
+    </div>
+    <button id="help-close-btn" class="bcms-help-close" title="إغلاق">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="bcms-help-panel__body" id="help-panel-body">
+    {% if help_template %}
+      {% include help_template %}
+    {% else %}
+      <div class="h-overview">لا يوجد دليل مخصص لهذه الشاشة بعد.</div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Overlay -->
+<div id="help-overlay" class="bcms-help-overlay"></div>
+
+
+<style>
+/* ═══════════════════════════════════════════════
+   BCMS Help Panel — rose theme, RTL
+═══════════════════════════════════════════════ */
+:root {
+  --hp-rose:      #e11d48;
+  --hp-rose-dk:   #be123c;
+  --hp-rose-lt:   #ffe4e6;
+  --hp-surface:   #ffffff;
+  --hp-surface2:  #f8fafc;
+  --hp-border:    #e2e8f0;
+  --hp-text:      #1e293b;
+  --hp-muted:     #64748b;
+}
+
+/* FAB */
+.bcms-help-fab {
+  position: fixed;
+  bottom: 28px;
+  left: 28px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--hp-rose), var(--hp-rose-dk));
+  border: none;
+  color: #fff;
+  font-size: 1.15rem;
+  cursor: pointer;
+  z-index: 1050;
+  box-shadow: 0 4px 16px rgba(225,29,72,.38);
+  transition: transform .2s, box-shadow .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bcms-help-fab:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(225,29,72,.5); }
+.bcms-help-fab:active { transform: scale(.93); }
+
+/* Panel — slides in from right (RTL) */
+.bcms-help-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(340px, calc(100vw - 1rem));
+  background: var(--hp-surface);
+  box-shadow: -4px 0 32px rgba(0,0,0,.13);
+  z-index: 1051;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  direction: rtl;
+}
+.bcms-help-panel.is-open { transform: translateX(0); }
+
+/* Header */
+.bcms-help-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, var(--hp-rose), var(--hp-rose-dk));
+  color: #fff;
+  flex-shrink: 0;
+}
+.bcms-help-panel__avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.bcms-help-panel__title { font-size: .92rem; font-weight: 800; }
+.bcms-help-panel__subtitle { font-size: .72rem; opacity: .82; margin-top: 1px; }
+.bcms-help-close {
+  background: rgba(255,255,255,.15);
+  border: none; color: #fff;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: .85rem;
+  transition: background .15s; flex-shrink: 0;
+}
+.bcms-help-close:hover { background: rgba(255,255,255,.3); }
+
+/* Body */
+.bcms-help-panel__body {
+  flex: 1; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 16px;
+  background: var(--hp-surface2);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.bcms-help-panel__body::-webkit-scrollbar { width: 4px; }
+.bcms-help-panel__body::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
+
+/* Overlay */
+.bcms-help-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.28);
+  z-index: 1050;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.bcms-help-overlay.is-open { opacity: 1; pointer-events: all; }
+
+/* ═══ Content blocks (used inside help/*.html files) ═══ */
+
+/* Overview banner */
+.h-overview {
+  background: var(--hp-rose-lt);
+  border-right: 4px solid var(--hp-rose);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: .84rem;
+  color: #4b0018;
+  line-height: 1.75;
+}
+
+/* Collapsible section */
+.h-section {
+  border: 1.5px solid var(--hp-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--hp-surface);
+}
+.h-section__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: .83rem;
+  font-weight: 800;
+  color: var(--hp-text);
+  cursor: pointer;
+  user-select: none;
+  background: #fafafa;
+  border-bottom: 1px solid var(--hp-border);
+}
+.h-section__head i.h-icon { color: var(--hp-rose); font-size: .88rem; }
+.h-section__head .h-chev {
+  margin-right: auto; margin-left: 0;
+  color: #94a3b8; font-size: .68rem;
+  transition: transform .2s;
+}
+.h-section.is-open .h-chev { transform: rotate(180deg); }
+.h-section__body {
+  padding: 10px 14px 14px;
+  display: none;
+  font-size: .82rem;
+  color: var(--hp-muted);
+  line-height: 1.8;
+}
+.h-section.is-open .h-section__body { display: block; }
+
+/* Lists */
+.h-list {
+  list-style: none;
+  padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.h-list li {
+  padding-right: 14px;
+  position: relative;
+  line-height: 1.7;
+}
+.h-list li::before {
+  content: "•";
+  color: var(--hp-rose);
+  font-weight: 700;
+  position: absolute;
+  right: 0; top: .1rem;
+}
+.h-list strong { color: var(--hp-text); }
+
+/* Numbered steps */
+.h-steps {
+  counter-reset: h-step;
+  list-style: none;
+  padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.h-steps li {
+  counter-increment: h-step;
+  display: flex; gap: 8px;
+  align-items: flex-start;
+}
+.h-steps li::before {
+  content: counter(h-step);
+  background: var(--hp-rose);
+  color: #fff;
+  font-size: .7rem;
+  font-weight: 800;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+.h-steps strong { color: var(--hp-text); }
+
+/* Task block */
+.h-task { margin-bottom: 12px; }
+.h-task:last-child { margin-bottom: 0; }
+.h-task__title {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--hp-text);
+  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.h-task__title::before {
+  content: '';
+  width: 3px; height: 14px;
+  background: var(--hp-rose);
+  border-radius: 2px;
+  display: inline-block; flex-shrink: 0;
+}
+
+/* Status badges */
+.h-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 100px;
+  font-size: .72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.h-badge--draft    { background:#f1f5f9; color:#475569; }
+.h-badge--paid     { background:#dcfce7; color:#15803d; }
+.h-badge--partial  { background:#fef9c3; color:#854d0e; }
+.h-badge--cancelled{ background:#fee2e2; color:#b91c1c; }
+.h-badge--active   { background:#dcfce7; color:#15803d; }
+.h-badge--inactive { background:#f1f5f9; color:#94a3b8; }
+.h-badge--pending  { background:#fef9c3; color:#854d0e; }
+.h-badge--done     { background:#e0f2fe; color:#0369a1; }
+
+/* Tip callout */
+.h-tip {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: .8rem;
+  color: #78350f;
+  display: flex; gap: 8px;
+  align-items: flex-start;
+}
+.h-tip i { color: #f59e0b; flex-shrink: 0; margin-top: 2px; }
+
+@media (max-width: 480px) {
+  .bcms-help-panel { width: 100%; }
+  .bcms-help-fab { bottom: 16px; left: 16px; }
+}
+</style>
+
+
+<script>
+(function () {
+  const fab     = document.getElementById('help-fab');
+  const panel   = document.getElementById('help-panel');
+  const overlay = document.getElementById('help-overlay');
+  const closeBtn = document.getElementById('help-close-btn');
+  let open = false;
+
+  function openPanel() {
+    open = true;
+    panel.classList.add('is-open');
+    panel.setAttribute('aria-hidden', 'false');
+    overlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePanel() {
+    open = false;
+    panel.classList.remove('is-open');
+    panel.setAttribute('aria-hidden', 'true');
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
+  fab.addEventListener('click', () => open ? closePanel() : openPanel());
+  closeBtn.addEventListener('click', closePanel);
+  overlay.addEventListener('click', closePanel);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) closePanel(); });
+
+  // Collapsible sections
+  document.querySelectorAll('.h-section__head').forEach(head => {
+    head.addEventListener('click', () => {
+      head.closest('.h-section').classList.toggle('is-open');
+    });
+  });
+}());
+</script>
