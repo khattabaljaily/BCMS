@@ -55,12 +55,8 @@ def specialist_save(request, pk=None):
         instance.services.set(service_ids)
         if _is_ajax(request):
             instance.refresh_from_db()
-            try:
-                row_html = render_to_string('staff/_row.html', {'s': instance}, request=request)
-                card_html = render_to_string('staff/_card.html', {'s': instance}, request=request)
-            except Exception:
-                row_html = ''
-                card_html = ''
+            row_html = render_to_string('staff/_row.html', {'s': instance}, request=request)
+            card_html = render_to_string('staff/_card.html', {'s': instance}, request=request)
             return JsonResponse({
                 'success': True,
                 'message': 'تم حفظ بيانات الفرد بنجاح.',

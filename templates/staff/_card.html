@@ -11,7 +11,7 @@
     </div>
     <div class="cx-card-actions">
       <button type="button" class="cx-act"
-              onclick="openEditSpecialist({{ s.pk }}, '{{ s.name|escapejs }}', '{{ s.phone|default:''|escapejs }}', '{{ s.specialty|default:''|escapejs }}', '{{ s.work_start|time:"H:i"|default:'' }}', '{{ s.work_end|time:"H:i"|default:'' }}', '{{ s.bio|default:''|escapejs }}', {{ s.is_active|yesno:'true,false' }}, '{% for svc in s.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}')">
+              onclick="openEditSpecialist({{ s.pk }}, '{{ s.name|escapejs }}', '{{ s.phone|default:''|escapejs }}', '{{ s.specialty|default:''|escapejs }}', '{{ s.work_start|time:"H:i"|default:'' }}', '{{ s.work_end|time:"H:i"|default:'' }}', '{{ s.bio|default:''|escapejs }}', {{ s.is_active|yesno:'true,false' }}, '{% for svc in s.services.all %}{% if not forloop.first %},{% endif %}{{ svc.pk }}{% endfor %}', '{{ s.salary_type }}', '{{ s.base_salary }}', '{{ s.commission_rate }}')">
         <i class="fas fa-edit"></i>
       </button>
       <button type="button" class="cx-act cx-act--del"
