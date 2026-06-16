@@ -143,15 +143,13 @@
             <option value="card_or_bank">بطاقة / تحويل بنكي</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label" id="usal-treasury-label">الخزينة</label>
-          <select name="treasury" class="form-control">
-            <option value="">بدون خزينة</option>
+        <div class="form-group" id="usal-treasury-wrap">
+          <label class="form-label">الخزينة <span style="color:var(--red)">*</span></label>
+          <select name="treasury" class="form-control" id="usal-treasury" required>
             {% for t in treasuries %}
               <option value="{{ t.pk }}" {% if forloop.first %}selected{% endif %}>{{ t.name }}</option>
             {% endfor %}
           </select>
-          <div id="usal-bank-note" style="display:none;font-size:11px;color:#6366f1;margin-top:4px;">يُحفظ كمرجع فقط — لن يُخصم من رصيد الخزينة</div>
         </div>
         <div class="form-group">
           <label class="form-label">ملاحظات <span class="form-optional">اختياري</span></label>
@@ -197,15 +195,15 @@ function calcTotal() {
 }
 document.addEventListener('DOMContentLoaded', calcTotal);
 function toggleUsalLabel(val) {
-  var lbl = document.getElementById('usal-treasury-label');
-  var note = document.getElementById('usal-bank-note');
-  if (!lbl) return;
+  var wrap = document.getElementById('usal-treasury-wrap');
+  var sel  = document.getElementById('usal-treasury');
+  if (!wrap) return;
   if (val === 'card_or_bank') {
-    lbl.textContent = 'الحساب البنكي (مرجع)';
-    if (note) note.style.display = 'block';
+    wrap.style.display = 'none';
+    if (sel) sel.removeAttribute('required');
   } else {
-    lbl.textContent = 'الخزينة';
-    if (note) note.style.display = 'none';
+    wrap.style.display = '';
+    if (sel) sel.setAttribute('required', '');
   }
 }
 </script>

@@ -160,7 +160,7 @@ const BCMS = {
                     '<p class="confirm-desc">' + message + '<br><small>لا يمكن التراجع عن هذا الإجراء.</small></p>' +
                     '<div class="confirm-actions">' +
                         '<button type="button" class="btn btn--ghost btn--sm" id="_bcmsNo">إلغاء</button>' +
-                        '<button type="button" class="btn btn--danger btn--sm" id="_bcmsYes">نعم، احذف</button>' +
+                        '<button type="button" class="btn btn--danger btn--sm" id="_bcmsYes">' + (title === 'تأكيد الحذف' ? 'نعم، احذف' : 'تأكيد') + '</button>' +
                     '</div>' +
                 '</div>';
             document.body.appendChild(overlay);
@@ -179,6 +179,33 @@ const BCMS = {
 
     confirmDelete: function (message) {
         return BCMS.confirmAction(message || 'هل أنت متأكد من الحذف؟', 'تأكيد الحذف');
+    },
+
+    confirmYesNo: function (message, title, yesText, iconClass) {
+        return new Promise(function (resolve) {
+            var overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML =
+                '<div class="confirm-box">' +
+                    '<div class="confirm-icon" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);"><i class="fas ' + (iconClass || 'fa-question-circle') + '"></i></div>' +
+                    '<h5 class="confirm-title">' + (title || 'تأكيد') + '</h5>' +
+                    '<p class="confirm-desc">' + message + '</p>' +
+                    '<div class="confirm-actions">' +
+                        '<button type="button" class="btn btn--ghost btn--sm" id="_bcmsNo">إلغاء</button>' +
+                        '<button type="button" class="btn btn--primary btn--sm" id="_bcmsYes">' + (yesText || 'تأكيد') + '</button>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+            requestAnimationFrame(function () { overlay.classList.add('open'); });
+            function cleanup() {
+                overlay.classList.remove('open');
+                setTimeout(function () { overlay.remove(); document.body.style.overflow = ''; }, 200);
+            }
+            overlay.querySelector('#_bcmsYes').addEventListener('click', function () { cleanup(); resolve(true); });
+            overlay.querySelector('#_bcmsNo').addEventListener('click',  function () { cleanup(); resolve(false); });
+            overlay.addEventListener('click', function (e) { if (e.target === overlay) { cleanup(); resolve(false); } });
+        });
     },
 
     alertModal: function (message, title) {

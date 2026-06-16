@@ -37,16 +37,16 @@
         <div class="cx-hero-actions">
           {% if sp.status == 'draft' %}
             <button class="btn btn--primary btn--sm"
-              onclick="BCMS.confirmAction('تأكيد صرف الراتب وخصمه من الخزينة؟', 'صرف الراتب').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
+              onclick="BCMS.confirmYesNo('تأكيد صرف الراتب وخصمه من الخزينة؟', 'صرف الراتب', 'نعم، اصرف', 'fa-check-circle').then(ok=>{ if(ok) fetch('{% url 'finance:salary_pay' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الصرف','success');setTimeout(()=>location.reload(),400);}}); })">
               <i class="fas fa-check-circle"></i> صرف الراتب
             </button>
             <button class="btn btn--ghost btn--sm"
-              onclick="BCMS.confirmAction('إلغاء كشف الراتب وعكس أي حركة خزينة؟', 'إلغاء الكشف').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','warning');setTimeout(()=>location.reload(),400);}}); })">
+              onclick="BCMS.confirmYesNo('إلغاء كشف الراتب وعكس أي حركة خزينة؟', 'إلغاء الكشف', 'نعم، إلغاء', 'fa-times-circle').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم الإلغاء','warning');setTimeout(()=>location.reload(),400);}}); })">
               <i class="fas fa-times"></i> إلغاء
             </button>
           {% elif sp.status == 'paid' %}
             <button class="btn btn--ghost btn--sm"
-              onclick="BCMS.confirmAction('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.', 'عكس الصرف').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','warning');setTimeout(()=>location.reload(),400);}}); })">
+              onclick="BCMS.confirmYesNo('عكس صرف الراتب؟ سيُعاد المبلغ للخزينة.', 'عكس الصرف', 'نعم، اعكس', 'fa-undo').then(ok=>{ if(ok) fetch('{% url 'finance:salary_cancel' sp.pk %}',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':BCMS.getCsrf()}}).then(r=>r.json()).then(j=>{ if(j.success){BCMS.toast('تم العكس','warning');setTimeout(()=>location.reload(),400);}}); })">
               <i class="fas fa-undo"></i> عكس الصرف
             </button>
           {% endif %}
