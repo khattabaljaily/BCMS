@@ -263,7 +263,7 @@
           </a>
           <!-- Nested: الرواتب والسلفيات -->
           <div class="nav-subgroup {% block nav_finance_salary_open %}{% endblock %}">
-            <div class="nav-subitem nav-subitem--group" onclick="this.closest('.nav-subgroup').classList.toggle('open')">
+            <div class="nav-subitem nav-subitem--group" onclick="event.stopPropagation();this.closest('.nav-subgroup').classList.toggle('open')">
               <i class="fas fa-money-bill-transfer"></i> الرواتب والسلفيات
               <i class="fas fa-chevron-left nav-subarrow"></i>
             </div>
@@ -608,10 +608,28 @@
 /* ── Sort arrow feedback ──────────────────────────────────── */
 thead th[data-sortable] .sort-arrow .fa-sort         { opacity: .35; }
 thead th[data-sortable].sort-asc .sort-arrow i       { opacity: 1; }
-thead th[data-sortable].sort-asc .sort-arrow i::before  { content: '\f0de'; } /* fa-sort-up */
+thead th[data-sortable].sort-asc .sort-arrow i::before  { content: '\f0de'; }
 thead th[data-sortable].sort-desc .sort-arrow i      { opacity: 1; }
-thead th[data-sortable].sort-desc .sort-arrow i::before { content: '\f0dd'; } /* fa-sort-down */
+thead th[data-sortable].sort-desc .sort-arrow i::before { content: '\f0dd'; }
 thead th[data-sortable]:hover { background: var(--rose-50, #fff1f5); }
+
+/* ── Nested salary sub-group in sidebar ──────────────────── */
+.nav-submenu--finance { max-height: 0; overflow:hidden; transition:max-height .28s cubic-bezier(.4,0,.2,1); padding-right:14px; }
+.nav-group.open .nav-submenu--finance { max-height:600px; }
+.nav-subitem--group {
+  display:flex; align-items:center; gap:9px;
+  padding:7px 10px 7px 8px; border-radius:8px;
+  color:rgba(255,255,255,.5); font-size:12.5px; font-weight:600;
+  cursor:pointer; user-select:none;
+  transition:background .15s,color .15s;
+}
+.nav-subitem--group:hover { background:rgba(255,255,255,.07); color:rgba(255,255,255,.8); }
+.nav-subitem--group i:first-child { width:16px; text-align:center; font-size:11px; flex-shrink:0; color:rgba(255,255,255,.28); }
+.nav-subarrow { margin-right:auto; font-size:9px; color:rgba(255,255,255,.25); transition:transform .2s; }
+.nav-subgroup.open .nav-subarrow { transform:rotate(-90deg); color:rgba(255,255,255,.5); }
+.nav-submenu2 { max-height:0; overflow:hidden; transition:max-height .25s ease; }
+.nav-subgroup.open .nav-submenu2 { max-height:300px; }
+.nav-subitem--deep { padding-right:30px !important; font-size:12px; }
 </style>
 <script>
 (function(){
