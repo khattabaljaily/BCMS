@@ -531,9 +531,12 @@ def invoice_edit(request, pk):
         'name': sp.name,
     } for sp in specialists])
 
+    lines = inv.lines.select_related('service', 'product', 'specialist')
+
     return render(request, 'billing/form.html', {
         'inv': inv,
         'edit_mode': True,
+        'lines': lines,
         'clients_json':    clients_json,
         'services_json':   services_json,
         'products_json':   products_json,

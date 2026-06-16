@@ -871,7 +871,7 @@ function resetPOS() {
 }
 
 /* ── Helpers ── */
-function fmt(n) { return parseFloat(n).toLocaleString('ar', { minimumFractionDigits: 2 }); }
+function fmt(n) { return parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function esc(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '\\"'); }
 
 /* ── Init ── */
