@@ -404,8 +404,11 @@ function buildSpecialistOptions(serviceId, selectedId) {
     }
   }
   if (!list.length) list = SPECIALISTS;
+  // Auto-select when only one option available and nothing explicitly selected
+  const parsed = parseInt(selectedId, 10);
+  const effective = !isNaN(parsed) ? parsed : (list.length === 1 ? list[0].id : null);
   return `<option value="">—</option>` + list.map(sp =>
-    `<option value="${sp.id}"${sp.id === parseInt(selectedId, 10) ? ' selected' : ''}>${esc(sp.name)}</option>`
+    `<option value="${sp.id}"${sp.id === effective ? ' selected' : ''}>${esc(sp.name)}</option>`
   ).join('');
 }
 
@@ -573,6 +576,15 @@ document.getElementById('client-info').style.display = 'flex';
 document.getElementById('payment-method').value = '{{ inv.payment_method }}';
 document.getElementById('discount-amount').value = '{{ inv.discount_amount }}';
 document.getElementById('notes-textarea').value = '{{ inv.notes|escapejs }}';
+
+// Auto-select specialist when only one candidate and none currently selected
+document.querySelectorAll('#lines-body .specialist-sel').forEach(function(sel) {
+  if (sel.value !== '') return;
+  const row = sel.closest('tr');
+  const serviceId = row.querySelector('[name="service_id[]"]').value;
+  if (!serviceId) return;
+  sel.innerHTML = buildSpecialistOptions(serviceId, '');
+});
 
 // Recalculate totals for server-rendered lines
 calcTotals();
