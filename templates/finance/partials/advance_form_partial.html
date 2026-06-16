@@ -28,9 +28,8 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">الخزينة</label>
-          <select name="treasury" class="form-control">
-            <option value="">بدون خزينة</option>
+          <label class="form-label">الخزينة <span style="color:var(--red)">*</span></label>
+          <select name="treasury" class="form-control" required>
             {% for t in treasuries %}
               <option value="{{ t.pk }}" {% if forloop.first %}selected{% endif %}>{{ t.name }}</option>
             {% endfor %}
