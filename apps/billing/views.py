@@ -148,6 +148,41 @@ def get_invoice_lines_from_post(request, center):
     return lines
 
 
+def _validate_invoice_stock(lines, existing_lines=None):
+    quantities = {}
+    products = {}
+    for line in lines:
+        product = line.get('product')
+        if not product:
+            continue
+        quantities[product.pk] = quantities.get(product.pk, Decimal('0')) + line.get('quantity', Decimal('0'))
+        products[product.pk] = product
+
+    if existing_lines is not None:
+        previous = {}
+        previous_products = {}
+        for line in existing_lines:
+            if not line.product_id:
+                continue
+            previous[line.product_id] = previous.get(line.product_id, Decimal('0')) + line.quantity
+            previous_products[line.product_id] = line.product
+        for pk, old_qty in previous.items():
+            quantities[pk] = quantities.get(pk, Decimal('0')) - old_qty
+            if pk not in products:
+                products[pk] = previous_products.get(pk)
+
+    for pk, net_qty in quantities.items():
+        if net_qty <= 0:
+            continue
+        product = products.get(pk)
+        if not product:
+            continue
+        available = product.stock or Decimal('0')
+        if net_qty > available:
+            return (False, f'لا توجد كمية كافية من المنتج "{product.name}". الكمية المطلوبة {net_qty} بينما المخزون المتاح {available}.')
+    return (True, '')
+
+
 def _parse_store_order_id_from_notes(notes):
     if not notes:
         return None
@@ -230,69 +265,73 @@ def invoice_create(request):
         lines = get_invoice_lines_from_post(request, center)
         if not lines:
             messages.error(request, 'يجب إضافة بند واحد على الأقل للفاتورة.')
-        elif appointment_error:
-            # Prevent saving invoices with invalid or duplicate appointment references.
-            pass
         else:
-            try:
-                with transaction.atomic():
-                    from apps.core.models import Settings
-                    settings_obj, _ = Settings.objects.get_or_create(center=center)
-                    number = settings_obj.next_invoice_number()
+            stock_ok, stock_error = _validate_invoice_stock(lines)
+            if not stock_ok:
+                messages.error(request, stock_error)
+            elif appointment_error:
+                # Prevent saving invoices with invalid or duplicate appointment references.
+                pass
+            else:
+                try:
+                    with transaction.atomic():
+                        from apps.core.models import Settings
+                        settings_obj, _ = Settings.objects.get_or_create(center=center)
+                        number = settings_obj.next_invoice_number()
 
-                    payment_method = request.POST.get('payment_method', 'cash')
-                    inv = Invoice.objects.create(
-                        center=center,
-                        number=number,
-                        client_id=client_id or None,
-                        appointment=appointment,
-                        payment_method=payment_method,
-                        notes=request.POST.get('notes', ''),
-                        discount_amount=Decimal(request.POST.get('discount_amount') or '0'),
-                        status='draft',
-                    )
-
-                    for item in lines:
-                        InvoiceLine.objects.create(
-                            invoice=inv,
-                            description=item['description'],
-                            service=item['service'],
-                            product=item['product'],
-                            specialist=item['specialist'],
-                            quantity=item['quantity'],
-                            unit_price=item['unit_price'],
-                            discount_percent=item['discount_percent'],
+                        payment_method = request.POST.get('payment_method', 'cash')
+                        inv = Invoice.objects.create(
+                            center=center,
+                            number=number,
+                            client_id=client_id or None,
+                            appointment=appointment,
+                            payment_method=payment_method,
+                            notes=request.POST.get('notes', ''),
+                            discount_amount=Decimal(request.POST.get('discount_amount') or '0'),
+                            status='draft',
                         )
 
-                        if item['product']:
-                            StockMovement.objects.create(
-                                center=center,
+                        for item in lines:
+                            InvoiceLine.objects.create(
+                                invoice=inv,
+                                description=item['description'],
+                                service=item['service'],
                                 product=item['product'],
-                                change=-item['quantity'],
-                                type='sale',
-                                reference=f'invoice_{inv.pk}',
-                                notes=f'Invoice #{inv.number}',
+                                specialist=item['specialist'],
+                                quantity=item['quantity'],
+                                unit_price=item['unit_price'],
+                                discount_percent=item['discount_percent'],
                             )
 
-                    inv.recalculate()
+                            if item['product']:
+                                StockMovement.objects.create(
+                                    center=center,
+                                    product=item['product'],
+                                    change=-item['quantity'],
+                                    type='sale',
+                                    reference=f'invoice_{inv.pk}',
+                                    notes=f'Invoice #{inv.number}',
+                                )
 
-                    action = request.POST.get('action')
-                    if action == 'pay':
-                        if payment_method == 'later':
+                        inv.recalculate()
+
+                        action = request.POST.get('action')
+                        if action == 'pay':
+                            if payment_method == 'later':
+                                inv.status = 'draft'
+                                inv.paid_amount = Decimal('0')
+                                inv.save(update_fields=['status', 'paid_amount'])
+                            else:
+                                inv.mark_paid(amount=inv.total, method=payment_method)
+                                _create_invoice_treasury_movement(inv)
+                        else:
                             inv.status = 'draft'
                             inv.paid_amount = Decimal('0')
                             inv.save(update_fields=['status', 'paid_amount'])
-                        else:
-                            inv.mark_paid(amount=inv.total, method=payment_method)
-                            _create_invoice_treasury_movement(inv)
-                    else:
-                        inv.status = 'draft'
-                        inv.paid_amount = Decimal('0')
-                        inv.save(update_fields=['status', 'paid_amount'])
 
-                return redirect('billing:detail', pk=inv.pk)
-            except Exception as e:
-                messages.error(request, f'حدث خطأ أثناء حفظ الفاتورة: {e}')
+                    return redirect('billing:detail', pk=inv.pk)
+                except Exception as e:
+                    messages.error(request, f'حدث خطأ أثناء حفظ الفاتورة: {e}')
         
 
     clients_json = json.dumps([{
@@ -318,6 +357,7 @@ def invoice_create(request):
         'name':  p.name,
         'price': float(p.price),
         'sku':   p.sku or '',
+        'stock': float(p.stock),
     } for p in products])
 
     specialists_json = json.dumps([{
@@ -431,68 +471,73 @@ def invoice_edit(request, pk):
             for movement in StockMovement.objects.filter(reference=f'invoice_{inv.pk}'):
                 movement.delete()
 
-            # Update invoice header
-            payment_method = request.POST.get('payment_method', 'cash')
-            inv.client_id      = request.POST.get('client') or None
-            inv.payment_method = payment_method
-            inv.notes          = request.POST.get('notes', '')
-            inv.discount_amount = Decimal(request.POST.get('discount_amount') or '0')
-            inv.save(update_fields=['client_id', 'payment_method', 'notes', 'discount_amount'])
+            stock_ok, stock_error = _validate_invoice_stock(lines)
+            if not stock_ok:
+                messages.error(request, stock_error)
+            else:
+                # Update invoice header
+                payment_method = request.POST.get('payment_method', 'cash')
+                inv.client_id      = request.POST.get('client') or None
+                inv.payment_method = payment_method
+                inv.notes          = request.POST.get('notes', '')
+                inv.discount_amount = Decimal(request.POST.get('discount_amount') or '0')
+                inv.save(update_fields=['client_id', 'payment_method', 'notes', 'discount_amount'])
 
-            # Rebuild lines
-            inv.lines.all().delete()
-            for item in lines:
-                InvoiceLine.objects.create(
-                    invoice=inv,
-                    description=item['description'],
-                    service=item['service'],
-                    product=item['product'],
-                    specialist=item['specialist'],
-                    quantity=item['quantity'],
-                    unit_price=item['unit_price'],
-                    discount_percent=item['discount_percent'],
-                )
-                if item['product']:
-                    StockMovement.objects.create(
-                        center=center,
+                # Rebuild lines
+                inv.lines.all().delete()
+                for item in lines:
+                    InvoiceLine.objects.create(
+                        invoice=inv,
+                        description=item['description'],
+                        service=item['service'],
                         product=item['product'],
-                        change=-item['quantity'],
-                        type='sale',
-                        reference=f'invoice_{inv.pk}',
-                        notes=f'Invoice #{inv.number}',
+                        specialist=item['specialist'],
+                        quantity=item['quantity'],
+                        unit_price=item['unit_price'],
+                        discount_percent=item['discount_percent'],
                     )
 
-            inv.recalculate()
+                    if item['product']:
+                        StockMovement.objects.create(
+                            center=center,
+                            product=item['product'],
+                            change=-item['quantity'],
+                            type='sale',
+                            reference=f'invoice_{inv.pk}',
+                            notes=f'Invoice #{inv.number}',
+                        )
 
-            action = request.POST.get('action')
-            if action == 'pay':
-                if payment_method == 'later':
-                    # Switching to pay-later: remove direct treasury movement, cancel prior client payments
-                    _delete_invoice_treasury_movement(inv)
-                    inv.status = 'draft'
-                    inv.paid_amount = Decimal('0')
-                    inv.save(update_fields=['status', 'paid_amount'])
+                inv.recalculate()
+
+                action = request.POST.get('action')
+                if action == 'pay':
+                    if payment_method == 'later':
+                        # Switching to pay-later: remove direct treasury movement, cancel prior client payments
+                        _delete_invoice_treasury_movement(inv)
+                        inv.status = 'draft'
+                        inv.paid_amount = Decimal('0')
+                        inv.save(update_fields=['status', 'paid_amount'])
+                    else:
+                        # Pay now (cash/card): replace treasury movement with updated amount
+                        _delete_invoice_treasury_movement(inv)
+                        inv.mark_paid(amount=inv.total, method=payment_method)
+                        _create_invoice_treasury_movement(inv)
                 else:
-                    # Pay now (cash/card): replace treasury movement with updated amount
-                    _delete_invoice_treasury_movement(inv)
-                    inv.mark_paid(amount=inv.total, method=payment_method)
-                    _create_invoice_treasury_movement(inv)
-            else:
-                # Draft save — reconcile treasury if already paid
-                if prev_status == 'paid' and payment_method in ('cash', 'card_or_bank'):
-                    # Total may have changed: replace movement with new amount
-                    _delete_invoice_treasury_movement(inv)
-                    inv.mark_paid(amount=inv.total, method=payment_method)
-                    _create_invoice_treasury_movement(inv)
-                elif prev_status == 'paid' and payment_method == 'later':
-                    # Switched from paid to later: remove treasury, clear payment
-                    _delete_invoice_treasury_movement(inv)
-                    inv.status = 'draft'
-                    inv.paid_amount = Decimal('0')
-                    inv.save(update_fields=['status', 'paid_amount'])
-                elif prev_method in ('cash', 'card_or_bank') and payment_method == 'later':
-                    # Payment method changed to later without explicit action
-                    _delete_invoice_treasury_movement(inv)
+                    # Draft save — reconcile treasury if already paid
+                    if prev_status == 'paid' and payment_method in ('cash', 'card_or_bank'):
+                        # Total may have changed: replace movement with new amount
+                        _delete_invoice_treasury_movement(inv)
+                        inv.mark_paid(amount=inv.total, method=payment_method)
+                        _create_invoice_treasury_movement(inv)
+                    elif prev_status == 'paid' and payment_method == 'later':
+                        # Switched from paid to later: remove treasury, clear payment
+                        _delete_invoice_treasury_movement(inv)
+                        inv.status = 'draft'
+                        inv.paid_amount = Decimal('0')
+                        inv.save(update_fields=['status', 'paid_amount'])
+                    elif prev_method in ('cash', 'card_or_bank') and payment_method == 'later':
+                        # Payment method changed to later without explicit action
+                        _delete_invoice_treasury_movement(inv)
 
             if store_order and store_order.status == 'pending':
                 store_order.status = 'confirmed'
@@ -524,6 +569,7 @@ def invoice_edit(request, pk):
         'name':  p.name,
         'price': float(p.price),
         'sku':   p.sku or '',
+        'stock': float(p.stock),
     } for p in products])
 
     specialists_json = json.dumps([{

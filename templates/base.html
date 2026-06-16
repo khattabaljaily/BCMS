@@ -229,6 +229,12 @@
         فريق الخدمة
       </a>
 
+      <!-- الموظفون (إدارة) -->
+      <a href="{% url 'accounts:users' %}" class="nav-item {% block nav_users_top %}{% endblock %}">
+        <span class="nav-icon"><i class="fas fa-id-badge"></i></span>
+        الموظفون
+      </a>
+
       <!-- نقطة البيع -->
       <a href="{% url 'billing:pos' %}" class="nav-item {% block nav_pos %}{% endblock %}">
         <span class="nav-icon"><i class="fas fa-cash-register"></i></span>

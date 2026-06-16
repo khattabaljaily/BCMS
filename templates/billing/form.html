@@ -361,6 +361,9 @@ function catalogCard(item) {
   const meta = activeTab === 'services'
     ? (item.duration || '')
     : (item.sku ? 'SKU: ' + item.sku : '');
+  const stockInfo = activeTab === 'products'
+    ? (item.stock <= 0 ? '⚠ نفد المخزون' : `المخزون: ${item.stock}`)
+    : meta;
   const productId = activeTab === 'products' ? item.id : '';
   const serviceId = activeTab === 'services' ? item.id : '';
   const safeName = item.name
@@ -384,7 +387,7 @@ function catalogCard(item) {
       ${activeTab === 'services' ? '<i class="fas fa-spa"></i>' : '<i class="fas fa-box-open"></i>'}
     </span>
     <span class="catalog-item__name">${safeLabel}</span>
-    ${meta ? `<span class="catalog-item__meta">${meta}</span>` : ''}
+    ${stockInfo ? `<span class="catalog-item__meta">${stockInfo}</span>` : ''}
     <span class="catalog-item__price">${item.price.toFixed(2)}</span>
   </button>`;
 }
@@ -503,6 +506,13 @@ document.getElementById('payment-method').addEventListener('change', updatePayBu
 document.getElementById('catalog-grid').addEventListener('click', function(e) {
   const item = e.target.closest('.catalog-item');
   if (!item) return;
+  if (item.dataset.productId) {
+    const prod = PRODUCTS.find(x => String(x.id) === item.dataset.productId);
+    if (prod && prod.stock <= 0) {
+      alert(`لا يمكن إضافة المنتج "${prod.name}" لأن المخزون المتوفر 0.`);
+      return;
+    }
+  }
   addFromCatalog(
     item.dataset.name,
     parseFloat(item.dataset.price) || 0,
@@ -510,6 +520,29 @@ document.getElementById('catalog-grid').addEventListener('click', function(e) {
     item.dataset.serviceId || '',
     ''
   );
+});
+
+document.getElementById('invoice-form').addEventListener('submit', function(e) {
+  const rows = document.querySelectorAll('#lines-body tr');
+  const totals = {};
+  rows.forEach(row => {
+    const productId = row.querySelector('[name="product_id[]"]').value;
+    const qty = parseFloat(row.querySelector('[name="quantity[]"]').value) || 0;
+    if (!productId) return;
+    totals[productId] = (totals[productId] || 0) + qty;
+  });
+
+  let error = null;
+  Object.entries(totals).forEach(([productId, qty]) => {
+    const prod = PRODUCTS.find(x => String(x.id) === productId);
+    if (prod && qty > prod.stock) {
+      error = `الكمية المطلوبة من المنتج "${prod.name}" (${qty}) أكبر من المخزون المتاح (${prod.stock}).`;
+    }
+  });
+  if (error) {
+    alert(error);
+    e.preventDefault();
+  }
 });
 
 document.getElementById('lines-body').addEventListener('click', function(e) {
