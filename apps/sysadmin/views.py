@@ -9,12 +9,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse, FileResponse, Http404
 from django.utils import timezone
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.views.decorators.http import require_POST
 
 from apps.core.models import Center, ServiceType, Settings, CenterBackup
 from apps.core.countries import ARAB_COUNTRIES, COUNTRY_CHOICES
 from apps.accounts.models import User
+from apps.clients.models import Client
+from apps.appointments.models import Appointment
+from apps.billing.models import Invoice
 from .decorators import superuser_required
 
 
@@ -89,7 +92,18 @@ def dashboard(request):
         .order_by('plan_expires')[:6]
     )
 
-    total_users = User.objects.filter(center__isnull=False).count()
+    total_users        = User.objects.filter(center__isnull=False).count()
+    total_clients      = Client.objects.count()
+    total_appointments = Appointment.objects.count()
+
+    this_month_start = today.replace(day=1)
+    appointments_this_month = Appointment.objects.filter(date__gte=this_month_start).count()
+
+    total_revenue = (
+        Invoice.objects
+        .filter(status='paid')
+        .aggregate(t=Sum('total'))['t'] or 0
+    )
 
     return render(request, 'sysadmin/dashboard.html', {
         'total_centers':   total_centers,
@@ -97,8 +111,12 @@ def dashboard(request):
         'inactive_centers': total_centers - active_centers,
         'trial_centers':   trial_centers,
         'expired_centers': expired_centers,
-        'total_users':     total_users,
-        'recent_centers':  recent_centers,
+        'total_users':              total_users,
+        'total_clients':            total_clients,
+        'total_appointments':       total_appointments,
+        'appointments_this_month':  appointments_this_month,
+        'total_revenue':            total_revenue,
+        'recent_centers':           recent_centers,
         'expiring_soon':   expiring_soon,
         'chart_plan_labels': json.dumps(chart_plan_labels),
         'chart_plan_data':   json.dumps(chart_plan_data),

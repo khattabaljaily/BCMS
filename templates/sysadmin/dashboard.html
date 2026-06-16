@@ -4,7 +4,8 @@
 {% block nav_dashboard %}active{% endblock %}
 
 {% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% load static %}
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
 <style>
 /* ════════════════════════════════════════
    HERO
@@ -111,11 +112,29 @@
   width: 44px; height: 44px; border-radius: 16px;
   display: flex; align-items: center; justify-content: center;
   font-size: 18px;
-  background: color-mix(in srgb, var(--kpi-color) 16%, white);
-  color: var(--kpi-color);
+  background: color-mix(in srgb, var(--kpi-color, #6366f1) 16%, white);
+  color: var(--kpi-color, #6366f1);
 }
 .kpi-card__num { font-size: 30px; font-weight: 900; line-height: 1; color: #111827; }
 .kpi-card__lbl { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing:.02em; }
+
+/* KPI card color variants */
+.kpi-card--indigo { --kpi-color: #6366f1; }
+.kpi-card--green  { --kpi-color: #10b981; }
+.kpi-card--red    { --kpi-color: #ef4444; }
+.kpi-card--gray   { --kpi-color: #94a3b8; }
+.kpi-card--amber  { --kpi-color: #f59e0b; }
+.kpi-card--blue   { --kpi-color: #3b82f6; }
+.kpi-card--purple { --kpi-color: #8b5cf6; }
+.kpi-card--teal   { --kpi-color: #14b8a6; }
+.kpi-card--pink   { --kpi-color: #ec4899; }
+
+/* Chart panel icon variants */
+.ch-panel__icon--indigo { background: #eef2ff; color: #6366f1; }
+.ch-panel__icon--purple { background: #ede9fe; color: #8b5cf6; }
+.ch-panel__icon--green  { background: #d1fae5; color: #10b981; }
+.ch-panel__icon--blue   { background: #dbeafe; color: #3b82f6; }
+.ch-panel__icon--amber  { background: #fef3c7; color: #f59e0b; }
 /* ════════════════════════════════════════
    CHARTS ROW
 ════════════════════════════════════════ */
@@ -386,7 +405,7 @@
   </div>
 </div>
 
-<!-- ══════════ KPI CARDS — 6 equal full-width columns ══════════ -->
+<!-- ══════════ KPI CARDS ══════════ -->
 <div class="kpi-grid">
 
   <div class="kpi-card kpi-card--indigo">
@@ -434,6 +453,22 @@
     <div>
       <div class="kpi-card__num">{{ total_users }}</div>
       <div class="kpi-card__lbl">إجمالي المستخدمين</div>
+    </div>
+  </div>
+
+  <div class="kpi-card kpi-card--teal">
+    <div class="kpi-card__icon"><i class="fas fa-user-group"></i></div>
+    <div>
+      <div class="kpi-card__num">{{ total_clients }}</div>
+      <div class="kpi-card__lbl">إجمالي العملاء</div>
+    </div>
+  </div>
+
+  <div class="kpi-card kpi-card--purple">
+    <div class="kpi-card__icon"><i class="fas fa-calendar-check"></i></div>
+    <div>
+      <div class="kpi-card__num">{{ appointments_this_month }}</div>
+      <div class="kpi-card__lbl">مواعيد هذا الشهر</div>
     </div>
   </div>
 
