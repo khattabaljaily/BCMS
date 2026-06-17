@@ -156,17 +156,17 @@
 .ts-wa-btn--desktop { display:block; }
 
 @media (pointer:coarse), (max-width:768px) {
-  .ts-wa-btn--mobile  { display:inline-flex; align-items:center; gap:.55rem; }
+  .ts-wa-card { flex-direction:column; align-items:flex-start; gap:.85rem; }
+  .ts-wa-btn--mobile  { display:flex; align-items:center; justify-content:center; gap:.55rem; width:100%; }
   .ts-wa-btn--desktop { display:none; }
 }
 .ts-wa-btn--mobile {
-  background:#25d366; color:#fff; border:none; border-radius:14px;
-  padding:.6rem 1.3rem; font-size:.88rem; font-weight:800;
-  text-decoration:none; white-space:nowrap; cursor:pointer;
-  box-shadow:0 2px 10px rgba(37,211,102,.4);
-  transition:transform .15s, box-shadow .15s;
+  background:rgba(255,255,255,.12); color:#fff; border:1.5px solid rgba(255,255,255,.25);
+  border-radius:14px; padding:.65rem 1.3rem; font-size:.88rem; font-weight:700;
+  text-decoration:none; cursor:pointer; backdrop-filter:blur(4px);
+  transition:background .18s;
 }
-.ts-wa-btn--mobile:hover { color:#fff; transform:scale(1.03); box-shadow:0 4px 16px rgba(37,211,102,.5); }
+.ts-wa-btn--mobile:hover { background:rgba(255,255,255,.2); color:#fff; }
 
 .ts-wa-qr-wrap { text-align:center; }
 .ts-wa-qr-wrap canvas {
