@@ -128,8 +128,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = 'users'
-        verbose_name = 'مستخدم'
-        verbose_name_plural = 'المستخدمون'
+        verbose_name = 'موظف'
+        verbose_name_plural = 'الموظفون'
 
     def __str__(self):
         return self.full_name or self.username

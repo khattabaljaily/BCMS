@@ -224,14 +224,14 @@ def user_save(request, pk=None):
         try:
             instance.save()
         except Exception as e:
-            err = 'اسم المستخدم مستخدم بالفعل.' if '1062' in str(e) or 'UNIQUE' in str(e).upper() else f'خطأ: {e}'
+            err = 'اسم الدخول مستخدم بالفعل.' if '1062' in str(e) or 'UNIQUE' in str(e).upper() else f'خطأ: {e}'
             if _is_ajax(request):
                 return JsonResponse({'success': False, 'message': err}, status=400)
             messages.error(request, err)
             return render(request, 'accounts/user_form.html', {'instance': instance, 'roles': roles})
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم حفظ المستخدم بنجاح.'})
-        messages.success(request, 'تم حفظ المستخدم.')
+            return JsonResponse({'success': True, 'message': 'تم حفظ الموظف بنجاح.'})
+        messages.success(request, 'تم حفظ الموظف.')
         return redirect('accounts:users')
 
     return render(request, 'accounts/user_form.html', {
@@ -247,8 +247,8 @@ def user_delete(request, pk):
     if request.method == 'POST':
         obj.delete()
         if _is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'تم حذف المستخدم بنجاح.'})
-        messages.success(request, 'تم حذف المستخدم.')
+            return JsonResponse({'success': True, 'message': 'تم حذف الموظف بنجاح.'})
+        messages.success(request, 'تم حذف الموظف.')
     return redirect('accounts:users')
 
 

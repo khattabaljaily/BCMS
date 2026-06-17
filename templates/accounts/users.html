@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% load static number_format %}
-{% block title %}المستخدمون{% endblock %}
-{% block page_title %}المستخدمون{% endblock %}
+{% block title %}الموظفون{% endblock %}
+{% block page_title %}الموظفون{% endblock %}
 {% block nav_team_open %}open{% endblock %}
 {% block nav_users %}active{% endblock %}
-{% block nav_users_top %}active{% endblock %}
 
 {% block content %}
 <div class="cx-scene">
@@ -17,14 +16,14 @@
           <i class="fas fa-users-cog"></i>
         </div>
         <div>
-          <h1 class="cx-hero-title">المستخدمون</h1>
-          <p class="cx-hero-desc">{{ users.count }} مستخدم</p>
+          <h1 class="cx-hero-title">الموظفون</h1>
+          <p class="cx-hero-desc">{{ users.count }} موظف</p>
         </div>
       </div>
       <div class="cx-hero-right">
         <div class="cx-hero-actions">
           <a href="{% url 'accounts:user_add' %}" class="btn btn--primary">
-            <i class="fas fa-plus"></i> إضافة مستخدم
+            <i class="fas fa-plus"></i> إضافة موظف
           </a>
         </div>
       </div>
@@ -58,7 +57,7 @@
         <thead>
           <tr>
             <th>الاسم</th>
-            <th>اسم المستخدم</th>
+            <th>اسم الدخول</th>
             <th>الدور</th>
             <th>الهاتف</th>
             <th>الحالة</th>
@@ -93,7 +92,7 @@
               <div class="cx-row-actions">
                 <a href="{% url 'accounts:user_edit' u.pk %}" class="cx-act" title="تعديل"><i class="fas fa-edit"></i></a>
                 <button type="button" class="cx-act cx-act--del" title="حذف"
-                        onclick="BCMS.ajaxDelete('{% url 'accounts:user_delete' u.pk %}', 'حذف المستخدم {{ u.full_name|default:u.username|escapejs }}؟', 'row-{{ u.pk }}')">
+                        onclick="BCMS.ajaxDelete('{% url 'accounts:user_delete' u.pk %}', 'حذف الموظف {{ u.full_name|default:u.username|escapejs }}؟', 'row-{{ u.pk }}')">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
@@ -104,7 +103,7 @@
             <td colspan="6">
               <div class="cx-empty" style="padding:48px 24px;">
                 <i class="fas fa-users"></i>
-                <p>لا مستخدمون</p>
+                <p>لا موظفون</p>
               </div>
             </td>
           </tr>
@@ -130,7 +129,7 @@
           <div class="cx-card-actions">
             <a href="{% url 'accounts:user_edit' u.pk %}" class="cx-act"><i class="fas fa-edit"></i></a>
             <button type="button" class="cx-act cx-act--del"
-                    onclick="BCMS.ajaxDelete('{% url 'accounts:user_delete' u.pk %}', 'حذف المستخدم {{ u.full_name|default:u.username|escapejs }}؟', 'row-{{ u.pk }}')">
+                    onclick="BCMS.ajaxDelete('{% url 'accounts:user_delete' u.pk %}', 'حذف الموظف {{ u.full_name|default:u.username|escapejs }}؟', 'row-{{ u.pk }}')">
               <i class="fas fa-trash"></i>
             </button>
           </div>

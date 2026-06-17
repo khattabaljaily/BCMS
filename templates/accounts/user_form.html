@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}{% if instance %}تعديل مستخدم{% else %}مستخدم جديد{% endif %}{% endblock %}
-{% block page_title %}{% if instance %}تعديل: {{ instance.full_name }}{% else %}مستخدم جديد{% endif %}{% endblock %}
+{% block title %}{% if instance %}تعديل موظف{% else %}موظف جديد{% endif %}{% endblock %}
+{% block page_title %}{% if instance %}تعديل: {{ instance.full_name }}{% else %}موظف جديد{% endif %}{% endblock %}
 {% block nav_team_open %}open{% endblock %}
 {% block nav_users %}active{% endblock %}
-{% block nav_users_top %}active{% endblock %}
 
 {% block content %}
 <div class="cx-scene">
@@ -23,10 +22,10 @@
           {{ instance.full_name|first|default:"م" }}
         </div>
         <div class="uf-avatar__name" id="avatarName">
-          {{ instance.full_name|default:"مستخدم جديد" }}
+          {{ instance.full_name|default:"موظف جديد" }}
         </div>
         <div class="uf-avatar__username">
-          {% if instance %}@{{ instance.username }}{% else %}اسم المستخدم{% endif %}
+          {% if instance %}@{{ instance.username }}{% else %}اسم الدخول{% endif %}
         </div>
       </div>
 
@@ -42,7 +41,7 @@
 
       <div class="uf-aside__actions">
         <button type="submit" class="btn btn--primary" style="width:100%;">
-          <i class="fas fa-save"></i> حفظ المستخدم
+          <i class="fas fa-save"></i> حفظ الموظف
         </button>
         <a href="{% url 'accounts:users' %}" class="btn btn--ghost" style="width:100%;margin-top:8px;">
           إلغاء
@@ -74,14 +73,14 @@
           </div>
           <div class="form-group">
             <label class="form-label">
-              اسم المستخدم <span style="color:#ef4444;">*</span>
+              اسم الدخول <span style="color:#ef4444;">*</span>
               {% if instance %}<span class="form-optional">(لا يمكن تغييره)</span>{% endif %}
             </label>
             <div class="field-wrap">
               <i class="fas fa-at fi"></i>
               <input class="form-control" type="text" name="username"
                      value="{{ instance.username|default:'' }}"
-                     placeholder="اسم_المستخدم"
+                     placeholder="اسم_الدخول"
                      {% if instance %}readonly style="background:#f8fafc;color:#94a3b8;"{% endif %}
                      required>
             </div>
@@ -142,7 +141,7 @@
               <i class="fas fa-external-link-alt" style="font-size:10px;"></i>
               إدارة الأدوار
             </a>
-            &nbsp;—&nbsp; حدد دوراً لمنح المستخدم صلاحياته تلقائياً
+            &nbsp;—&nbsp; حدد دوراً لمنح الموظف صلاحياته تلقائياً
           </div>
         </div>
 
@@ -263,7 +262,7 @@
 <script>
 // Update avatar preview
 document.getElementById('id_full_name').addEventListener('input', function() {
-  const name = this.value || 'مستخدم جديد';
+  const name = this.value || 'موظف جديد';
   document.getElementById('avatarName').textContent = name;
   document.getElementById('avatarCircle').textContent = name[0] || 'م';
 });
