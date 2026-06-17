@@ -698,23 +698,35 @@ document.addEventListener('DOMContentLoaded', function () {
     overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.4)';
     document.body.appendChild(overlay);
 
+    var _sidebarScrollY = 0;
     function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
+    function lockScroll() {
+      _sidebarScrollY = window.scrollY || window.pageYOffset;
+      document.body.style.position = 'fixed';
+      document.body.style.top = '-' + _sidebarScrollY + 'px';
+      document.body.style.width = '100%';
+    }
+    function unlockScroll() {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, _sidebarScrollY);
+    }
     function open()  {
       sidebar.classList.add('open');
       sidebar.classList.remove('closed');
       if (isMobile()) {
         overlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
+        lockScroll();
       } else {
         overlay.style.display = 'none';
-        document.body.style.overflow = '';
       }
     }
     function close() {
       sidebar.classList.remove('open');
       sidebar.classList.add('closed');
       overlay.style.display = 'none';
-      document.body.style.overflow = '';
+      if (isMobile()) unlockScroll();
     }
 
     toggleBtn.addEventListener('click', function () { sidebar.classList.contains('open') ? close() : open(); });
