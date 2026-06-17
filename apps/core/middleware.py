@@ -4,7 +4,7 @@ based on the logged-in user, and activates the tenant's timezone.
 """
 import zoneinfo
 from django.utils import timezone
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 
 class MaintenanceMiddleware:
@@ -50,7 +50,8 @@ class NoCacheMiddleware:
 class CenterMiddleware:
     OPEN_PATHS = (
         '/login/', '/register/', '/admin/', '/static/', '/media/', '/store/',
-        '/sysadmin/', '/pricing/', '/about/',
+        '/sysadmin/', '/pricing/', '/about/', '/subscription/', '/support/',
+        '/logout/',
     )
 
     def __init__(self, get_response):
@@ -72,6 +73,18 @@ class CenterMiddleware:
                 timezone.deactivate()
         else:
             timezone.deactivate()
+
+        # Block access for expired or inactive centers
+        if (
+            request.user.is_authenticated
+            and not request.user.is_superuser
+            and request.center is not None
+            and not any(request.path.startswith(p) for p in self.OPEN_PATHS)
+        ):
+            if not request.center.is_active or request.center.is_expired:
+                response = self.get_response(request)
+                timezone.deactivate()
+                return redirect('/subscription/')
 
         response = self.get_response(request)
         timezone.deactivate()
