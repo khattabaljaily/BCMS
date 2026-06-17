@@ -524,7 +524,8 @@ def center_support_create(request):
     if not request.center:
         return JsonResponse({'ok': False, 'error': 'no_center'}, status=400)
     if request.method != 'POST':
-        return HttpResponseNotAllowed(['POST'])
+        from django.shortcuts import redirect
+        return redirect('core:support')
 
     subject     = request.POST.get('subject', '').strip()
     description = request.POST.get('description', '').strip()
