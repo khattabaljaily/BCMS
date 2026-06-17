@@ -207,10 +207,14 @@
         <div class="ts-wa-card__title">تواصل معنا مباشرةً عبر واتساب</div>
         <div class="ts-wa-card__sub">للردود السريعة على استفساراتك</div>
       </div>
-      <!-- Mobile: direct link -->
-      <a href="https://wa.me/249110100110" target="_blank" rel="noopener" class="ts-wa-btn ts-wa-btn--mobile">
+      <!-- Mobile: direct link with pre-filled message -->
+      {% with center_name=request.center.name|default:"" user_name=request.user.get_full_name|default:request.user.username %}
+      <a href="https://wa.me/249110100110?text={% filter urlencode %}مرحباً، أنا {{ user_name }} من {{ center_name }}، أتواصل معكم بخصوص الاشتراك في برنامج EnjazBCMS.{% endfilter %}"
+         target="_blank" rel="noopener" class="ts-wa-btn ts-wa-btn--mobile"
+         id="waLink">
         <i class="fab fa-whatsapp"></i> افتح المحادثة
       </a>
+      {% endwith %}
       <!-- Desktop: QR -->
       <div class="ts-wa-btn--desktop">
         <div class="ts-wa-qr-wrap">
@@ -381,7 +385,8 @@ document.getElementById('newTicketForm').addEventListener('submit', async functi
   // Only render on non-touch / wide screens
   var isMobile = window.matchMedia('(pointer:coarse), (max-width:768px)').matches;
   if (isMobile) return;
-  var url = 'https://wa.me/249110100110';
+  var msg = {% with cn=request.center.name|default:"" un=request.user.get_full_name|default:request.user.username %}'مرحباً، أنا {{ un }} من {{ cn }}، أتواصل معكم بخصوص الاشتراك في برنامج EnjazBCMS.'{% endwith %};
+  var url = 'https://wa.me/249110100110?text=' + encodeURIComponent(msg);
   var canvas = document.getElementById('waQrCanvas');
   if (!canvas) return;
   // Tiny QR encoder (no external lib needed — uses browser Canvas + encode via data URI from qr-server)
