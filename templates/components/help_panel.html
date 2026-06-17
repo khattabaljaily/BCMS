@@ -300,36 +300,20 @@
   const overlay = document.getElementById('help-overlay');
   const closeBtn = document.getElementById('help-close-btn');
   let open = false;
-  let _scrollY = 0;
-
-  function lockScroll() {
-    _scrollY = window.scrollY || window.pageYOffset;
-    document.body.style.position = 'fixed';
-    document.body.style.top = '-' + _scrollY + 'px';
-    document.body.style.width = '100%';
-  }
-  function unlockScroll() {
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    window.scrollTo(0, _scrollY);
-  }
-
-  function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
 
   function openPanel() {
     open = true;
     panel.classList.add('is-open');
     panel.setAttribute('aria-hidden', 'false');
     overlay.classList.add('is-open');
-    if (isMobile()) lockScroll();
+    document.documentElement.style.overflow = 'hidden';
   }
   function closePanel() {
     open = false;
     panel.classList.remove('is-open');
     panel.setAttribute('aria-hidden', 'true');
     overlay.classList.remove('is-open');
-    if (isMobile()) unlockScroll();
+    document.documentElement.style.overflow = '';
   }
 
   fab.addEventListener('click', () => open ? closePanel() : openPanel());
