@@ -63,7 +63,7 @@
           <input type="checkbox" name="remember_me" id="id_remember">
           تذكرني
         </label>
-        <a href="javascript:void(0);" class="link-forgot">نسيت كلمة المرور؟</a>
+        <a href="{% url 'accounts:password_reset_request' %}" class="link-forgot">نسيت كلمة المرور؟</a>
       </div>
 
       <button type="submit" class="btn-submit">

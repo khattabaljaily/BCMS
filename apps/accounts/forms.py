@@ -6,6 +6,53 @@ from apps.core.models import Center, ServiceType
 from apps.core.countries import ARAB_COUNTRIES, COUNTRY_CHOICES
 
 
+class PasswordResetForm(forms.Form):
+    email = forms.EmailField(
+        label='البريد الإلكتروني',
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'أدخل بريدك الإلكتروني',
+            'autocomplete': 'email',
+            'autofocus': True,
+        })
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not User.objects.filter(email=email, is_active=True).exists():
+            raise forms.ValidationError('لا يوجد حساب نشط بهذا البريد الإلكتروني.')
+        return email
+
+
+class SetPasswordForm(forms.Form):
+    new_password1 = forms.CharField(
+        label='كلمة المرور الجديدة',
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'أدخل كلمة مرور قوية',
+            'autocomplete': 'new-password',
+        }),
+    )
+    new_password2 = forms.CharField(
+        label='تأكيد كلمة المرور الجديدة',
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'أعد إدخال كلمة المرور',
+            'autocomplete': 'new-password',
+        }),
+    )
+
+    def clean_new_password1(self):
+        pw = self.cleaned_data.get('new_password1', '')
+        if len(pw) < 8:
+            raise forms.ValidationError('كلمة المرور يجب أن تكون 8 أحرف على الأقل.')
+        return pw
+
+    def clean_new_password2(self):
+        pw1 = self.cleaned_data.get('new_password1')
+        pw2 = self.cleaned_data.get('new_password2')
+        if pw1 and pw2 and pw1 != pw2:
+            raise forms.ValidationError('كلمتا المرور غير متطابقتين.')
+        return pw2
+
+
 class LoginForm(forms.Form):
     username = forms.CharField(label='اسم المستخدم', max_length=150)
     password = forms.CharField(label='كلمة المرور', widget=forms.PasswordInput)

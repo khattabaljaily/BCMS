@@ -3,16 +3,30 @@
 
 // ── Global Spinner ─────────────────────────────────────────────────────────
 const GSpinner = (function () {
-    var _el = null, _count = 0, _safety = null;
+    var _el = null, _count = 0, _safety = null, _showAt = 0;
+    var MIN_MS = 300;  // minimum visible time
     function _getEl() { return _el || (_el = document.getElementById('global-spinner')); }
-    function _doHide() { var s = _getEl(); if (s) s.classList.remove('active'); }
+    function _doHide() {
+        var s = _getEl(); if (!s) return;
+        s.classList.remove('active');
+        s.classList.add('hiding');
+        setTimeout(function () { s.classList.remove('hiding'); }, 350);
+    }
+    function _scheduledHide() {
+        var elapsed = Date.now() - _showAt;
+        clearTimeout(_safety);
+        _safety = setTimeout(_doHide, Math.max(0, MIN_MS - elapsed));
+    }
     function show() {
+        if (_count === 0) _showAt = Date.now();
         _count++;
-        var s = _getEl(); if (s) s.classList.add('active');
+        var s = _getEl(); if (!s) return;
+        s.classList.remove('hiding');
+        s.classList.add('active');
         clearTimeout(_safety); _safety = setTimeout(forceHide, 15000);
     }
-    function hide() { _count = Math.max(0, _count - 1); if (_count === 0) { clearTimeout(_safety); _doHide(); } }
-    function forceHide() { clearTimeout(_safety); _count = 0; _doHide(); }
+    function hide()      { _count = Math.max(0, _count - 1); if (_count === 0) _scheduledHide(); }
+    function forceHide() { _count = 0; _scheduledHide(); }
     return { show: show, hide: hide, forceHide: forceHide };
 })();
 
@@ -115,6 +129,9 @@ document.addEventListener('click', function (e) {
 document.addEventListener('submit', function (e) {
     if (!e.defaultPrevented) GSpinner.show();
 });
+
+// Catch-all: show spinner on any page unload (covers window.location.href = ..., reload(), replace(), etc.)
+window.addEventListener('beforeunload', function () { GSpinner.show(); });
 
 // ── BCMS Utilities ─────────────────────────────────────────────────────────
 const BCMS = {

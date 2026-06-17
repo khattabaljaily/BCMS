@@ -6,7 +6,13 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from .forms import LoginForm, RegisterForm
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+from .forms import LoginForm, RegisterForm, PasswordResetForm, SetPasswordForm
 from .models import User, Role, PERMISSIONS
 
 SECTION_LABELS = {
@@ -308,3 +314,73 @@ def role_delete(request, pk):
             return JsonResponse({'success': True, 'message': 'تم حذف الدور.'})
         messages.success(request, 'تم حذف الدور.')
     return redirect('accounts:roles')
+
+
+def password_reset_request(request):
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+
+    if request.method == 'POST':
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            user = User.objects.get(email=email, is_active=True)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            reset_url = request.build_absolute_uri(
+                reverse('accounts:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+            )
+            subject = 'إعادة تعيين كلمة المرور - BCMS'
+            html_message = render_to_string('accounts/email/password_reset_email.html', {
+                'user': user,
+                'reset_url': reset_url,
+            })
+            try:
+                send_mail(
+                    subject=subject,
+                    message='',
+                    html_message=html_message,
+                    from_email=None,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+                messages.success(request, 'تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني.')
+            except Exception:
+                messages.error(request, 'حدث خطأ في إرسال البريد الإلكتروني. يرجى المحاولة لاحقاً.')
+    else:
+        form = PasswordResetForm()
+
+    return render(request, 'accounts/password_reset_request.html', {'form': form})
+
+
+def password_reset_confirm(request, uidb64, token):
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is None or not default_token_generator.check_token(user, token):
+        messages.error(request, 'رابط إعادة التعيين غير صحيح أو منتهي الصلاحية.')
+        return redirect('accounts:password_reset_request')
+
+    if request.method == 'POST':
+        form = SetPasswordForm(request.POST)
+        if form.is_valid():
+            user.set_password(form.cleaned_data['new_password1'])
+            user.save(update_fields=['password'])
+            messages.success(request, 'تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.')
+            return redirect('accounts:login')
+    else:
+        form = SetPasswordForm()
+
+    return render(request, 'accounts/password_reset_confirm.html', {'form': form})
+
+
+def password_reset_complete(request):
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+    return render(request, 'accounts/password_reset_complete.html')

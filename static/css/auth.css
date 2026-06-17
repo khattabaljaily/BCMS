@@ -158,6 +158,14 @@ html,body {
   color:var(--error); font-size:13px; font-weight:600;
 }
 .alert-error i { flex-shrink:0; font-size:15px; margin-top:1px; }
+.alert-success {
+  display:flex; align-items:flex-start; gap:12px;
+  background:#f0fdf4; border:1.5px solid #bbf7d0;
+  border-radius:14px; padding:14px 16px;
+  margin-bottom:22px;
+  color:#15803d; font-size:13px; font-weight:600;
+}
+.alert-success i { flex-shrink:0; font-size:15px; margin-top:1px; }
 
 /* ──────────────── FIELD ──────────────── */
 .field { margin-bottom:10px; }

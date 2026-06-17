@@ -29,9 +29,10 @@
     background: rgba(255,255,255,.88);
     backdrop-filter: blur(8px);
     display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity .2s;
+    opacity: 0; pointer-events: none; transition: none;
   }
-  #global-spinner.active { opacity: 1; pointer-events: auto; }
+  #global-spinner.active  { opacity: 1; pointer-events: auto;  transition: none; }
+  #global-spinner.hiding  { opacity: 0; pointer-events: none;  transition: opacity .3s ease; }
   .spinner-ring {
     width: 52px; height: 52px;
     border: 4px solid rgba(244,63,94,.15);
@@ -41,6 +42,47 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
+
+<script>
+// ── Global spinner for auth pages ──────────────────────────────────────────
+(function() {
+  var sp = document.getElementById('global-spinner');
+  function show() {
+    if (!sp) return;
+    sp.classList.remove('hiding');
+    sp.classList.add('active');
+  }
+  function hide() {
+    if (!sp) return;
+    sp.classList.remove('active');
+    sp.classList.add('hiding');
+    setTimeout(function() { sp.classList.remove('hiding'); }, 350);
+  }
+
+  // Link clicks
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a[href]');
+    if (!link) return;
+    var href = link.getAttribute('href') || '';
+    if (!href || href === '#' || /^(javascript:|mailto:|tel:|#)/i.test(href)) return;
+    if (link.target === '_blank') return;
+    if (link.hasAttribute('data-no-spinner')) return;
+    show();
+  }, true);
+
+  // Form submits
+  document.addEventListener('submit', function(e) {
+    if (!e.defaultPrevented) show();
+  });
+
+  // Catch-all: window.location navigations
+  window.addEventListener('beforeunload', function() { show(); });
+
+  // Hide when page finishes loading or restores from bfcache
+  window.addEventListener('pageshow', hide);
+  window.addEventListener('load', hide);
+})();
+</script>
 
 <script>
 (function(){

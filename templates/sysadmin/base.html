@@ -538,7 +538,7 @@ form select {
 .sa-health-card__lbl { font-size: 12px; color: var(--sa-muted); margin-top: 3px; }
 .sa-health-card__names { font-size: 11px; color: var(--sa-muted); margin-top: 5px; }
 
-/* ── Spinner ── */
+/* ── Inline button spinner ── */
 .sa-spinner {
   display: inline-block; width: 14px; height: 14px;
   border: 2px solid rgba(255,255,255,.3);
@@ -546,6 +546,26 @@ form select {
   animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Global page-transition spinner ── */
+#sa-global-spinner {
+  position: fixed; inset: 0; z-index: 99999;
+  background: rgba(255,255,255,.90);
+  backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: none;
+}
+#sa-global-spinner.active  { opacity: 1; pointer-events: auto;  transition: none; }
+#sa-global-spinner.hiding  { opacity: 0; pointer-events: none;  transition: opacity .3s ease; }
+.sa-global-spinner__ring {
+  width: 52px; height: 52px;
+  border: 4px solid rgba(99,102,241,.15);
+  border-top-color: var(--sa-accent);
+  border-radius: 50%;
+  animation: sa-gs-spin .7s linear infinite;
+}
+@keyframes sa-gs-spin { to { transform: rotate(360deg); } }
 
 /* ── Toast ── */
 .sa-toast {
@@ -847,6 +867,65 @@ form select {
 </div>
 
 <div id="sa-overlay" onclick="saSidebarClose()"></div>
+
+<!-- Global page-transition spinner -->
+<div id="sa-global-spinner" aria-hidden="true" role="status">
+  <div class="sa-global-spinner__ring"></div>
+</div>
+
+<script>
+// ── Global spinner ────────────────────────────────────────────────────────
+(function() {
+  var sp = document.getElementById('sa-global-spinner');
+  var _safety = null, _showAt = 0;
+  var MIN_MS = 300;
+
+  function _doHide() {
+    if (!sp) return;
+    sp.classList.remove('active');
+    sp.classList.add('hiding');
+    setTimeout(function() { sp.classList.remove('hiding'); }, 350);
+  }
+  function _scheduledHide() {
+    var elapsed = Date.now() - _showAt;
+    clearTimeout(_safety);
+    _safety = setTimeout(_doHide, Math.max(0, MIN_MS - elapsed));
+  }
+  function show() {
+    if (!sp) return;
+    _showAt = Date.now();
+    sp.classList.remove('hiding');
+    sp.classList.add('active');
+    clearTimeout(_safety);
+    _safety = setTimeout(_doHide, 15000);
+  }
+  function hide() { _scheduledHide(); }
+
+  // Link clicks
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a[href]');
+    if (!link) return;
+    var href = link.getAttribute('href') || '';
+    if (!href || href === '#' || /^(javascript:|mailto:|tel:|#)/i.test(href)) return;
+    if (link.target === '_blank') return;
+    if (link.hasAttribute('data-no-spinner')) return;
+    if (/\/(export|download|backup)[_\/]/i.test(href)) return;
+    show();
+  }, true);
+
+  // Form submits
+  document.addEventListener('submit', function(e) {
+    if (!e.defaultPrevented) show();
+  });
+
+  // Catch-all for window.location navigations
+  window.addEventListener('beforeunload', function() { show(); });
+
+  // Hide on page load / bfcache restore
+  window.addEventListener('pageshow', hide);
+  window.addEventListener('load', hide);
+})();
+</script>
 
 <script>
 function saSidebarToggle() {
