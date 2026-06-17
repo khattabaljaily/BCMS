@@ -121,6 +121,8 @@
 .bcms-help-panel__body {
   flex: 1; min-height: 0;
   overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 16px;
   background: var(--hp-surface2);
   display: flex; flex-direction: column; gap: 12px;
@@ -310,19 +312,21 @@
     window.scrollTo(0, _scrollY);
   }
 
+  function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
+
   function openPanel() {
     open = true;
     panel.classList.add('is-open');
     panel.setAttribute('aria-hidden', 'false');
     overlay.classList.add('is-open');
-    lockScroll();
+    if (isMobile()) lockScroll();
   }
   function closePanel() {
     open = false;
     panel.classList.remove('is-open');
     panel.setAttribute('aria-hidden', 'true');
     overlay.classList.remove('is-open');
-    unlockScroll();
+    if (isMobile()) unlockScroll();
   }
 
   fab.addEventListener('click', () => open ? closePanel() : openPanel());
